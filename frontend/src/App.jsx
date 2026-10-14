@@ -1,25 +1,197 @@
 import { useEffect, useMemo, useState } from "react";
+import {
+  Sprout,
+  Leaf,
+  Search,
+  MapPin,
+  User,
+  Phone,
+  Mail,
+  ShoppingCart,
+  Tractor,
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  ShieldCheck,
+  Tag,
+  Filter,
+  Plus,
+  Edit2,
+  Trash2,
+  RefreshCw,
+  X,
+  MessageSquare,
+  AlertCircle,
+  Info,
+  ChevronRight,
+  TrendingUp,
+  SlidersHorizontal,
+  ExternalLink,
+  Clock,
+  Sparkles,
+  Award,
+  Layers,
+  ArrowUpRight,
+  Store,
+  DollarSign,
+  Scale
+} from "lucide-react";
 import "./App.css";
 
 const initialCrops = [
-  { _id: "demo-1", name: "Rice (Sona Masoori)", category: "Grains", price: 28, unit: "kg", location: "Tuni", quantity: 500, farmerName: "Ramesh Varma", isDemo: true },
-  { _id: "demo-2", name: "Red Chillies (Guntur)", category: "Spices", price: 120, unit: "kg", location: "Anakapalli", quantity: 100, farmerName: "K. Satyanarayana", isDemo: true },
-  { _id: "demo-3", name: "Yellow Maize", category: "Grains", price: 22, unit: "kg", location: "East Godavari", quantity: 800, farmerName: "S. Apparao", isDemo: true },
-  { _id: "demo-4", name: "Country Tomatoes", category: "Vegetables", price: 25, unit: "kg", location: "Tuni", quantity: 200, farmerName: "N. Lakshmi", isDemo: true },
-  { _id: "demo-5", name: "Organic Groundnuts", category: "Pulses & Nuts", price: 65, unit: "kg", location: "Kakinada", quantity: 300, farmerName: "B. Venkatesh", isDemo: true },
-  { _id: "demo-6", name: "Dry Turmeric", category: "Spices", price: 90, unit: "kg", location: "Rajahmundry", quantity: 150, farmerName: "P. Suryanarayana", isDemo: true },
+  {
+    _id: "demo-1",
+    name: "Rice (Sona Masoori)",
+    category: "Grains",
+    price: 28,
+    unit: "kg",
+    location: "Tuni, East Godavari",
+    quantity: 500,
+    farmerName: "Ramesh Varma",
+    description: "Freshly harvested, naturally dried to 12% moisture. Premium Grade-A slender grain.",
+    isDemo: true
+  },
+  {
+    _id: "demo-2",
+    name: "Red Chillies (Guntur Teja)",
+    category: "Spices",
+    price: 125,
+    unit: "kg",
+    location: "Anakapalli",
+    quantity: 120,
+    farmerName: "K. Satyanarayana",
+    description: "High pungency, sun-dried bright red pods, ideal for spice processors and bulk buyers.",
+    isDemo: true
+  },
+  {
+    _id: "demo-3",
+    name: "Yellow Hybrid Maize",
+    category: "Grains",
+    price: 22,
+    unit: "kg",
+    location: "Prathipadu, Kakinada",
+    quantity: 850,
+    farmerName: "S. Apparao",
+    description: "Clean golden grain, properly separated and packed in standard 50kg bags.",
+    isDemo: true
+  },
+  {
+    _id: "demo-4",
+    name: "Country Fresh Tomatoes",
+    category: "Vegetables",
+    price: 24,
+    unit: "kg",
+    location: "Payakaraopeta, Tuni",
+    quantity: 250,
+    farmerName: "N. Lakshmi",
+    description: "Organically grown firm country variety with rich tangy flavor. Hand-picked daily.",
+    isDemo: true
+  },
+  {
+    _id: "demo-5",
+    name: "Organic Groundnuts",
+    category: "Pulses & Nuts",
+    price: 68,
+    unit: "kg",
+    location: "Kakinada Rural",
+    quantity: 320,
+    farmerName: "B. Venkatesh",
+    description: "High oil content, pod shells cleaned. Grown with zero chemical pesticides.",
+    isDemo: true
+  },
+  {
+    _id: "demo-6",
+    name: "Dry Turmeric Fingers",
+    category: "Spices",
+    price: 92,
+    unit: "kg",
+    location: "Rajahmundry",
+    quantity: 180,
+    farmerName: "P. Suryanarayana",
+    description: "Boiled and sun-polished finger turmeric with natural deep yellow curcumin rich color.",
+    isDemo: true
+  }
 ];
 
-const categories = ["All", "Grains", "Vegetables", "Spices", "Pulses & Nuts"];
+const categories = [
+  { id: "All", label: "All Harvests", telugu: "అన్నీ", icon: "🌾" },
+  { id: "Grains", label: "Grains & Paddy", telugu: "ధాన్యాలు", icon: "🍚" },
+  { id: "Vegetables", label: "Fresh Vegetables", telugu: "కూరగాయలు", icon: "🍅" },
+  { id: "Spices", label: "Spices & Chillies", telugu: "మసాలాలు", icon: "🌶️" },
+  { id: "Pulses & Nuts", label: "Pulses & Nuts", telugu: "పప్పుధాన్యాలు", icon: "🥜" }
+];
+
+const popularLocations = ["All", "Tuni", "Anakapalli", "Kakinada", "Rajahmundry", "East Godavari"];
+
+const popularCropsSuggestions = [
+  { name: "Sona Masoori Paddy (వరి)", category: "Grains", unit: "kg", price: "28" },
+  { name: "Guntur Red Chillies (మిరప)", category: "Spices", unit: "kg", price: "125" },
+  { name: "Country Tomatoes (టమోటా)", category: "Vegetables", unit: "kg", price: "24" },
+  { name: "Yellow Maize (మొక్కజొన్న)", category: "Grains", unit: "kg", price: "22" },
+  { name: "Organic Groundnuts (వేరుశనగ)", category: "Pulses & Nuts", unit: "kg", price: "68" },
+  { name: "Dry Turmeric (పసుపు)", category: "Spices", unit: "kg", price: "92" }
+];
+
+function getCropTeluguTag(name = "", category = "") {
+  const lower = name.toLowerCase();
+  if (lower.includes("sona masoori") || lower.includes("rice") || lower.includes("paddy")) return "సోనా మసూరి వరి";
+  if (lower.includes("chilli") || lower.includes("mirchi")) return "గుంటూరు ఎండుమిర్చి";
+  if (lower.includes("maize") || lower.includes("corn")) return "పసుపు మొక్కజొన్న";
+  if (lower.includes("tomato")) return "నాటు టమోటాలు";
+  if (lower.includes("groundnut") || lower.includes("peanut")) return "సేంద్రీయ వేరుశనగ";
+  if (lower.includes("turmeric")) return "ఎండిన పసుపు కొమ్ములు";
+  if (lower.includes("wheat")) return "నాణ్యమైన గోధుమలు";
+  if (lower.includes("onion")) return "తాజా ఉల్లిపాయలు";
+  if (category === "Grains") return "ధాన్యం పంట";
+  if (category === "Vegetables") return "తాజా కూరగాయ";
+  if (category === "Spices") return "నాణ్యమైన మసాలా";
+  if (category === "Pulses & Nuts") return "పప్పుధాన్యాలు";
+  return "తాజా రైతు పంట";
+}
+
+function getCropVisualTheme(name = "", category = "") {
+  const lower = name.toLowerCase();
+  if (lower.includes("rice") || lower.includes("paddy")) {
+    return { emoji: "🌾", bgClass: "theme-grain", badge: "Paddy / వరి" };
+  }
+  if (lower.includes("chilli") || lower.includes("mirchi")) {
+    return { emoji: "🌶️", bgClass: "theme-spice", badge: "Chilli / మిర్చి" };
+  }
+  if (lower.includes("maize") || lower.includes("corn")) {
+    return { emoji: "🌽", bgClass: "theme-maize", badge: "Maize / మొక్కజొన్న" };
+  }
+  if (lower.includes("tomato")) {
+    return { emoji: "🍅", bgClass: "theme-veg", badge: "Tomato / టమోటా" };
+  }
+  if (lower.includes("groundnut") || lower.includes("peanut")) {
+    return { emoji: "🥜", bgClass: "theme-pulse", badge: "Groundnut / వేరుశనగ" };
+  }
+  if (lower.includes("turmeric")) {
+    return { emoji: "🫚", bgClass: "theme-turmeric", badge: "Turmeric / పసుపు" };
+  }
+  if (category === "Vegetables") {
+    return { emoji: "🥬", bgClass: "theme-veg", badge: "Vegetable / కూరగాయ" };
+  }
+  if (category === "Spices") {
+    return { emoji: "🌿", bgClass: "theme-spice", badge: "Spice / మసాలా" };
+  }
+  if (category === "Pulses & Nuts") {
+    return { emoji: "🫘", bgClass: "theme-pulse", badge: "Pulses / పప్పుధాన్యం" };
+  }
+  return { emoji: "🌱", bgClass: "theme-default", badge: "Fresh Crop / పంట" };
+}
 
 function App() {
   const [crops, setCrops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
-  const [modal, setModal] = useState("");
+  const [locationFilter, setLocationFilter] = useState("All");
+  const [sortBy, setSortBy] = useState("featured"); // 'featured' | 'price-asc' | 'price-desc' | 'qty-desc'
+
+  const [modal, setModal] = useState(""); // '' | 'listing' | 'editCrop' | 'login' | 'register' | 'enquiry' | 'dashboard' | 'buyerDashboard'
   const [selectedCrop, setSelectedCrop] = useState(null);
-  const [notice, setNotice] = useState("");
+  const [notice, setNotice] = useState(null); // { message: string, type: 'success' | 'info' | 'error' }
 
   // Authenticated user state
   const [currentUser, setCurrentUser] = useState(() => {
@@ -33,8 +205,13 @@ function App() {
 
   // Crop creation form state
   const [listing, setListing] = useState({
-    name: "", category: "Grains", price: "", unit: "kg",
-    quantity: "", location: "", description: ""
+    name: "",
+    category: "Grains",
+    price: "",
+    unit: "kg",
+    quantity: "",
+    location: "",
+    description: ""
   });
 
   // Crop editing state
@@ -42,7 +219,10 @@ function App() {
 
   // Authentication form state
   const [account, setAccount] = useState({
-    name: "", email: "", password: "", role: "Buyer"
+    name: "",
+    email: "",
+    password: "",
+    role: "Farmer"
   });
 
   // Farmer Dashboard states
@@ -56,11 +236,28 @@ function App() {
   const [buyerLoading, setBuyerLoading] = useState(false);
   const [buyerError, setBuyerError] = useState("");
 
+  // Enquiry quick message templates
+  const [enquiryMessage, setEnquiryMessage] = useState("");
+
+  // Auto-dismiss notice after 5 seconds
+  useEffect(() => {
+    if (notice) {
+      const timer = setTimeout(() => {
+        setNotice(null);
+      }, 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [notice]);
+
   // Fetch crops & verify authentication on mount
   useEffect(() => {
     fetchCrops();
     verifyAuthSession();
   }, []);
+
+  function triggerNotice(message, type = "info") {
+    setNotice({ message, type });
+  }
 
   async function verifyAuthSession() {
     const token = sessionStorage.getItem("agroconnectToken");
@@ -75,13 +272,12 @@ function App() {
         setCurrentUser(data.user);
         sessionStorage.setItem("agroconnectUser", JSON.stringify(data.user));
       } else {
-        // Token invalid or expired
         sessionStorage.removeItem("agroconnectToken");
         sessionStorage.removeItem("agroconnectUser");
         setCurrentUser(null);
       }
     } catch (err) {
-      console.warn("Session check offline or failed:", err);
+      console.warn("Session check failed or offline:", err);
     }
   }
 
@@ -94,28 +290,43 @@ function App() {
       if (Array.isArray(data) && data.length > 0) {
         setCrops(data);
       } else {
-        // Fallback to sample crops if database is empty so marketplace has initial items
         setCrops(initialCrops);
       }
     } catch (error) {
       console.error("Backend fetch error:", error);
       setCrops(initialCrops);
-      setNotice("Notice: Connected in offline demo mode with sample listings.");
+      triggerNotice("Viewing in offline demo mode with authentic sample harvest listings.", "info");
     } finally {
       setLoading(false);
     }
   }
 
   const filteredCrops = useMemo(() => {
-    return crops.filter((crop) => {
-      const query = search.toLowerCase();
+    let result = crops.filter((crop) => {
+      const query = search.trim().toLowerCase();
       const matchesSearch =
-        `${crop.name} ${crop.location} ${crop.farmerName || ""}`.toLowerCase().includes(query);
-      const matchesCategory =
-        category === "All" || crop.category === category;
-      return matchesSearch && matchesCategory;
+        !query ||
+        `${crop.name} ${crop.location} ${crop.farmerName || ""} ${crop.category}`.toLowerCase().includes(query);
+
+      const matchesCategory = category === "All" || crop.category === category;
+
+      const matchesLocation =
+        locationFilter === "All" ||
+        (crop.location && crop.location.toLowerCase().includes(locationFilter.toLowerCase()));
+
+      return matchesSearch && matchesCategory && matchesLocation;
     });
-  }, [crops, search, category]);
+
+    if (sortBy === "price-asc") {
+      result.sort((a, b) => Number(a.price) - Number(b.price));
+    } else if (sortBy === "price-desc") {
+      result.sort((a, b) => Number(b.price) - Number(a.price));
+    } else if (sortBy === "qty-desc") {
+      result.sort((a, b) => Number(b.quantity) - Number(a.quantity));
+    }
+
+    return result;
+  }, [crops, search, category, locationFilter, sortBy]);
 
   function handleLogout() {
     sessionStorage.removeItem("agroconnectToken");
@@ -124,49 +335,69 @@ function App() {
     setDashboardListings([]);
     setDashboardEnquiries([]);
     setBuyerEnquiries([]);
-    setNotice("You have logged out successfully.");
+    triggerNotice("You have logged out successfully. Come back soon!", "success");
     setModal("");
   }
 
   function showEnquiry(crop) {
     if (crop.isDemo) {
-      setNotice("This is a demo sample crop. To send real enquiries, browse listings saved by farmers in MongoDB!");
+      triggerNotice(
+        "This is an authentic sample listing. You can register/login as a Farmer to list your real crops and receive live enquiries!",
+        "info"
+      );
       return;
     }
 
     const token = sessionStorage.getItem("agroconnectToken");
     if (!token || !currentUser) {
-      setNotice("Please log in with a Buyer account to send an enquiry.");
+      triggerNotice("Please log in with a Buyer account to send an enquiry to this farmer.", "info");
+      setAccount({ name: "", email: "", password: "", role: "Buyer" });
       setModal("login");
       return;
     }
 
-    const isOwnCrop = crop.farmer === currentUser.id ||
+    const isOwnCrop =
+      crop.farmer === currentUser.id ||
       crop.farmer?._id === currentUser.id ||
       crop.farmer === currentUser._id;
 
     if (isOwnCrop) {
-      setNotice("You are the owner of this crop listing. You can view its enquiries in your Farmer Dashboard.");
+      triggerNotice("You own this crop listing! You can manage enquiries in your Farmer Dashboard.", "info");
+      openFarmerDashboard();
       return;
     }
 
     setSelectedCrop(crop);
+    setEnquiryMessage("");
     setModal("enquiry");
   }
 
   function openListingModal() {
     const token = sessionStorage.getItem("agroconnectToken");
     if (!token || !currentUser) {
-      setNotice("Please log in with a Farmer account to list crops.");
-      setModal("login");
+      triggerNotice("Please log in or register with a Farmer account to list your produce.", "info");
+      setAccount({ name: "", email: "", password: "", role: "Farmer" });
+      setModal("register");
       return;
     }
 
     if (currentUser.role !== "Farmer") {
-      setNotice("Only accounts with the Farmer role can list crops. You are currently logged in as a Buyer.");
+      triggerNotice(
+        "You are currently logged in as a Buyer. Crop listing is reserved for Farmer accounts.",
+        "error"
+      );
       return;
     }
 
+    setListing({
+      name: "",
+      category: "Grains",
+      price: "",
+      unit: "kg",
+      quantity: "",
+      location: "",
+      description: ""
+    });
     setModal("listing");
   }
 
@@ -183,37 +414,43 @@ function App() {
         quantity: Number(listing.quantity),
         location: listing.location.trim(),
         farmerName: currentUser?.name || "Local Farmer",
-        description: listing.description ? listing.description.trim() : "",
+        description: listing.description ? listing.description.trim() : ""
       };
 
       const res = await fetch("/api/crops", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
       });
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.message || "Could not save crop listing");
+        throw new Error(errorData.message || "Could not publish crop listing");
       }
 
       const savedCrop = await res.json();
-      setCrops((current) => [savedCrop, ...current.filter(c => !c.isDemo)]);
+      setCrops((current) => [savedCrop, ...current.filter((c) => !c.isDemo)]);
       setListing({
-        name: "", category: "Grains", price: "", unit: "kg",
-        quantity: "", location: "", description: ""
+        name: "",
+        category: "Grains",
+        price: "",
+        unit: "kg",
+        quantity: "",
+        location: "",
+        description: ""
       });
       setModal("");
       setSearch("");
       setCategory("All");
-      setNotice("Your crop listing has been saved to the database successfully!");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      triggerNotice("🎉 Your crop listing is live in the marketplace! Buyers can now send direct purchase enquiries.", "success");
+      const el = document.getElementById("marketplace");
+      if (el) el.scrollIntoView({ behavior: "smooth" });
     } catch (error) {
       console.error("Save listing error:", error);
-      setNotice(`Failed to save listing: ${error.message}`);
+      triggerNotice(`Failed to save listing: ${error.message}`, "error");
     }
   }
 
@@ -251,7 +488,7 @@ function App() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(payload)
       });
@@ -263,21 +500,19 @@ function App() {
 
       const updated = data.crop || { ...editingCrop, ...payload };
 
-      // Update in marketplace crops state
-      setCrops(current => current.map(c => c._id === updated._id ? updated : c));
-      // Update in farmer dashboard state
-      setDashboardListings(current => current.map(c => c._id === updated._id ? updated : c));
+      setCrops((current) => current.map((c) => (c._id === updated._id ? updated : c)));
+      setDashboardListings((current) => current.map((c) => (c._id === updated._id ? updated : c)));
 
-      setNotice("Crop listing updated successfully!");
+      triggerNotice("Crop details updated successfully!", "success");
       setModal("dashboard");
       setEditingCrop(null);
     } catch (error) {
-      setNotice(error.message || "Failed to update listing.");
+      triggerNotice(error.message || "Failed to update listing.", "error");
     }
   }
 
   async function handleDeleteCrop(cropId, cropName) {
-    if (!window.confirm(`Are you sure you want to delete "${cropName}"? This action cannot be undone.`)) {
+    if (!window.confirm(`Are you sure you want to remove "${cropName}" from the marketplace?`)) {
       return;
     }
 
@@ -293,11 +528,11 @@ function App() {
         throw new Error(data.message || "Failed to delete crop listing.");
       }
 
-      setCrops(current => current.filter(c => c._id !== cropId));
-      setDashboardListings(current => current.filter(c => c._id !== cropId));
-      setNotice("Crop listing deleted successfully.");
+      setCrops((current) => current.filter((c) => c._id !== cropId));
+      setDashboardListings((current) => current.filter((c) => c._id !== cropId));
+      triggerNotice("Crop listing has been removed from marketplace.", "info");
     } catch (error) {
-      setNotice(error.message || "Failed to delete listing.");
+      triggerNotice(error.message || "Failed to delete listing.", "error");
     }
   }
 
@@ -305,12 +540,10 @@ function App() {
     event.preventDefault();
 
     const isRegister = modal === "register";
-    const endpoint = isRegister
-      ? "/api/auth/register"
-      : "/api/auth/login";
+    const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
 
     if (isRegister && account.password.length < 8) {
-      setNotice("Password must be at least 8 characters long.");
+      triggerNotice("Password must be at least 8 characters long for account security.", "error");
       return;
     }
 
@@ -343,14 +576,15 @@ function App() {
       sessionStorage.setItem("agroconnectUser", JSON.stringify(data.user));
       setCurrentUser(data.user);
 
-      setNotice(
-        `${isRegister ? "Registration" : "Login"} successful! Welcome, ${data.user.name} (${data.user.role}).`
+      triggerNotice(
+        `Welcome to AgroConnect, ${data.user.name}! Signed in as ${data.user.role}.`,
+        "success"
       );
 
       setModal("");
-      setAccount({ name: "", email: "", password: "", role: "Buyer" });
+      setAccount({ name: "", email: "", password: "", role: "Farmer" });
     } catch (error) {
-      setNotice(error.message || "Something went wrong. Please try again.");
+      triggerNotice(error.message || "Something went wrong. Please check your credentials.", "error");
     }
   }
 
@@ -360,7 +594,7 @@ function App() {
     const token = sessionStorage.getItem("agroconnectToken");
 
     if (!token || !currentUser) {
-      setNotice("Please log in before submitting an enquiry.");
+      triggerNotice("Please log in before sending a produce enquiry.", "info");
       setModal("login");
       return;
     }
@@ -372,14 +606,14 @@ function App() {
     const messageText = formData.get("message").trim();
 
     if (!selectedCrop?._id || selectedCrop.isDemo) {
-      setNotice("This crop is a demo listing. Please select a crop saved in the database.");
+      triggerNotice("This is a demo listing. Try submitting an enquiry on live farmer crops!", "info");
       setModal("");
       return;
     }
 
     const buyerEmail = contact.includes("@") ? contact : currentUser.email;
-    const message = `Requirement: ${quantity ? `${quantity} needed` : "Bulk enquiry"}
-Contact Details: ${contact}
+    const fullMessage = `Requirement: ${quantity ? `${quantity} needed` : "Bulk purchase enquiry"}
+Phone/Contact: ${contact}
 Message: ${messageText}`;
 
     try {
@@ -392,7 +626,7 @@ Message: ${messageText}`;
         body: JSON.stringify({
           buyerName,
           buyerEmail,
-          message,
+          message: fullMessage,
           cropId: selectedCrop._id
         })
       });
@@ -403,10 +637,13 @@ Message: ${messageText}`;
         throw new Error(data.message || "Could not submit enquiry.");
       }
 
-      setNotice("Your enquiry has been sent to the farmer successfully! You can track its status in your Buyer Dashboard.");
+      triggerNotice(
+        `Enquiry sent to farmer ${selectedCrop.farmerName}! You can track responses anytime in your Buyer Dashboard.`,
+        "success"
+      );
       setModal("");
     } catch (error) {
-      setNotice(error.message || "Failed to submit enquiry.");
+      triggerNotice(error.message || "Failed to submit enquiry.", "error");
     }
   }
 
@@ -414,13 +651,13 @@ Message: ${messageText}`;
     const token = sessionStorage.getItem("agroconnectToken");
 
     if (!token || !currentUser) {
-      setNotice("Please log in to access your farmer dashboard.");
+      triggerNotice("Please log in to open your Farmer Dashboard.", "info");
       setModal("login");
       return;
     }
 
     if (currentUser.role !== "Farmer") {
-      setNotice("The Farmer Dashboard is only available to Farmer accounts. You are currently logged in as a Buyer.");
+      triggerNotice("The Farmer Dashboard is exclusive to Farmer accounts.", "info");
       return;
     }
 
@@ -436,7 +673,7 @@ Message: ${messageText}`;
       ]);
 
       if (!listingsRes.ok || !enquiriesRes.ok) {
-        throw new Error("Could not load dashboard data. Check backend connection.");
+        throw new Error("Could not load dashboard data from server.");
       }
 
       const [listings, enquiries] = await Promise.all([
@@ -447,7 +684,7 @@ Message: ${messageText}`;
       setDashboardListings(Array.isArray(listings) ? listings : []);
       setDashboardEnquiries(Array.isArray(enquiries) ? enquiries : []);
     } catch (error) {
-      setNotice(error.message || "Failed to load dashboard.");
+      triggerNotice(error.message || "Failed to load dashboard data.", "error");
     } finally {
       setDashboardLoading(false);
     }
@@ -457,7 +694,7 @@ Message: ${messageText}`;
     const token = sessionStorage.getItem("agroconnectToken");
 
     if (!token || !currentUser) {
-      setNotice("Please log in to access your buyer dashboard.");
+      triggerNotice("Please log in to check your Buyer Dashboard.", "info");
       setModal("login");
       return;
     }
@@ -501,762 +738,1529 @@ Message: ${messageText}`;
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "Could not update enquiry status.");
+        throw new Error(data.message || "Could not update status.");
       }
 
-      setDashboardEnquiries(current =>
-        current.map(item =>
-          item._id === enquiryId
-            ? { ...item, status }
-            : item
-        )
+      setDashboardEnquiries((current) =>
+        current.map((item) => (item._id === enquiryId ? { ...item, status } : item))
       );
 
-      setNotice(`Enquiry status updated to "${status}".`);
+      triggerNotice(`Enquiry status updated to "${status}".`, "success");
     } catch (error) {
-      setNotice(error.message || "Failed to update enquiry status.");
+      triggerNotice(error.message || "Failed to update enquiry status.", "error");
     }
   }
 
-  // Dashboard counters
-  const farmerPendingCount = dashboardEnquiries.filter(e => e.status === "Pending").length;
-  const farmerRespondedCount = dashboardEnquiries.filter(e => e.status === "Responded").length;
-  const farmerClosedCount = dashboardEnquiries.filter(e => e.status === "Closed").length;
+  // Dashboard counter statistics
+  const farmerPendingCount = dashboardEnquiries.filter((e) => e.status === "Pending").length;
+  const farmerRespondedCount = dashboardEnquiries.filter((e) => e.status === "Responded").length;
+  const farmerClosedCount = dashboardEnquiries.filter((e) => e.status === "Closed").length;
 
-  const buyerPendingCount = buyerEnquiries.filter(e => e.status === "Pending").length;
-  const buyerRespondedCount = buyerEnquiries.filter(e => e.status === "Responded").length;
-  const buyerClosedCount = buyerEnquiries.filter(e => e.status === "Closed").length;
+  const buyerPendingCount = buyerEnquiries.filter((e) => e.status === "Pending").length;
+  const buyerRespondedCount = buyerEnquiries.filter((e) => e.status === "Responded").length;
+  const buyerClosedCount = buyerEnquiries.filter((e) => e.status === "Closed").length;
+
+  // Live estimated batch value in crop creation
+  const estimatedBatchValue =
+    Number(listing.price) > 0 && Number(listing.quantity) > 0
+      ? (Number(listing.price) * Number(listing.quantity)).toLocaleString("en-IN")
+      : null;
 
   return (
-    <div className="app-shell">
-      <nav className="navbar">
-        <a className="brand" href="#home">
-          <span className="brand-icon">✳</span> AgroConnect
-        </a>
-        <div className="nav-links">
-          <a href="#home">Home</a>
-          <a href="#marketplace">Marketplace</a>
-
-          {currentUser ? (
-            <>
-              {currentUser.role === "Farmer" ? (
-                <>
-                  <button className="nav-secondary-action" onClick={openListingModal}>
-                    ＋ List Crop
-                  </button>
-                  <button className="nav-login" onClick={openFarmerDashboard}>
-                    Farmer Dashboard {farmerPendingCount > 0 && <span className="nav-badge-dot" />}
-                  </button>
-                </>
-              ) : (
-                <button className="nav-login" onClick={openBuyerDashboard}>
-                  Buyer Dashboard
-                </button>
-              )}
-
-              <div className="user-badge" title={`Signed in as ${currentUser.email}`}>
-                <span className="user-avatar">{currentUser.role === "Farmer" ? "🧑‍🌾" : "🛒"}</span>
-                <span className="user-name">{currentUser.name}</span>
-                <span className="user-role-tag">{currentUser.role}</span>
-              </div>
-
-              <button className="nav-logout-btn" onClick={handleLogout} title="Log out of AgroConnect">
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <button className="nav-login" onClick={() => setModal("login")}>
-                Login
-              </button>
-              <button className="nav-button" onClick={() => setModal("register")}>
-                Join AgroConnect
-              </button>
-            </>
-          )}
-        </div>
-      </nav>
-
+    <div className="agro-app">
+      {/* GLOBAL TOAST NOTIFICATION */}
       {notice && (
-        <div className="notice" role="status">
-          <div className="notice-content">
-            <span className="notice-icon">ℹ</span>
-            <span>{notice}</span>
+        <div className={`toast-banner toast-${notice.type}`} role="alert">
+          <div className="toast-body">
+            {notice.type === "success" && <CheckCircle2 className="toast-icon success" size={20} />}
+            {notice.type === "error" && <AlertCircle className="toast-icon error" size={20} />}
+            {notice.type === "info" && <Sparkles className="toast-icon info" size={20} />}
+            <span className="toast-text">{notice.message}</span>
           </div>
-          <button onClick={() => setNotice("")} aria-label="Dismiss message">×</button>
+          <button className="toast-close" onClick={() => setNotice(null)} aria-label="Close alert">
+            <X size={16} />
+          </button>
         </div>
       )}
 
-      <header className="hero" id="home">
-        <div className="hero-copy">
-          <span className="eyebrow">A BETTER MARKET FOR EVERY FARMER</span>
-          <h1>From our farms<br />to your <span>business.</span></h1>
-          <p>Discover fresh agricultural produce and connect directly with farmers across Tuni and nearby areas of Andhra Pradesh.</p>
-          <div className="hero-actions">
-            <a className="primary-button" href="#marketplace">Explore crops <span>→</span></a>
-            <button className="secondary-button" onClick={openListingModal}>＋ List your crops</button>
+      {/* TOP REGIONAL BANNER */}
+      <div className="top-regional-banner">
+        <div className="banner-inner">
+          <div className="banner-left">
+            <span className="regional-tag">🌾 Andhra Pradesh Agri Portal</span>
+            <span className="banner-sep">|</span>
+            <span className="banner-subtext">Direct trade between local farmers & wholesale/retail buyers · Zero Commission</span>
           </div>
-          <div className="hero-note"><span>✓</span> Local produce · Direct connections · Better opportunities</div>
+          <div className="banner-right">
+            <span className="location-pill">📍 Focus: Tuni, Godavari & AP Mandals</span>
+          </div>
         </div>
-        <div className="hero-art" aria-label="Illustration of an agricultural field">
-          <div className="sun" />
-          <div className="hill hill-back" />
-          <div className="hill hill-front" />
-          <div className="field-row row-one" />
-          <div className="field-row row-two" />
-          <div className="field-row row-three" />
-          <div className="art-label"><span>✳</span><div><strong>Grow together.</strong><small>Trade with confidence.</small></div></div>
+      </div>
+
+      {/* NAVIGATION BAR */}
+      <nav className="main-navbar">
+        <div className="navbar-container">
+          <a className="brand-logo" href="#home">
+            <div className="brand-icon-box">
+              <Sprout className="sprout-icon" size={24} />
+            </div>
+            <div className="brand-text">
+              <span className="brand-title">AgroConnect</span>
+              <span className="brand-telugu">రైతు సేవా వేదిక</span>
+            </div>
+          </a>
+
+          <div className="nav-center-links">
+            <a href="#marketplace" className="nav-link active">
+              <Store size={16} />
+              <span>Marketplace (సంత)</span>
+            </a>
+            <a href="#how-it-works" className="nav-link">
+              <Layers size={16} />
+              <span>How It Works</span>
+            </a>
+            <a href="#farmer-section" className="nav-link">
+              <Tractor size={16} />
+              <span>For Farmers (రైతులకు)</span>
+            </a>
+          </div>
+
+          <div className="nav-actions">
+            {currentUser ? (
+              <div className="user-action-cluster">
+                {currentUser.role === "Farmer" ? (
+                  <>
+                    <button className="btn-primary-glow" onClick={openListingModal}>
+                      <Plus size={16} />
+                      <span>List Crop (పంట నమోదు)</span>
+                    </button>
+                    <button className="btn-dashboard-pill" onClick={openFarmerDashboard}>
+                      <Tractor size={17} />
+                      <span>Farmer Dashboard</span>
+                      {farmerPendingCount > 0 && <span className="badge-count-pulse">{farmerPendingCount}</span>}
+                    </button>
+                  </>
+                ) : (
+                  <button className="btn-dashboard-pill" onClick={openBuyerDashboard}>
+                    <ShoppingCart size={17} />
+                    <span>Buyer Dashboard</span>
+                    {buyerRespondedCount > 0 && <span className="badge-count-pulse">{buyerRespondedCount}</span>}
+                  </button>
+                )}
+
+                <div className="user-profile-badge">
+                  <div className="profile-avatar">
+                    {currentUser.role === "Farmer" ? "🧑‍🌾" : "🛒"}
+                  </div>
+                  <div className="profile-info">
+                    <span className="profile-name">{currentUser.name}</span>
+                    <span className="profile-role">{currentUser.role}</span>
+                  </div>
+                </div>
+
+                <button className="btn-logout" onClick={handleLogout} title="Log out">
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <div className="guest-action-cluster">
+                <button
+                  className="btn-text-login"
+                  onClick={() => {
+                    setAccount({ name: "", email: "", password: "", role: "Buyer" });
+                    setModal("login");
+                  }}
+                >
+                  <User size={16} />
+                  <span>Log In</span>
+                </button>
+                <button
+                  className="btn-register-highlight"
+                  onClick={() => {
+                    setAccount({ name: "", email: "", password: "", role: "Farmer" });
+                    setModal("register");
+                  }}
+                >
+                  <Sparkles size={16} />
+                  <span>Join AgroConnect</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </nav>
+
+      {/* HERO SECTION */}
+      <header className="hero-section" id="home">
+        <div className="hero-content">
+          <div className="hero-badge">
+            <Award size={15} />
+            <span>Fair Prices Directly To Farmers · Fresh Quality For Buyers</span>
+          </div>
+
+          <h1 className="hero-heading">
+            Direct Farm Marketplace for <br />
+            <span className="text-highlight-green">Hardworking Farmers</span> &amp; <span className="text-highlight-amber">Smart Buyers</span>
+          </h1>
+
+          <p className="hero-description">
+            Connecting agriculture growers across Tuni, Kakinada, and Andhra Pradesh directly with wholesale traders, grocery businesses, and families. No mandi commissions, no hidden middleman cuts.
+          </p>
+
+          <div className="hero-interactive-cards">
+            {/* FARMER QUICK CARD */}
+            <div className="role-promo-card card-farmer">
+              <div className="promo-badge">రైతుల కోసం · FOR FARMERS</div>
+              <div className="promo-header">
+                <div className="promo-icon farmer-bg">
+                  <Tractor size={28} />
+                </div>
+                <div>
+                  <h3>Sell Your Harvest Directly</h3>
+                  <p>Get true market rates. List in 2 minutes and receive buyer calls.</p>
+                </div>
+              </div>
+              <ul className="promo-points">
+                <li><Check size={14} /> 100% Free - Zero brokerage fees</li>
+                <li><Check size={14} /> Direct buyer WhatsApp &amp; phone inquiries</li>
+                <li><Check size={14} /> Instant price transparency</li>
+              </ul>
+              <button className="btn-promo-action farmer-btn" onClick={openListingModal}>
+                <Plus size={16} />
+                <span>+ List Your Produce (పంటను అమ్మండి)</span>
+              </button>
+            </div>
+
+            {/* BUYER QUICK CARD */}
+            <div className="role-promo-card card-buyer">
+              <div className="promo-badge">కొనుగోలుదారులకు · FOR BUYERS</div>
+              <div className="promo-header">
+                <div className="promo-icon buyer-bg">
+                  <ShoppingCart size={28} />
+                </div>
+                <div>
+                  <h3>Source Farm-Fresh Produce</h3>
+                  <p>Discover paddy, red chillies, spices, and fresh vegetables from local farms.</p>
+                </div>
+              </div>
+              <ul className="promo-points">
+                <li><Check size={14} /> Direct origin quality from verified AP growers</li>
+                <li><Check size={14} /> Wholesale lots &amp; competitive farm gate rates</li>
+                <li><Check size={14} /> Direct negotiations &amp; sample inspection</li>
+              </ul>
+              <a className="btn-promo-action buyer-btn" href="#marketplace">
+                <Search size={16} />
+                <span>Browse Harvests (పంటల సంత)</span>
+              </a>
+            </div>
+          </div>
+
+          <div className="trust-ribbon">
+            <div className="trust-item">
+              <ShieldCheck className="trust-icon" size={20} />
+              <div>
+                <strong>Verified Farmers</strong>
+                <span>Direct regional growers</span>
+              </div>
+            </div>
+            <div className="trust-item">
+              <DollarSign className="trust-icon" size={20} />
+              <div>
+                <strong>Zero Commission</strong>
+                <span>100% money stays with farmers</span>
+              </div>
+            </div>
+            <div className="trust-item">
+              <Phone className="trust-icon" size={20} />
+              <div>
+                <strong>Direct Contact</strong>
+                <span>Call &amp; negotiate directly</span>
+              </div>
+            </div>
+            <div className="trust-item">
+              <MapPin className="trust-icon" size={20} />
+              <div>
+                <strong>Local Sourcing</strong>
+                <span>Tuni, Godavari &amp; AP region</span>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
-      <section className="benefits">
-        <div><span className="benefit-icon">🌾</span><div><strong>Farm fresh</strong><small>Produce from local growers</small></div></div>
-        <div><span className="benefit-icon">🤝</span><div><strong>Direct connection</strong><small>Buyers meet farmers</small></div></div>
-        <div><span className="benefit-icon">📍</span><div><strong>Locally focused</strong><small>Tuni and nearby districts</small></div></div>
+      {/* HOW IT WORKS SECTION */}
+      <section className="how-it-works-section" id="how-it-works">
+        <div className="section-container">
+          <div className="section-title-center">
+            <span className="eyebrow-chip">SIMPLE 3-STEP SYSTEM</span>
+            <h2>How AgroConnect Works for Everyone</h2>
+            <p>Designed to be crystal-clear, fast, and accessible on any mobile phone.</p>
+          </div>
+
+          <div className="steps-grid">
+            <div className="step-card">
+              <div className="step-number">1</div>
+              <div className="step-icon-wrap">
+                <Tractor size={30} />
+              </div>
+              <h3>Farmer Lists Produce</h3>
+              <p>Farmer inputs crop name, available quantity, price per kg/bag, and town location in under 2 minutes.</p>
+            </div>
+
+            <div className="step-card">
+              <div className="step-number">2</div>
+              <div className="step-icon-wrap">
+                <Search size={30} />
+              </div>
+              <h3>Buyer Browses &amp; Enquires</h3>
+              <p>Traders and consumers search by crop or town, view verified farm prices, and submit direct enquiries.</p>
+            </div>
+
+            <div className="step-card">
+              <div className="step-number">3</div>
+              <div className="step-icon-wrap">
+                <CheckCircle2 size={30} />
+              </div>
+              <h3>Direct Deal &amp; Delivery</h3>
+              <p>Farmer and buyer connect directly via phone/WhatsApp to finalize pickup, transport, and instant payment.</p>
+            </div>
+          </div>
+        </div>
       </section>
 
-      <main id="marketplace" className="marketplace">
-        <div className="section-heading">
-          <div>
-            <span className="eyebrow">THE LOCAL MARKETPLACE</span>
-            <h2>Explore available crops</h2>
-            <p>Find produce that matches your business or household needs directly from growers.</p>
-          </div>
-          <button className="outline-button" onClick={openListingModal}>＋ Add a crop</button>
-        </div>
+      {/* MARKETPLACE SECTION */}
+      <main className="marketplace-section" id="marketplace">
+        <div className="section-container">
+          <div className="marketplace-header-row">
+            <div>
+              <div className="market-badge">
+                <Store size={15} />
+                <span>DIRECT AGRI-EXCHANGE</span>
+              </div>
+              <h2>Fresh Harvests Available Today</h2>
+              <p>Browse fresh farm produce verified directly from growers across Andhra Pradesh.</p>
+            </div>
 
-        <div className="search-row">
-          <label className="search-box">
-            <span>⌕</span>
-            <input
-              aria-label="Search crops, locations, or farmers"
-              placeholder="Search crops, locations, or farmers..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-            {search && <button onClick={() => setSearch("")} aria-label="Clear search">×</button>}
-          </label>
-          <span className="result-count">{loading ? "Loading crops..." : `${filteredCrops.length} crops found`}</span>
-        </div>
-
-        <div className="category-list" aria-label="Filter crops by category">
-          {categories.map((item) => (
-            <button
-              key={item}
-              className={category === item ? "category-chip active" : "category-chip"}
-              onClick={() => setCategory(item)}
-            >{item}</button>
-          ))}
-        </div>
-
-        {loading ? (
-          <div className="marketplace-loading">
-            <span className="spinner">⏳</span>
-            <p>Loading fresh crops from the database...</p>
-          </div>
-        ) : filteredCrops.length ? (
-          <div className="crop-grid">
-            {filteredCrops.map((crop, index) => {
-              const cropKey = crop._id || crop.id || index;
-              const quantityDisplay = typeof crop.quantity === "number"
-                ? `${crop.quantity} ${crop.unit || "kg"}`
-                : crop.quantity;
-
-              const isOwner = currentUser && (
-                crop.farmer === currentUser.id ||
-                crop.farmer?._id === currentUser.id ||
-                crop.farmer === currentUser._id
-              );
-
-              return (
-                <article className="crop-card" key={cropKey}>
-                  <div className={`crop-visual crop-visual-${index % 4}`}>
-                    <span className="crop-category">{crop.category}</span>
-                    {isOwner && <span className="owner-badge">Your Listing</span>}
-                    {crop.isDemo && <span className="demo-tag">Sample</span>}
-                    <span className="crop-emoji" aria-hidden="true">
-                      {crop.name.toLowerCase().includes("rice") || crop.name.toLowerCase().includes("paddy") ? "🌾" :
-                        crop.name.toLowerCase().includes("chilli") ? "🌶️" :
-                          crop.name.toLowerCase().includes("maize") || crop.name.toLowerCase().includes("corn") ? "🌽" :
-                            crop.name.toLowerCase().includes("tomato") ? "🍅" :
-                              crop.name.toLowerCase().includes("groundnut") || crop.name.toLowerCase().includes("peanut") ? "🥜" :
-                                crop.name.toLowerCase().includes("turmeric") ? "🫚" :
-                                  crop.name.toLowerCase().includes("wheat") ? "🌾" : "🌱"}
-                    </span>
-                  </div>
-                  <div className="crop-details">
-                    <div className="crop-title-row">
-                      <h3>{crop.name}</h3>
-                      <span className="available-dot">Available</span>
-                    </div>
-                    <p className="crop-location">⌖ {crop.location}</p>
-                    <p className="crop-farmer">🧑‍🌾 Grower: <strong>{crop.farmerName || "Local Farmer"}</strong></p>
-                    {crop.description && <p className="crop-desc">{crop.description}</p>}
-                    <div className="crop-meta">
-                      <span>Available stock</span>
-                      <strong>{quantityDisplay}</strong>
-                    </div>
-                    <div className="crop-footer">
-                      <div>
-                        <small>Price per {crop.unit || "kg"}</small>
-                        <strong>₹{crop.price}<small> / {crop.unit || "kg"}</small></strong>
-                      </div>
-                      {isOwner ? (
-                        <button className="manage-listing-btn" onClick={openFarmerDashboard}>
-                          Manage <span>⚙</span>
-                        </button>
-                      ) : (
-                        <button onClick={() => showEnquiry(crop)}>
-                          Enquire <span>→</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="empty-state">
-            <span>🌱</span>
-            <h3>No matching crops found</h3>
-            <p>Try searching with another crop name or clear your category filter.</p>
-            <button className="outline-button" onClick={() => { setSearch(""); setCategory("All"); }}>
-              Clear all filters
+            <button className="btn-add-crop-accent" onClick={openListingModal}>
+              <Plus size={18} />
+              <span>List Your Crop (పంట చేర్చండి)</span>
             </button>
           </div>
-        )}
-        <p className="demo-disclaimer">
-          AgroConnect connects verified farmers in Andhra Pradesh directly with prospective bulk and retail buyers.
-        </p>
+
+          {/* SEARCH & FILTERS BAR */}
+          <div className="filter-panel-card">
+            <div className="search-input-group">
+              <Search className="search-icon-inside" size={20} />
+              <input
+                type="text"
+                className="search-field"
+                placeholder="Search crops (e.g. Sona Masoori, Chilli, Tomato), farmers, or towns..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                aria-label="Search crops"
+              />
+              {search && (
+                <button className="search-clear-btn" onClick={() => setSearch("")} aria-label="Clear search">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            {/* SORT & LOCATION SELECTORS */}
+            <div className="filter-controls-row">
+              <div className="filter-control-item">
+                <MapPin size={15} className="control-icon" />
+                <label htmlFor="locationSelect">Location:</label>
+                <select
+                  id="locationSelect"
+                  value={locationFilter}
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                  className="control-select"
+                >
+                  {popularLocations.map((loc) => (
+                    <option key={loc} value={loc}>
+                      {loc === "All" ? "All Locations (అన్ని ప్రాంతాలు)" : loc}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="filter-control-item">
+                <SlidersHorizontal size={15} className="control-icon" />
+                <label htmlFor="sortSelect">Sort By:</label>
+                <select
+                  id="sortSelect"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="control-select"
+                >
+                  <option value="featured">Featured First</option>
+                  <option value="price-asc">Price: Low to High</option>
+                  <option value="price-desc">Price: High to Low</option>
+                  <option value="qty-desc">Largest Quantity First</option>
+                </select>
+              </div>
+
+              <div className="results-counter-pill">
+                <strong>{filteredCrops.length}</strong> crops available
+              </div>
+            </div>
+
+            {/* CATEGORY TABS */}
+            <div className="category-chips-row" role="tablist">
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  className={`category-tab-btn ${category === cat.id ? "active" : ""}`}
+                  onClick={() => setCategory(cat.id)}
+                  role="tab"
+                  aria-selected={category === cat.id}
+                >
+                  <span className="cat-icon">{cat.icon}</span>
+                  <span className="cat-label">{cat.label}</span>
+                  <span className="cat-telugu">({cat.telugu})</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* CROPS GRID */}
+          {loading ? (
+            <div className="state-box loading-box">
+              <RefreshCw className="spinner-icon" size={32} />
+              <h3>Loading Fresh Produce...</h3>
+              <p>Fetching active harvest listings directly from farmers.</p>
+            </div>
+          ) : filteredCrops.length > 0 ? (
+            <div className="crops-grid">
+              {filteredCrops.map((crop, index) => {
+                const theme = getCropVisualTheme(crop.name, crop.category);
+                const teluguName = getCropTeluguTag(crop.name, crop.category);
+                const isOwner =
+                  currentUser &&
+                  (crop.farmer === currentUser.id ||
+                    crop.farmer?._id === currentUser.id ||
+                    crop.farmer === currentUser._id);
+
+                const totalVal =
+                  crop.price && crop.quantity
+                    ? (crop.price * crop.quantity).toLocaleString("en-IN")
+                    : null;
+
+                return (
+                  <article className="crop-card-modern" key={crop._id || index}>
+                    <div className={`crop-card-banner ${theme.bgClass}`}>
+                      <div className="card-top-badges">
+                        <span className="pill-category">{crop.category}</span>
+                        {isOwner ? (
+                          <span className="pill-owner">Your Listing</span>
+                        ) : crop.isDemo ? (
+                          <span className="pill-sample">Sample Harvest</span>
+                        ) : (
+                          <span className="pill-fresh">Fresh Stock</span>
+                        )}
+                      </div>
+
+                      <div className="crop-center-emoji" aria-hidden="true">
+                        {theme.emoji}
+                      </div>
+
+                      <div className="crop-telugu-subtag">
+                        <span>{teluguName}</span>
+                      </div>
+                    </div>
+
+                    <div className="crop-card-body">
+                      <div className="crop-heading-area">
+                        <h3 className="crop-name">{crop.name}</h3>
+                        <div className="crop-location-badge">
+                          <MapPin size={13} />
+                          <span>{crop.location}</span>
+                        </div>
+                      </div>
+
+                      <div className="farmer-attribution">
+                        <div className="farmer-avatar-mini">🧑‍🌾</div>
+                        <div className="farmer-meta">
+                          <span className="farmer-name">{crop.farmerName || "Verified Local Farmer"}</span>
+                          <span className="verified-status">
+                            <CheckCircle2 size={12} /> Verified Grower
+                          </span>
+                        </div>
+                      </div>
+
+                      {crop.description && (
+                        <p className="crop-notes">"{crop.description}"</p>
+                      )}
+
+                      <div className="crop-specs-container">
+                        <div className="spec-item">
+                          <span className="spec-label">Available Lot:</span>
+                          <strong className="spec-value">{crop.quantity} {crop.unit || "kg"}</strong>
+                        </div>
+                        {totalVal && (
+                          <div className="spec-item right">
+                            <span className="spec-label">Total Lot Value:</span>
+                            <span className="spec-value-sub">~₹{totalVal}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="crop-price-action-bar">
+                        <div className="price-box">
+                          <span className="price-tag-label">Farmer Rate</span>
+                          <div className="price-main">
+                            <span className="currency-symbol">₹</span>
+                            <span className="price-amount">{crop.price}</span>
+                            <span className="price-unit">/{crop.unit || "kg"}</span>
+                          </div>
+                        </div>
+
+                        {isOwner ? (
+                          <button className="btn-manage-crop" onClick={openFarmerDashboard}>
+                            <Edit2 size={15} />
+                            <span>Manage</span>
+                          </button>
+                        ) : (
+                          <button className="btn-enquire-crop" onClick={() => showEnquiry(crop)}>
+                            <span>Enquire / కొనుగోలు</span>
+                            <ArrowRight size={15} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="state-box empty-box">
+              <div className="empty-icon-circle">🌱</div>
+              <h3>No matching crops found</h3>
+              <p>We couldn't find any produce matching "{search}" in {locationFilter === "All" ? "any location" : locationFilter}.</p>
+              <div className="empty-actions">
+                <button
+                  className="btn-reset-filters"
+                  onClick={() => {
+                    setSearch("");
+                    setCategory("All");
+                    setLocationFilter("All");
+                  }}
+                >
+                  Clear All Filters (అన్ని ఫిల్టర్లు తొలగించండి)
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </main>
 
-      <section className="farmer-banner">
-        <div>
-          <span className="eyebrow">ARE YOU A FARMER?</span>
-          <h2>Your harvest deserves a wider market.</h2>
-          <p>List your crops online to reach verified buyers across Andhra Pradesh directly without middleman markups.</p>
+      {/* FARMER OUTREACH BANNER */}
+      <section className="farmer-outreach-section" id="farmer-section">
+        <div className="section-container">
+          <div className="outreach-card">
+            <div className="outreach-text">
+              <span className="outreach-eyebrow">రైతు సోదరులారా · FOR ALL GROWERS</span>
+              <h2>Earn Fair Value for Every Kilo of Your Harvest</h2>
+              <p>
+                Don't sell for low mandi prices to middlemen. On AgroConnect, retail buyers and bulk traders from Andhra Pradesh contact you directly to purchase your crops at fair prices.
+              </p>
+              <div className="outreach-highlights">
+                <div><CheckCircle2 size={16} /> Free listing forever</div>
+                <div><CheckCircle2 size={16} /> Direct payment to your bank/UPI</div>
+                <div><CheckCircle2 size={16} /> Complete control over your pricing</div>
+              </div>
+            </div>
+            <div className="outreach-action">
+              <button className="btn-outreach-cta" onClick={openListingModal}>
+                <Plus size={18} />
+                <span>List Your Harvest Now (పంట నమోదు చేయండి)</span>
+              </button>
+            </div>
+          </div>
         </div>
-        <button className="banner-button" onClick={openListingModal}>
-          List your crops <span>→</span>
-        </button>
       </section>
 
-      <footer className="footer">
-        <a className="brand footer-brand" href="#home">
-          <span className="brand-icon">✳</span> AgroConnect
-        </a>
-        <p>Direct agricultural commerce connecting local farmers and buyers in Tuni, AP.</p>
-        <span>AgroConnect · Verified Marketplace</span>
+      {/* MODERN FOOTER */}
+      <footer className="agro-footer">
+        <div className="footer-container">
+          <div className="footer-main-row">
+            <div className="footer-brand-col">
+              <div className="brand-logo footer-logo">
+                <div className="brand-icon-box">
+                  <Sprout size={22} />
+                </div>
+                <div className="brand-text">
+                  <span className="brand-title">AgroConnect</span>
+                  <span className="brand-telugu">రైతు సేవా వేదిక</span>
+                </div>
+              </div>
+              <p className="footer-summary">
+                Direct agricultural marketplace empowering local farmers in Tuni, East Godavari, and Andhra Pradesh to trade transparently with buyers.
+              </p>
+            </div>
+
+            <div className="footer-nav-col">
+              <h4>Quick Links</h4>
+              <a href="#marketplace">Marketplace (సంత)</a>
+              <a href="#how-it-works">How It Works</a>
+              <a href="#farmer-section">For Farmers</a>
+              <button className="footer-link-btn" onClick={openListingModal}>List Produce</button>
+            </div>
+
+            <div className="footer-nav-col">
+              <h4>Account Portals</h4>
+              {currentUser ? (
+                <>
+                  {currentUser.role === "Farmer" ? (
+                    <button className="footer-link-btn" onClick={openFarmerDashboard}>Farmer Dashboard</button>
+                  ) : (
+                    <button className="footer-link-btn" onClick={openBuyerDashboard}>Buyer Dashboard</button>
+                  )}
+                  <button className="footer-link-btn" onClick={handleLogout}>Log Out</button>
+                </>
+              ) : (
+                <>
+                  <button className="footer-link-btn" onClick={() => { setAccount({ ...account, role: "Farmer" }); setModal("register"); }}>Join as Farmer</button>
+                  <button className="footer-link-btn" onClick={() => { setAccount({ ...account, role: "Buyer" }); setModal("register"); }}>Join as Buyer</button>
+                  <button className="footer-link-btn" onClick={() => setModal("login")}>Sign In</button>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="footer-bottom-bar">
+            <span>© {new Date().getFullYear()} AgroConnect · Connecting AP Farmers &amp; Buyers</span>
+            <span className="footer-tagline">100% Direct · Zero Middlemen · Andhra Pradesh</span>
+          </div>
+        </div>
       </footer>
 
+      {/* ========================================================= */}
+      {/* MODALS */}
+      {/* ========================================================= */}
       {modal && (
-        <div className="modal-backdrop" onClick={() => setModal("")}>
-          <section
-            className={`modal ${modal === "dashboard" || modal === "buyerDashboard" ? "modal-large" : ""}`}
+        <div className="modal-backdrop-modern" onClick={() => setModal("")}>
+          <div
+            className={`modal-window ${modal === "dashboard" || modal === "buyerDashboard" ? "modal-large" : ""}`}
             role="dialog"
             aria-modal="true"
-            onClick={(event) => event.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
-            <button className="modal-close" onClick={() => setModal("")} aria-label="Close dialog">×</button>
+            <button className="modal-close-round" onClick={() => setModal("")} aria-label="Close dialog">
+              <X size={18} />
+            </button>
 
-            {/* FARMER: LIST CROP MODAL */}
+            {/* ----------------------------------------------------- */}
+            {/* 1. FARMER: POST CROP MODAL */}
+            {/* ----------------------------------------------------- */}
             {modal === "listing" && (
-              <>
-                <span className="eyebrow">FOR FARMERS</span>
-                <h2>List your crop</h2>
-                <p className="modal-intro">Enter your crop details to create a verified listing saved directly in the marketplace.</p>
-                <form onSubmit={submitListing} className="form-stack">
-                  <label>
-                    Crop name
-                    <input required value={listing.name} onChange={(event) => setListing({ ...listing, name: event.target.value })} placeholder="e.g. Sona Masoori Paddy" />
-                  </label>
-                  <label>
-                    Category
-                    <select value={listing.category} onChange={(event) => setListing({ ...listing, category: event.target.value })}>
-                      {categories.filter((item) => item !== "All").map((item) => (
-                        <option key={item} value={item}>{item}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <div className="form-two">
-                    <label>
-                      Price (₹ per unit)
-                      <input required type="number" min="0.01" step="0.01" value={listing.price} onChange={(event) => setListing({ ...listing, price: event.target.value })} placeholder="e.g. 28" />
-                    </label>
-                    <label>
-                      Unit
-                      <select value={listing.unit} onChange={(event) => setListing({ ...listing, unit: event.target.value })}>
-                        <option value="kg">Kilogram (kg)</option>
-                        <option value="quintal">Quintal (100 kg)</option>
-                        <option value="tonne">Tonne</option>
-                        <option value="bag">Bag</option>
-                      </select>
-                    </label>
+              <div className="modal-inner-scroll">
+                <div className="modal-title-bar">
+                  <div className="modal-title-icon-box green">
+                    <Plus size={22} />
                   </div>
-                  <div className="form-two">
-                    <label>
-                      Quantity available
-                      <input required type="number" min="0.01" step="0.01" value={listing.quantity} onChange={(event) => setListing({ ...listing, quantity: event.target.value })} placeholder="e.g. 500" />
-                    </label>
-                    <label>
-                      Location (Town / Mandal)
-                      <input required value={listing.location} onChange={(event) => setListing({ ...listing, location: event.target.value })} placeholder="e.g. Tuni, East Godavari" />
-                    </label>
-                  </div>
-                  <label>
-                    Description / Quality notes (optional)
-                    <textarea rows="2" value={listing.description} onChange={(event) => setListing({ ...listing, description: event.target.value })} placeholder="e.g. Freshly harvested, dried to optimal moisture, grade A quality." />
-                  </label>
-                  <button className="primary-button form-submit" type="submit">
-                    Publish crop listing →
-                  </button>
-                </form>
-              </>
-            )}
-
-            {/* FARMER: EDIT CROP MODAL */}
-            {modal === "editCrop" && editingCrop && (
-              <>
-                <span className="eyebrow">EDIT LISTING</span>
-                <h2>Update crop details</h2>
-                <p className="modal-intro">Modify quantity, pricing, or location for {editingCrop.name}.</p>
-                <form onSubmit={submitEditCrop} className="form-stack">
-                  <label>
-                    Crop name
-                    <input required value={editingCrop.name} onChange={(e) => setEditingCrop({ ...editingCrop, name: e.target.value })} />
-                  </label>
-                  <label>
-                    Category
-                    <select value={editingCrop.category} onChange={(e) => setEditingCrop({ ...editingCrop, category: e.target.value })}>
-                      {categories.filter((item) => item !== "All").map((item) => (
-                        <option key={item} value={item}>{item}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <div className="form-two">
-                    <label>
-                      Price (₹ per {editingCrop.unit})
-                      <input required type="number" min="0.01" step="0.01" value={editingCrop.price} onChange={(e) => setEditingCrop({ ...editingCrop, price: e.target.value })} />
-                    </label>
-                    <label>
-                      Unit
-                      <select value={editingCrop.unit} onChange={(e) => setEditingCrop({ ...editingCrop, unit: e.target.value })}>
-                        <option value="kg">Kilogram (kg)</option>
-                        <option value="quintal">Quintal (100 kg)</option>
-                        <option value="tonne">Tonne</option>
-                        <option value="bag">Bag</option>
-                      </select>
-                    </label>
-                  </div>
-                  <div className="form-two">
-                    <label>
-                      Available quantity
-                      <input required type="number" min="0.01" step="0.01" value={editingCrop.quantity} onChange={(e) => setEditingCrop({ ...editingCrop, quantity: e.target.value })} />
-                    </label>
-                    <label>
-                      Location
-                      <input required value={editingCrop.location} onChange={(e) => setEditingCrop({ ...editingCrop, location: e.target.value })} />
-                    </label>
-                  </div>
-                  <label>
-                    Description
-                    <textarea rows="2" value={editingCrop.description || ""} onChange={(e) => setEditingCrop({ ...editingCrop, description: e.target.value })} />
-                  </label>
-                  <div className="modal-button-group">
-                    <button className="primary-button" type="submit">Save changes →</button>
-                    <button className="secondary-button" type="button" onClick={() => setModal("dashboard")}>Cancel</button>
-                  </div>
-                </form>
-              </>
-            )}
-
-            {/* AUTH: LOGIN & REGISTER */}
-            {(modal === "login" || modal === "register") && (
-              <>
-                <span className="eyebrow">AGROCONNECT ACCESS</span>
-                <h2>{modal === "register" ? "Create your account" : "Welcome back"}</h2>
-                <p className="modal-intro">
-                  {modal === "register"
-                    ? "Register as a Farmer to list produce or as a Buyer to connect with growers."
-                    : "Enter your credentials to access your listings and enquiries."}
-                </p>
-                <form onSubmit={submitAccount} className="form-stack">
-                  {modal === "register" && (
-                    <label>
-                      Full name
-                      <input required value={account.name} onChange={(event) => setAccount({ ...account, name: event.target.value })} placeholder="e.g. Ramesh Varma" />
-                    </label>
-                  )}
-                  <label>
-                    Email address
-                    <input required type="email" value={account.email} onChange={(event) => setAccount({ ...account, email: event.target.value })} placeholder="you@example.com" />
-                  </label>
-                  <label>
-                    Password
-                    <input required type="password" minLength="8" value={account.password} onChange={(event) => setAccount({ ...account, password: event.target.value })} placeholder="At least 8 characters" />
-                  </label>
-                  {modal === "register" && (
-                    <label>
-                      Account role
-                      <select value={account.role} onChange={(event) => setAccount({ ...account, role: event.target.value })}>
-                        <option value="Buyer">Buyer (Purchase crops & enquire)</option>
-                        <option value="Farmer">Farmer (List produce & manage sales)</option>
-                      </select>
-                    </label>
-                  )}
-                  <button className="primary-button form-submit" type="submit">
-                    {modal === "register" ? "Create account" : "Log in"} →
-                  </button>
-                </form>
-                <p className="modal-switch">
-                  {modal === "register" ? "Already have an account?" : "New to AgroConnect?"}{" "}
-                  <button onClick={() => setModal(modal === "register" ? "login" : "register")}>
-                    {modal === "register" ? "Log in here" : "Create an account"}
-                  </button>
-                </p>
-              </>
-            )}
-
-            {/* BUYER: ENQUIRY MODAL */}
-            {modal === "enquiry" && selectedCrop && (
-              <>
-                <span className="eyebrow">BUYER ENQUIRY</span>
-                <h2>Enquire about {selectedCrop.name}</h2>
-                <div className="enquiry-crop-summary">
-                  <div><strong>Price:</strong> ₹{selectedCrop.price} / {selectedCrop.unit || "kg"}</div>
-                  <div><strong>Location:</strong> {selectedCrop.location}</div>
-                  <div><strong>Grower:</strong> {selectedCrop.farmerName || "Local Farmer"}</div>
-                </div>
-                <form className="form-stack" onSubmit={submitEnquiry}>
-                  <label>
-                    Your full name
-                    <input required name="buyerName" defaultValue={currentUser?.name || ""} placeholder="e.g. Rajesh Kumar" />
-                  </label>
-                  <label>
-                    Contact phone or email
-                    <input required name="contact" defaultValue={currentUser?.email || ""} placeholder="e.g. 9848022338 or rajesh@example.com" />
-                  </label>
-                  <label>
-                    Quantity needed ({selectedCrop.unit || "kg"})
-                    <input required name="quantity" placeholder={`e.g. 50 ${selectedCrop.unit || "kg"}`} />
-                  </label>
-                  <label>
-                    Message & requirements
-                    <textarea name="message" rows="3" placeholder="Specify pickup preferences, required delivery timeframe, or price negotiation..." />
-                  </label>
-                  <button className="primary-button form-submit" type="submit">
-                    Send enquiry to farmer →
-                  </button>
-                </form>
-              </>
-            )}
-
-            {/* FARMER DASHBOARD MODAL */}
-            {modal === "dashboard" && (
-              <div className="dashboard-content">
-                <div className="dashboard-header-row">
                   <div>
-                    <span className="eyebrow">FARMER MANAGEMENT</span>
-                    <h2>Farmer Dashboard</h2>
-                    <p className="modal-intro">Manage your active crop listings and review buyer purchase enquiries.</p>
+                    <span className="modal-eyebrow">రైతు పంట నమోదు · FOR FARMERS</span>
+                    <h2>List Your Harvest for Sale</h2>
+                    <p>Enter your produce details so verified buyers can view and send purchase enquiries.</p>
                   </div>
-                  <div className="dashboard-header-actions">
-                    <button className="refresh-btn" onClick={openFarmerDashboard} title="Refresh Dashboard">
-                      ↻ Refresh
+                </div>
+
+                {/* Quick suggestions */}
+                <div className="suggestion-box">
+                  <span className="suggestion-label">Quick Pick Popular Crops:</span>
+                  <div className="suggestion-chips">
+                    {popularCropsSuggestions.map((item) => (
+                      <button
+                        key={item.name}
+                        type="button"
+                        className="suggestion-chip-btn"
+                        onClick={() =>
+                          setListing({
+                            ...listing,
+                            name: item.name,
+                            category: item.category,
+                            unit: item.unit,
+                            price: item.price
+                          })
+                        }
+                      >
+                        {item.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <form onSubmit={submitListing} className="modern-form">
+                  <div className="form-group">
+                    <label htmlFor="cropName">Crop Name &amp; Variety (పంట పేరు)</label>
+                    <input
+                      id="cropName"
+                      required
+                      placeholder="e.g. Sona Masoori Rice, Guntur Teja Chillies, Country Tomatoes"
+                      value={listing.name}
+                      onChange={(e) => setListing({ ...listing, name: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-grid-2">
+                    <div className="form-group">
+                      <label htmlFor="cropCategory">Category (రకం)</label>
+                      <select
+                        id="cropCategory"
+                        value={listing.category}
+                        onChange={(e) => setListing({ ...listing, category: e.target.value })}
+                      >
+                        {categories.filter((c) => c.id !== "All").map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label} ({c.telugu})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="cropUnit">Unit of Sale (కొలత యూనిట్)</label>
+                      <select
+                        id="cropUnit"
+                        value={listing.unit}
+                        onChange={(e) => setListing({ ...listing, unit: e.target.value })}
+                      >
+                        <option value="kg">Kilograms (kg)</option>
+                        <option value="quintal">Quintal (100 kg)</option>
+                        <option value="bag">Bag (50 kg)</option>
+                        <option value="tonne">Tonne (1000 kg)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-grid-2">
+                    <div className="form-group">
+                      <label htmlFor="cropPrice">Price per {listing.unit} (ధర ₹)</label>
+                      <input
+                        id="cropPrice"
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        required
+                        placeholder="e.g. 28"
+                        value={listing.price}
+                        onChange={(e) => setListing({ ...listing, price: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="cropQty">Available Quantity (స్టాక్ మొత్తం)</label>
+                      <input
+                        id="cropQty"
+                        type="number"
+                        min="1"
+                        step="1"
+                        required
+                        placeholder="e.g. 500"
+                        value={listing.quantity}
+                        onChange={(e) => setListing({ ...listing, quantity: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  {/* LIVE ESTIMATED REVENUE CALCULATOR */}
+                  {estimatedBatchValue && (
+                    <div className="calculator-preview-box">
+                      <Scale size={18} className="calc-icon" />
+                      <div>
+                        <strong>Estimated Harvest Value: ₹{estimatedBatchValue}</strong>
+                        <span>({listing.quantity} {listing.unit} × ₹{listing.price})</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="form-group">
+                    <label htmlFor="cropLocation">Farm / Town Location (గ్రామం / మండలం)</label>
+                    <input
+                      id="cropLocation"
+                      required
+                      placeholder="e.g. Tuni, Anakapalli, Prathipadu, Kakinada Dist"
+                      value={listing.location}
+                      onChange={(e) => setListing({ ...listing, location: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="cropDesc">Harvest &amp; Quality Notes (నాణ్యత వివరాలు - ఐచ్ఛికం)</label>
+                    <textarea
+                      id="cropDesc"
+                      rows="2"
+                      placeholder="e.g. Grade A quality, dried naturally in sun, moisture 12%, pesticide-free."
+                      value={listing.description}
+                      onChange={(e) => setListing({ ...listing, description: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-actions-row">
+                    <button type="submit" className="btn-modal-submit green">
+                      <Check size={18} />
+                      <span>Publish Crop to Marketplace →</span>
                     </button>
-                    <button className="primary-button add-crop-quick-btn" onClick={() => setModal("listing")}>
-                      ＋ Add Crop
+                    <button type="button" className="btn-modal-cancel" onClick={() => setModal("")}>
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* ----------------------------------------------------- */}
+            {/* 2. FARMER: EDIT CROP MODAL */}
+            {/* ----------------------------------------------------- */}
+            {modal === "editCrop" && editingCrop && (
+              <div className="modal-inner-scroll">
+                <div className="modal-title-bar">
+                  <div className="modal-title-icon-box amber">
+                    <Edit2 size={22} />
+                  </div>
+                  <div>
+                    <span className="modal-eyebrow">UPDATE DETAILS</span>
+                    <h2>Edit Crop Listing</h2>
+                    <p>Adjust price, stock, or location for {editingCrop.name}.</p>
+                  </div>
+                </div>
+
+                <form onSubmit={submitEditCrop} className="modern-form">
+                  <div className="form-group">
+                    <label>Crop Name</label>
+                    <input
+                      required
+                      value={editingCrop.name}
+                      onChange={(e) => setEditingCrop({ ...editingCrop, name: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-grid-2">
+                    <div className="form-group">
+                      <label>Category</label>
+                      <select
+                        value={editingCrop.category}
+                        onChange={(e) => setEditingCrop({ ...editingCrop, category: e.target.value })}
+                      >
+                        {categories.filter((c) => c.id !== "All").map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label} ({c.telugu})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Unit</label>
+                      <select
+                        value={editingCrop.unit}
+                        onChange={(e) => setEditingCrop({ ...editingCrop, unit: e.target.value })}
+                      >
+                        <option value="kg">kg</option>
+                        <option value="quintal">quintal</option>
+                        <option value="bag">bag</option>
+                        <option value="tonne">tonne</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-grid-2">
+                    <div className="form-group">
+                      <label>Price per {editingCrop.unit} (₹)</label>
+                      <input
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        required
+                        value={editingCrop.price}
+                        onChange={(e) => setEditingCrop({ ...editingCrop, price: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Available Quantity</label>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        required
+                        value={editingCrop.quantity}
+                        onChange={(e) => setEditingCrop({ ...editingCrop, quantity: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Farm Location</label>
+                    <input
+                      required
+                      value={editingCrop.location}
+                      onChange={(e) => setEditingCrop({ ...editingCrop, location: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Quality &amp; Harvest Notes</label>
+                    <textarea
+                      rows="2"
+                      value={editingCrop.description || ""}
+                      onChange={(e) => setEditingCrop({ ...editingCrop, description: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-actions-row">
+                    <button type="submit" className="btn-modal-submit green">
+                      <Check size={18} />
+                      <span>Save Changes</span>
+                    </button>
+                    <button type="button" className="btn-modal-cancel" onClick={() => setModal("dashboard")}>
+                      Back to Dashboard
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* ----------------------------------------------------- */}
+            {/* 3. AUTHENTICATION: LOGIN & REGISTER */}
+            {/* ----------------------------------------------------- */}
+            {(modal === "login" || modal === "register") && (
+              <div className="modal-inner-scroll">
+                <div className="auth-tab-switch">
+                  <button
+                    className={`auth-tab-btn ${modal === "login" ? "active" : ""}`}
+                    onClick={() => setModal("login")}
+                  >
+                    Log In (లాగిన్)
+                  </button>
+                  <button
+                    className={`auth-tab-btn ${modal === "register" ? "active" : ""}`}
+                    onClick={() => setModal("register")}
+                  >
+                    Register Free (కొత్త ఖాతా)
+                  </button>
+                </div>
+
+                <div className="modal-title-bar">
+                  <div>
+                    <h2>{modal === "register" ? "Create Your Free Account" : "Welcome Back to AgroConnect"}</h2>
+                    <p>
+                      {modal === "register"
+                        ? "Join as a Farmer to sell your harvest, or as a Buyer to purchase directly from growers."
+                        : "Enter your credentials to manage your crop listings and purchase enquiries."}
+                    </p>
+                  </div>
+                </div>
+
+                <form onSubmit={submitAccount} className="modern-form">
+                  {modal === "register" && (
+                    <div className="role-selector-cards">
+                      <label
+                        className={`role-choice-card ${account.role === "Farmer" ? "selected" : ""}`}
+                        onClick={() => setAccount({ ...account, role: "Farmer" })}
+                      >
+                        <input
+                          type="radio"
+                          name="role"
+                          checked={account.role === "Farmer"}
+                          onChange={() => setAccount({ ...account, role: "Farmer" })}
+                        />
+                        <div className="role-choice-content">
+                          <span className="role-emoji">🧑‍🌾</span>
+                          <strong>I am a Farmer (రైతు)</strong>
+                          <small>List produce, set rates &amp; receive direct buyer calls</small>
+                        </div>
+                      </label>
+
+                      <label
+                        className={`role-choice-card ${account.role === "Buyer" ? "selected" : ""}`}
+                        onClick={() => setAccount({ ...account, role: "Buyer" })}
+                      >
+                        <input
+                          type="radio"
+                          name="role"
+                          checked={account.role === "Buyer"}
+                          onChange={() => setAccount({ ...account, role: "Buyer" })}
+                        />
+                        <div className="role-choice-content">
+                          <span className="role-emoji">🛒</span>
+                          <strong>I am a Buyer (కొనుగోలుదారు)</strong>
+                          <small>Source farm-fresh produce directly from local farms</small>
+                        </div>
+                      </label>
+                    </div>
+                  )}
+
+                  {modal === "register" && (
+                    <div className="form-group">
+                      <label htmlFor="accName">Full Name (మీ పూర్తి పేరు)</label>
+                      <input
+                        id="accName"
+                        required
+                        placeholder="e.g. Ramesh Varma or Rajesh Kumar"
+                        value={account.name}
+                        onChange={(e) => setAccount({ ...account, name: e.target.value })}
+                      />
+                    </div>
+                  )}
+
+                  <div className="form-group">
+                    <label htmlFor="accEmail">Email Address (ఈమెయిల్)</label>
+                    <input
+                      id="accEmail"
+                      type="email"
+                      required
+                      placeholder="e.g. farmer@gmail.com"
+                      value={account.email}
+                      onChange={(e) => setAccount({ ...account, email: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="accPassword">Password (పాస్‌వర్డ్)</label>
+                    <input
+                      id="accPassword"
+                      type="password"
+                      required
+                      minLength={8}
+                      placeholder="At least 8 characters"
+                      value={account.password}
+                      onChange={(e) => setAccount({ ...account, password: e.target.value })}
+                    />
+                  </div>
+
+                  <button type="submit" className="btn-modal-submit green full-width">
+                    <span>{modal === "register" ? "Create Free Account →" : "Sign In to AgroConnect →"}</span>
+                  </button>
+
+                  <div className="auth-footer-prompt">
+                    {modal === "register" ? (
+                      <p>
+                        Already have an account?{" "}
+                        <button type="button" onClick={() => setModal("login")} className="link-text">
+                          Log in here
+                        </button>
+                      </p>
+                    ) : (
+                      <p>
+                        Don't have an account yet?{" "}
+                        <button type="button" onClick={() => setModal("register")} className="link-text">
+                          Create account for free
+                        </button>
+                      </p>
+                    )}
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* ----------------------------------------------------- */}
+            {/* 4. BUYER: ENQUIRY MODAL */}
+            {/* ----------------------------------------------------- */}
+            {modal === "enquiry" && selectedCrop && (
+              <div className="modal-inner-scroll">
+                <div className="modal-title-bar">
+                  <div className="modal-title-icon-box green">
+                    <MessageSquare size={22} />
+                  </div>
+                  <div>
+                    <span className="modal-eyebrow">BUYER DIRECT ENQUIRY</span>
+                    <h2>Enquire with Farmer</h2>
+                    <p>Send your purchase requirement directly to the grower.</p>
+                  </div>
+                </div>
+
+                {/* Crop summary card inside modal */}
+                <div className="enquiry-crop-preview-box">
+                  <div className="preview-emoji">{getCropVisualTheme(selectedCrop.name, selectedCrop.category).emoji}</div>
+                  <div className="preview-details">
+                    <h4>{selectedCrop.name}</h4>
+                    <span className="preview-location">📍 {selectedCrop.location} · Grower: {selectedCrop.farmerName || "Local Farmer"}</span>
+                    <div className="preview-price-tag">
+                      <strong>₹{selectedCrop.price}</strong> /{selectedCrop.unit || "kg"} · Stock: {selectedCrop.quantity} {selectedCrop.unit || "kg"}
+                    </div>
+                  </div>
+                </div>
+
+                <form onSubmit={submitEnquiry} className="modern-form">
+                  <div className="form-group">
+                    <label htmlFor="buyerNameInput">Your Name (మీ పేరు)</label>
+                    <input
+                      id="buyerNameInput"
+                      name="buyerName"
+                      required
+                      defaultValue={currentUser?.name || ""}
+                      placeholder="e.g. S. Venkata Rao"
+                    />
+                  </div>
+
+                  <div className="form-grid-2">
+                    <div className="form-group">
+                      <label htmlFor="contactInput">Contact Phone / WhatsApp (ఫోన్ నంబర్)</label>
+                      <input
+                        id="contactInput"
+                        name="contact"
+                        required
+                        defaultValue={currentUser?.email || ""}
+                        placeholder="e.g. 9848012345 or email"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="qtyInput">Quantity Needed ({selectedCrop.unit || "kg"})</label>
+                      <input
+                        id="qtyInput"
+                        name="quantity"
+                        required
+                        placeholder={`e.g. 50 ${selectedCrop.unit || "kg"}`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Quick message suggestions */}
+                  <div className="quick-template-row">
+                    <span className="template-label">Quick Message Suggestions:</span>
+                    <div className="template-buttons">
+                      <button
+                        type="button"
+                        onClick={() => setEnquiryMessage("Is rate negotiable for bulk purchase? Can arrange own pickup.")}
+                      >
+                        Negotiate Bulk Rate?
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEnquiryMessage("Can I inspect a sample lot first? Looking for ongoing supply.")}
+                      >
+                        Inspect Sample Lot?
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEnquiryMessage("Ready for immediate pickup. Please contact via WhatsApp/phone.")}
+                      >
+                        Immediate Pickup Ready
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="enquiryMsgInput">Message &amp; Requirements to Farmer</label>
+                    <textarea
+                      id="enquiryMsgInput"
+                      name="message"
+                      rows="3"
+                      value={enquiryMessage}
+                      onChange={(e) => setEnquiryMessage(e.target.value)}
+                      placeholder="Mention preferred delivery or pickup timeline, quality questions, or negotiation..."
+                    />
+                  </div>
+
+                  <div className="form-actions-row">
+                    <button type="submit" className="btn-modal-submit green">
+                      <MessageSquare size={18} />
+                      <span>Send Enquiry to Farmer →</span>
+                    </button>
+                    <button type="button" className="btn-modal-cancel" onClick={() => setModal("")}>
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* ----------------------------------------------------- */}
+            {/* 5. FARMER DASHBOARD MODAL */}
+            {/* ----------------------------------------------------- */}
+            {modal === "dashboard" && (
+              <div className="modal-inner-scroll">
+                <div className="dashboard-top-header">
+                  <div>
+                    <span className="modal-eyebrow">FARMER PORTAL · రైతు నిర్వహణ కేంద్రం</span>
+                    <h2>Farmer Management Center</h2>
+                    <p>Track your active crop listings and review buyer purchase enquiries.</p>
+                  </div>
+                  <div className="dashboard-action-buttons">
+                    <button className="btn-dashboard-refresh" onClick={openFarmerDashboard} title="Refresh">
+                      <RefreshCw size={15} />
+                      <span>Refresh</span>
+                    </button>
+                    <button className="btn-dashboard-add" onClick={() => setModal("listing")}>
+                      <Plus size={16} />
+                      <span>Add New Crop</span>
                     </button>
                   </div>
                 </div>
 
                 {dashboardLoading ? (
-                  <div className="dashboard-loading">
-                    <span className="spinner">⏳</span>
-                    <p>Loading your listings and incoming enquiries...</p>
+                  <div className="state-box loading-box">
+                    <RefreshCw className="spinner-icon" size={28} />
+                    <h3>Loading your farmer dashboard...</h3>
                   </div>
                 ) : (
                   <>
-                    {/* Stat counters */}
-                    <div className="stats-grid">
-                      <div className="stat-card">
-                        <span className="stat-value">{dashboardListings.length}</span>
-                        <span className="stat-label">My Listings</span>
+                    {/* STATS OVERVIEW CARDS */}
+                    <div className="stats-cards-grid">
+                      <div className="stat-metric-card">
+                        <div className="metric-icon-box green">
+                          <Sprout size={20} />
+                        </div>
+                        <div>
+                          <span className="metric-val">{dashboardListings.length}</span>
+                          <span className="metric-lbl">Active Crops</span>
+                        </div>
                       </div>
-                      <div className="stat-card">
-                        <span className="stat-value">{dashboardEnquiries.length}</span>
-                        <span className="stat-label">Total Enquiries</span>
+
+                      <div className="stat-metric-card">
+                        <div className="metric-icon-box blue">
+                          <MessageSquare size={20} />
+                        </div>
+                        <div>
+                          <span className="metric-val">{dashboardEnquiries.length}</span>
+                          <span className="metric-lbl">Total Enquiries</span>
+                        </div>
                       </div>
-                      <div className="stat-card stat-pending">
-                        <span className="stat-value">{farmerPendingCount}</span>
-                        <span className="stat-label">Pending</span>
+
+                      <div className="stat-metric-card alert">
+                        <div className="metric-icon-box amber">
+                          <Clock size={20} />
+                        </div>
+                        <div>
+                          <span className="metric-val">{farmerPendingCount}</span>
+                          <span className="metric-lbl">Pending Response</span>
+                        </div>
                       </div>
-                      <div className="stat-card stat-responded">
-                        <span className="stat-value">{farmerRespondedCount}</span>
-                        <span className="stat-label">Responded</span>
-                      </div>
-                      <div className="stat-card stat-closed">
-                        <span className="stat-value">{farmerClosedCount}</span>
-                        <span className="stat-label">Closed</span>
+
+                      <div className="stat-metric-card success">
+                        <div className="metric-icon-box green">
+                          <CheckCircle2 size={20} />
+                        </div>
+                        <div>
+                          <span className="metric-val">{farmerRespondedCount}</span>
+                          <span className="metric-lbl">Responded</span>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Section tabs */}
-                    <div className="dashboard-tabs">
+                    {/* DASHBOARD TAB CONTROLS */}
+                    <div className="dashboard-tabs-bar">
                       <button
-                        className={`tab-btn ${dashboardTab === "all" ? "active" : ""}`}
+                        className={`d-tab-btn ${dashboardTab === "all" ? "active" : ""}`}
                         onClick={() => setDashboardTab("all")}
                       >
                         All Overview
                       </button>
                       <button
-                        className={`tab-btn ${dashboardTab === "listings" ? "active" : ""}`}
+                        className={`d-tab-btn ${dashboardTab === "listings" ? "active" : ""}`}
                         onClick={() => setDashboardTab("listings")}
                       >
-                        My Crops ({dashboardListings.length})
+                        My Crop Listings ({dashboardListings.length})
                       </button>
                       <button
-                        className={`tab-btn ${dashboardTab === "enquiries" ? "active" : ""}`}
+                        className={`d-tab-btn ${dashboardTab === "enquiries" ? "active" : ""}`}
                         onClick={() => setDashboardTab("enquiries")}
                       >
                         Buyer Enquiries ({dashboardEnquiries.length})
-                        {farmerPendingCount > 0 && <span className="tab-pending-badge">{farmerPendingCount}</span>}
+                        {farmerPendingCount > 0 && <span className="tab-bubble-count">{farmerPendingCount}</span>}
                       </button>
                     </div>
 
-                    {/* Listings section */}
+                    {/* LISTINGS SECTION */}
                     {(dashboardTab === "all" || dashboardTab === "listings") && (
-                      <section className="dashboard-section">
-                        <div className="section-title-row">
-                          <h3>My Crop Listings ({dashboardListings.length})</h3>
-                          <button className="link-button" onClick={() => setModal("listing")}>＋ Add New Crop</button>
+                      <div className="dashboard-content-block">
+                        <div className="block-title-row">
+                          <h3>My Published Crops ({dashboardListings.length})</h3>
+                          <button className="btn-small-link" onClick={() => setModal("listing")}>
+                            + List another crop
+                          </button>
                         </div>
 
                         {dashboardListings.length === 0 ? (
-                          <div className="empty-substate">
-                            <p>You haven't listed any crops yet.</p>
-                            <button className="primary-button" onClick={() => setModal("listing")}>
-                              Create your first crop listing →
+                          <div className="dashboard-empty-state">
+                            <Tractor size={36} className="empty-state-icon" />
+                            <h4>You haven't listed any crops yet</h4>
+                            <p>Publish your harvest to start receiving purchase offers from verified buyers.</p>
+                            <button className="btn-modal-submit green" onClick={() => setModal("listing")}>
+                              <Plus size={16} />
+                              <span>List Your First Crop</span>
                             </button>
                           </div>
                         ) : (
-                          <div className="dashboard-cards-grid">
-                            {dashboardListings.map(crop => (
-                              <article className="dashboard-crop-card" key={crop._id}>
-                                <div className="crop-card-top">
+                          <div className="dashboard-listings-grid">
+                            {dashboardListings.map((crop) => (
+                              <div className="farmer-crop-manage-card" key={crop._id}>
+                                <div className="manage-card-header">
                                   <div>
-                                    <span className="crop-category-pill">{crop.category}</span>
+                                    <span className="category-pill-sm">{crop.category}</span>
                                     <h4>{crop.name}</h4>
                                   </div>
-                                  <div className="crop-card-price">
+                                  <div className="manage-price-box">
                                     <strong>₹{crop.price}</strong>
                                     <small>/{crop.unit || "kg"}</small>
                                   </div>
                                 </div>
-                                <div className="crop-card-meta">
+
+                                <div className="manage-card-meta">
                                   <span>📦 Stock: <strong>{crop.quantity} {crop.unit || "kg"}</strong></span>
-                                  <span>⌖ Location: <strong>{crop.location}</strong></span>
+                                  <span>📍 Location: <strong>{crop.location}</strong></span>
                                 </div>
-                                {crop.description && <p className="crop-card-desc">{crop.description}</p>}
-                                <div className="crop-card-actions">
-                                  <button className="card-action-btn edit" onClick={() => openEditModal(crop)}>
-                                    ✏️ Edit
+
+                                {crop.description && (
+                                  <p className="manage-card-notes">"{crop.description}"</p>
+                                )}
+
+                                <div className="manage-card-buttons">
+                                  <button className="btn-manage-edit" onClick={() => openEditModal(crop)}>
+                                    <Edit2 size={14} />
+                                    <span>Edit</span>
                                   </button>
-                                  <button className="card-action-btn delete" onClick={() => handleDeleteCrop(crop._id, crop.name)}>
-                                    🗑️ Delete
+                                  <button
+                                    className="btn-manage-del"
+                                    onClick={() => handleDeleteCrop(crop._id, crop.name)}
+                                  >
+                                    <Trash2 size={14} />
+                                    <span>Delete</span>
                                   </button>
                                 </div>
-                              </article>
+                              </div>
                             ))}
                           </div>
                         )}
-                      </section>
+                      </div>
                     )}
 
-                    {/* Enquiries section */}
+                    {/* ENQUIRIES SECTION */}
                     {(dashboardTab === "all" || dashboardTab === "enquiries") && (
-                      <section className="dashboard-section">
-                        <div className="section-title-row">
-                          <h3>Buyer Enquiries ({dashboardEnquiries.length})</h3>
+                      <div className="dashboard-content-block">
+                        <div className="block-title-row">
+                          <h3>Incoming Buyer Enquiries ({dashboardEnquiries.length})</h3>
                         </div>
 
                         {dashboardEnquiries.length === 0 ? (
-                          <div className="empty-substate">
-                            <p>No buyer enquiries received yet.</p>
-                            <small>When buyers view your crop listings and submit purchase requests, they will appear here with contact details.</small>
+                          <div className="dashboard-empty-state">
+                            <MessageSquare size={36} className="empty-state-icon" />
+                            <h4>No enquiries received yet</h4>
+                            <p>When buyers browse your listings and express interest, their contact details and requirements will appear right here.</p>
                           </div>
                         ) : (
-                          <div className="dashboard-enquiries-list">
-                            {dashboardEnquiries.map(enquiry => (
-                              <article className="enquiry-card" key={enquiry._id}>
-                                <div className="enquiry-card-header">
-                                  <div>
-                                    <span className="enquiry-crop-title">
+                          <div className="enquiries-list-stack">
+                            {dashboardEnquiries.map((enquiry) => (
+                              <div className="enquiry-detail-card" key={enquiry._id}>
+                                <div className="enquiry-top-row">
+                                  <div className="enquiry-crop-identifier">
+                                    <span className="crop-tag-title">
                                       🌾 {enquiry.crop?.name || "Crop"} · ₹{enquiry.crop?.price || "--"} / {enquiry.crop?.unit || "kg"}
                                     </span>
-                                    <span className="enquiry-date">
-                                      {enquiry.createdAt ? new Date(enquiry.createdAt).toLocaleDateString("en-IN", {
-                                        day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
-                                      }) : ""}
+                                    <span className="enquiry-timestamp">
+                                      {enquiry.createdAt
+                                        ? new Date(enquiry.createdAt).toLocaleDateString("en-IN", {
+                                            day: "numeric",
+                                            month: "short",
+                                            year: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit"
+                                          })
+                                        : ""}
                                     </span>
                                   </div>
-                                  <span className={`status-badge status-${enquiry.status.toLowerCase()}`}>
-                                    {enquiry.status === "Pending" ? "🕒 Pending" : enquiry.status === "Responded" ? "✅ Responded" : "📁 Closed"}
+
+                                  <span className={`status-pill-badge status-${enquiry.status.toLowerCase()}`}>
+                                    {enquiry.status === "Pending" && "🕒 Pending"}
+                                    {enquiry.status === "Responded" && "✅ Responded"}
+                                    {enquiry.status === "Closed" && "📁 Closed"}
                                   </span>
                                 </div>
 
-                                <div className="enquiry-buyer-info">
-                                  <p><strong>Buyer Name:</strong> {enquiry.buyerName}</p>
-                                  <p>
-                                    <strong>Contact / Email:</strong>{" "}
-                                    {enquiry.buyerEmail ? (
-                                      <a href={`mailto:${enquiry.buyerEmail}`} className="contact-link">{enquiry.buyerEmail}</a>
-                                    ) : "Provided in message"}
-                                  </p>
+                                <div className="buyer-contact-cardlet">
+                                  <div className="contact-item">
+                                    <User size={15} />
+                                    <span><strong>Buyer:</strong> {enquiry.buyerName}</span>
+                                  </div>
+                                  <div className="contact-item">
+                                    <Mail size={15} />
+                                    <span><strong>Contact:</strong> <a href={`mailto:${enquiry.buyerEmail}`}>{enquiry.buyerEmail}</a></span>
+                                  </div>
                                 </div>
 
-                                <div className="enquiry-message-box">
+                                <div className="enquiry-message-bubble">
+                                  <span className="msg-label">Buyer Message:</span>
                                   <p>{enquiry.message}</p>
                                 </div>
 
-                                <div className="enquiry-status-control">
-                                  <label htmlFor={`status-${enquiry._id}`}>Update enquiry status:</label>
+                                <div className="enquiry-status-row">
+                                  <label htmlFor={`enq-status-${enquiry._id}`}>Update Status:</label>
                                   <select
-                                    id={`status-${enquiry._id}`}
+                                    id={`enq-status-${enquiry._id}`}
+                                    className="status-select-control"
                                     value={enquiry.status}
-                                    onChange={event => updateEnquiryStatus(enquiry._id, event.target.value)}
+                                    onChange={(e) => updateEnquiryStatus(enquiry._id, e.target.value)}
                                   >
-                                    <option value="Pending">Pending (Awaiting reply)</option>
-                                    <option value="Responded">Responded (Buyer contacted)</option>
-                                    <option value="Closed">Closed (Deal finished or resolved)</option>
+                                    <option value="Pending">🕒 Pending (Awaiting contact)</option>
+                                    <option value="Responded">✅ Responded (Contacted buyer)</option>
+                                    <option value="Closed">📁 Closed (Deal done / finished)</option>
                                   </select>
                                 </div>
-                              </article>
+                              </div>
                             ))}
                           </div>
                         )}
-                      </section>
+                      </div>
                     )}
                   </>
                 )}
               </div>
             )}
 
-            {/* BUYER DASHBOARD MODAL */}
+            {/* ----------------------------------------------------- */}
+            {/* 6. BUYER DASHBOARD MODAL */}
+            {/* ----------------------------------------------------- */}
             {modal === "buyerDashboard" && (
-              <div className="dashboard-content">
-                <div className="dashboard-header-row">
+              <div className="modal-inner-scroll">
+                <div className="dashboard-top-header">
                   <div>
-                    <span className="eyebrow">BUYER MANAGEMENT</span>
-                    <h2>Buyer Dashboard</h2>
-                    <p className="modal-intro">Track all produce enquiries you have submitted to local farmers.</p>
+                    <span className="modal-eyebrow">BUYER TRACKER · కొనుగోలుదారు కేంద్రం</span>
+                    <h2>Buyer Purchase Enquiries</h2>
+                    <p>Track all produce purchase requests sent to local farmers.</p>
                   </div>
-                  <div className="dashboard-header-actions">
-                    <button className="refresh-btn" onClick={openBuyerDashboard} title="Refresh enquiries">
-                      ↻ Refresh
+                  <div className="dashboard-action-buttons">
+                    <button className="btn-dashboard-refresh" onClick={openBuyerDashboard} title="Refresh">
+                      <RefreshCw size={15} />
+                      <span>Refresh</span>
                     </button>
-                    <button className="secondary-button" onClick={() => setModal("")}>
-                      Explore Marketplace
+                    <button className="btn-dashboard-add" onClick={() => setModal("")}>
+                      <Store size={16} />
+                      <span>Browse More Crops</span>
                     </button>
                   </div>
                 </div>
 
                 {buyerLoading ? (
-                  <div className="dashboard-loading">
-                    <span className="spinner">⏳</span>
-                    <p>Loading your submitted enquiries...</p>
+                  <div className="state-box loading-box">
+                    <RefreshCw className="spinner-icon" size={28} />
+                    <h3>Loading your enquiry history...</h3>
                   </div>
                 ) : buyerError ? (
-                  <div className="error-state">
-                    <p>⚠️ {buyerError}</p>
-                    <button className="primary-button" onClick={openBuyerDashboard}>Retry</button>
+                  <div className="state-box error-box">
+                    <AlertCircle size={28} />
+                    <h3>{buyerError}</h3>
+                    <button className="btn-modal-submit green" onClick={openBuyerDashboard}>
+                      Try Again
+                    </button>
                   </div>
                 ) : (
                   <>
-                    {/* Buyer stats */}
-                    <div className="stats-grid">
-                      <div className="stat-card">
-                        <span className="stat-value">{buyerEnquiries.length}</span>
-                        <span className="stat-label">Enquiries Sent</span>
+                    <div className="stats-cards-grid">
+                      <div className="stat-metric-card">
+                        <div className="metric-icon-box blue">
+                          <MessageSquare size={20} />
+                        </div>
+                        <div>
+                          <span className="metric-val">{buyerEnquiries.length}</span>
+                          <span className="metric-lbl">Total Sent</span>
+                        </div>
                       </div>
-                      <div className="stat-card stat-pending">
-                        <span className="stat-value">{buyerPendingCount}</span>
-                        <span className="stat-label">Pending Response</span>
+
+                      <div className="stat-metric-card alert">
+                        <div className="metric-icon-box amber">
+                          <Clock size={20} />
+                        </div>
+                        <div>
+                          <span className="metric-val">{buyerPendingCount}</span>
+                          <span className="metric-lbl">Awaiting Reply</span>
+                        </div>
                       </div>
-                      <div className="stat-card stat-responded">
-                        <span className="stat-value">{buyerRespondedCount}</span>
-                        <span className="stat-label">Responded</span>
+
+                      <div className="stat-metric-card success">
+                        <div className="metric-icon-box green">
+                          <CheckCircle2 size={20} />
+                        </div>
+                        <div>
+                          <span className="metric-val">{buyerRespondedCount}</span>
+                          <span className="metric-lbl">Farmer Responded</span>
+                        </div>
                       </div>
-                      <div className="stat-card stat-closed">
-                        <span className="stat-value">{buyerClosedCount}</span>
-                        <span className="stat-label">Closed</span>
+
+                      <div className="stat-metric-card">
+                        <div className="metric-icon-box">
+                          <Check size={20} />
+                        </div>
+                        <div>
+                          <span className="metric-val">{buyerClosedCount}</span>
+                          <span className="metric-lbl">Closed Deals</span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="dashboard-section">
-                      <div className="section-title-row">
+                    <div className="dashboard-content-block">
+                      <div className="block-title-row">
                         <h3>My Enquiry History ({buyerEnquiries.length})</h3>
                       </div>
 
                       {buyerEnquiries.length === 0 ? (
-                        <div className="empty-substate">
-                          <span>🛒</span>
-                          <p>You have not submitted any enquiries yet.</p>
-                          <small>Browse the marketplace to find fresh crops directly from local farmers and send enquiries.</small>
+                        <div className="dashboard-empty-state">
+                          <ShoppingCart size={36} className="empty-state-icon" />
+                          <h4>No enquiries sent yet</h4>
+                          <p>Explore farm-fresh paddy, chillies, and vegetables in the marketplace and connect directly with local farmers.</p>
                           <button
-                            className="primary-button"
-                            style={{ marginTop: "14px" }}
+                            className="btn-modal-submit green"
                             onClick={() => {
                               setModal("");
                               const el = document.getElementById("marketplace");
                               if (el) el.scrollIntoView({ behavior: "smooth" });
                             }}
                           >
-                            Explore Available Crops →
+                            <span>Explore Marketplace (సంతకు వెళ్ళండి)</span>
                           </button>
                         </div>
                       ) : (
-                        <div className="dashboard-enquiries-list">
-                          {buyerEnquiries.map(enquiry => (
-                            <article className="enquiry-card" key={enquiry._id}>
-                              <div className="enquiry-card-header">
-                                <div>
-                                  <span className="enquiry-crop-title">
-                                    🌾 {enquiry.crop?.name || "Crop listing"}
+                        <div className="enquiries-list-stack">
+                          {buyerEnquiries.map((enquiry) => (
+                            <div className="enquiry-detail-card" key={enquiry._id}>
+                              <div className="enquiry-top-row">
+                                <div className="enquiry-crop-identifier">
+                                  <span className="crop-tag-title">
+                                    🌾 {enquiry.crop?.name || "Crop"}
                                   </span>
                                   {enquiry.crop?.location && (
-                                    <span className="crop-location" style={{ margin: "4px 0" }}>
-                                      ⌖ {enquiry.crop.location} · ₹{enquiry.crop.price} / {enquiry.crop.unit}
+                                    <span className="enquiry-location-sub">
+                                      📍 {enquiry.crop.location} · ₹{enquiry.crop.price} / {enquiry.crop.unit}
                                     </span>
                                   )}
-                                  <span className="enquiry-date">
-                                    Submitted: {enquiry.createdAt ? new Date(enquiry.createdAt).toLocaleDateString("en-IN", {
-                                      day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
-                                    }) : ""}
+                                  <span className="enquiry-timestamp">
+                                    Submitted:{" "}
+                                    {enquiry.createdAt
+                                      ? new Date(enquiry.createdAt).toLocaleDateString("en-IN", {
+                                          day: "numeric",
+                                          month: "short",
+                                          year: "numeric"
+                                        })
+                                      : ""}
                                   </span>
                                 </div>
-                                <span className={`status-badge status-${enquiry.status.toLowerCase()}`}>
-                                  {enquiry.status === "Pending" ? "🕒 Pending Response" :
-                                    enquiry.status === "Responded" ? "✅ Farmer Responded" : "📁 Closed"}
+
+                                <span className={`status-pill-badge status-${enquiry.status.toLowerCase()}`}>
+                                  {enquiry.status === "Pending" && "🕒 Awaiting Farmer Reply"}
+                                  {enquiry.status === "Responded" && "✅ Farmer Responded"}
+                                  {enquiry.status === "Closed" && "📁 Closed"}
                                 </span>
                               </div>
 
-                              <div className="enquiry-message-box">
-                                <strong>My Message:</strong>
-                                <p style={{ whiteSpace: "pre-line", margin: "6px 0 0" }}>{enquiry.message}</p>
+                              <div className="enquiry-message-bubble">
+                                <span className="msg-label">Your Requirement Sent:</span>
+                                <p style={{ whiteSpace: "pre-line" }}>{enquiry.message}</p>
                               </div>
 
-                              <div className="buyer-enquiry-footer">
-                                <small>
+                              <div className="buyer-enquiry-footer-note">
+                                <Info size={14} />
+                                <span>
                                   {enquiry.status === "Pending"
-                                    ? "The farmer will review your enquiry and contact you via your provided phone/email."
+                                    ? "The farmer has received your requirement and will contact you directly on your phone/email."
                                     : enquiry.status === "Responded"
-                                      ? "The farmer has acknowledged your request and will contact you directly."
-                                      : "This enquiry has been closed."}
-                                </small>
+                                    ? "The farmer has acknowledged your request! Please check your phone calls or WhatsApp messages."
+                                    : "This enquiry has concluded."}
+                                </span>
                               </div>
-                            </article>
+                            </div>
                           ))}
                         </div>
                       )}
@@ -1265,7 +2269,7 @@ Message: ${messageText}`;
                 )}
               </div>
             )}
-          </section>
+          </div>
         </div>
       )}
     </div>
