@@ -54,7 +54,13 @@ router.post('/register', async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        phone: user.phone || '',
+        location: user.location || 'Andhra Pradesh',
+        bio: user.bio || '',
+        avatar: user.avatar || '',
+        businessType: user.businessType || '',
+        following: user.following || []
       }
     });
   } catch (error) {
@@ -92,7 +98,13 @@ router.post('/login', async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        phone: user.phone || '',
+        location: user.location || 'Andhra Pradesh',
+        bio: user.bio || '',
+        avatar: user.avatar || '',
+        businessType: user.businessType || '',
+        following: user.following || []
       }
     });
   } catch (error) {
@@ -113,12 +125,69 @@ router.get('/me', protect, async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        phone: user.phone || '',
+        location: user.location || 'Andhra Pradesh',
+        bio: user.bio || '',
+        avatar: user.avatar || '',
+        businessType: user.businessType || '',
+        following: user.following || [],
+        createdAt: user.createdAt
       }
     });
   } catch (error) {
     console.error('Fetch me error:', error.message);
     res.status(500).json({ message: 'Failed to fetch user profile.' });
+  }
+});
+
+// PUT /api/auth/profile - Update user profile fields
+router.put('/profile', protect, async (req, res) => {
+  try {
+    const { name, phone, location, bio, businessType } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    if (name !== undefined && typeof name === 'string' && name.trim()) {
+      user.name = name.trim();
+    }
+    if (phone !== undefined && typeof phone === 'string') {
+      user.phone = phone.trim();
+    }
+    if (location !== undefined && typeof location === 'string') {
+      user.location = location.trim();
+    }
+    if (bio !== undefined && typeof bio === 'string') {
+      user.bio = bio.trim();
+    }
+    if (businessType !== undefined && typeof businessType === 'string') {
+      user.businessType = businessType.trim();
+    }
+
+    await user.save();
+
+    res.json({
+      message: 'Profile updated successfully.',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone || '',
+        location: user.location || 'Andhra Pradesh',
+        bio: user.bio || '',
+        avatar: user.avatar || '',
+        businessType: user.businessType || '',
+        following: user.following || [],
+        createdAt: user.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Update profile error:', error.message);
+    res.status(500).json({ message: 'Failed to update profile.' });
   }
 });
 

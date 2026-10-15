@@ -22,7 +22,33 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['Farmer', 'Buyer'],
       required: true
-    }
+    },
+    phone: {
+      type: String,
+      default: ''
+    },
+    location: {
+      type: String,
+      default: 'Andhra Pradesh'
+    },
+    bio: {
+      type: String,
+      default: ''
+    },
+    avatar: {
+      type: String,
+      default: ''
+    },
+    businessType: {
+      type: String,
+      default: ''
+    },
+    following: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      }
+    ]
   },
   { timestamps: true }
 );

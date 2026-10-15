@@ -5,6 +5,10 @@ require('dotenv').config();
 const cropRoutes = require('./routes/crops');
 const authRoutes = require('./routes/auth');
 const enquiryRoutes = require('./routes/enquiries');
+const chatRoutes = require('./routes/chat');
+const farmerRoutes = require('./routes/farmers');
+const buyerRoutes = require('./routes/buyers');
+const weatherRoutes = require('./routes/weather');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -14,6 +18,10 @@ app.use(express.json());
 app.use('/api/crops', cropRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/enquiries', enquiryRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/farmers', farmerRoutes);
+app.use('/api/buyers', buyerRoutes);
+app.use('/api/weather', weatherRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({
