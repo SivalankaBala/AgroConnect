@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgMaize" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FAF7EB"/>
+      <stop offset="50%" stop-color="#F5ECCF"/>
+      <stop offset="100%" stop-color="#EADAA8"/>
+    </linearGradient>
+    <linearGradient id="cornKernels" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066"/>
+      <stop offset="50%" stop-color="#F5B718"/>
+      <stop offset="100%" stop-color="#C78403"/>
+    </linearGradient>
+    <linearGradient id="cornHusk" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#74C69D"/>
+      <stop offset="100%" stop-color="#2D6A4F"/>
+    </linearGradient>
+    <filter id="shadowMaize">
+      <feDropShadow dx="0" dy="12" stdDeviation="15" flood-color="#604010" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#bgMaize)"/>
+  <ellipse cx="200" cy="248" rx="135" ry="22" fill="#584010" opacity="0.12"/>
+  
+  <g filter="url(#shadowMaize)">
+    <!-- Husk Left Back -->
+    <path d="M180,260 C140,220 110,140 135,70 C145,105 165,180 185,255 Z" fill="url(#cornHusk)"/>
+    
+    <!-- Husk Right Back -->
+    <path d="M220,260 C260,220 290,140 265,70 C255,105 235,180 215,255 Z" fill="url(#cornHusk)"/>
+    
+    <!-- Main Corn Cob (Center) -->
+    <path d="M175,250 C165,180 168,110 200,60 C232,110 235,180 225,250 Z" fill="url(#cornKernels)"/>
+    
+    <!-- Corn Kernel Grids -->
+    <path d="M178,100 Q200,105 222,100" stroke="#BD7C02" stroke-width="2" fill="none"/>
+    <path d="M174,125 Q200,130 226,125" stroke="#BD7C02" stroke-width="2" fill="none"/>
+    <path d="M171,150 Q200,155 229,150" stroke="#BD7C02" stroke-width="2" fill="none"/>
+    <path d="M171,175 Q200,180 229,175" stroke="#BD7C02" stroke-width="2" fill="none"/>
+    <path d="M173,200 Q200,205 227,200" stroke="#BD7C02" stroke-width="2" fill="none"/>
+    <path d="M176,225 Q200,230 224,225" stroke="#BD7C02" stroke-width="2" fill="none"/>
+    <line x1="188" y1="80" x2="185" y2="245" stroke="#BD7C02" stroke-width="1.6"/>
+    <line x1="200" y1="65" x2="200" y2="250" stroke="#BD7C02" stroke-width="1.8"/>
+    <line x1="212" y1="80" x2="215" y2="245" stroke="#BD7C02" stroke-width="1.6"/>
+    
+    <!-- Husk Foreground Wraps -->
+    <path d="M165,260 C160,210 145,170 120,135 C150,165 170,210 185,265 Z" fill="#52B788"/>
+    <path d="M235,260 C240,210 255,170 280,135 C250,165 230,210 215,265 Z" fill="#52B788"/>
+    
+    <!-- Silk Strands at Top -->
+    <path d="M195,62 Q185,40 170,30" stroke="#A66804" stroke-width="1.5" fill="none"/>
+    <path d="M200,60 Q205,38 210,25" stroke="#A66804" stroke-width="1.5" fill="none"/>
+    <path d="M205,62 Q218,42 230,32" stroke="#A66804" stroke-width="1.5" fill="none"/>
+  </g>
+  
+  <g transform="translate(30, 32)">
+    <rect width="126" height="26" rx="13" fill="#1F4D36" fill-opacity="0.9"/>
+    <text x="63" y="17" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="0.5">SWEET MAIZE</text>
+  </g>
+</svg>

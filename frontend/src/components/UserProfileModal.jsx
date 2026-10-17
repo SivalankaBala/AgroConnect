@@ -21,6 +21,7 @@ import {
   Loader2
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
+import { apiUrl } from "../config/api";
 
 export default function UserProfileModal({
   isOpen,
@@ -79,7 +80,7 @@ export default function UserProfileModal({
     }
 
     try {
-      const res = await fetch("/api/auth/profile", {
+      const res = await fetch(apiUrl("/api/auth/profile"), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

@@ -9,6 +9,7 @@ import {
   CheckCheck
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
+import { apiUrl } from "../config/api";
 
 export function DirectChatModal({
   currentUser,
@@ -36,7 +37,7 @@ export function DirectChatModal({
   const fetchConversations = useCallback(async () => {
     if (!token) return;
     try {
-      const res = await fetch("/api/chat/conversations", {
+      const res = await fetch(apiUrl("/api/chat/conversations"), {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -63,7 +64,7 @@ export function DirectChatModal({
   const fetchMessages = useCallback(async (convId) => {
     if (!token || !convId) return;
     try {
-      const res = await fetch(`/api/chat/messages/${convId}`, {
+      const res = await fetch(apiUrl(`/api/chat/messages/${convId}`), {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -117,7 +118,7 @@ export function DirectChatModal({
         cropId: targetCrop ? (targetCrop._id || targetCrop.id) : undefined
       };
 
-      const res = await fetch("/api/chat/messages", {
+      const res = await fetch(apiUrl("/api/chat/messages"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

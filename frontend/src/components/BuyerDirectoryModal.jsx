@@ -11,6 +11,7 @@ import {
   Calendar
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
+import { apiUrl } from "../config/api";
 
 export function BuyerDirectoryModal({
   currentUser,
@@ -29,7 +30,7 @@ export function BuyerDirectoryModal({
       setLoading(true);
       const params = new URLSearchParams();
       if (search.trim()) params.append("search", search.trim());
-      const res = await fetch(`/api/buyers?${params.toString()}`);
+      const res = await fetch(apiUrl(`/api/buyers?${params.toString()}`));
       if (res.ok) {
         const data = await res.json();
         setBuyers(data || []);

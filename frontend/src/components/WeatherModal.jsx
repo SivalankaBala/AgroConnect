@@ -11,6 +11,7 @@ import {
   Info
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
+import { apiUrl } from "../config/api";
 
 const SUPPORTED_LOCATIONS = [
   "Tuni",
@@ -38,7 +39,7 @@ export function WeatherModal({ onClose }) {
     try {
       setLoading(true);
       setError("");
-      const res = await fetch(`/api/weather?location=${encodeURIComponent(loc)}`);
+      const res = await fetch(apiUrl(`/api/weather?location=${encodeURIComponent(loc)}`));
       if (!res.ok) {
         throw new Error("Could not fetch meteorological data.");
       }

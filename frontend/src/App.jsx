@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import {
   Home,
   Sprout,
@@ -26,7 +26,9 @@ import {
   Store,
   Scale,
   Eye,
-  LogOut
+  LogOut,
+  Sun,
+  Moon
 } from "lucide-react";
 import "./App.css";
 import { useLanguage } from "./context/LanguageContext";
@@ -41,8 +43,47 @@ import ProductDetailsModal from "./components/ProductDetailsModal";
 import UserProfileModal from "./components/UserProfileModal";
 import MobileBottomNav from "./components/MobileBottomNav";
 import LocationSelector from "./components/LocationSelector";
+import { apiUrl } from "./config/api";
 
-const PRESET_LOCATIONS = ["All", "B  himavaram", "Anakapalli", "Kakinada", "Rajahmundry", "East Godavari"];
+const PRESET_LOCATIONS = ["All", "Bhimavaram", "Anakapalli", "Kakinada", "Rajahmundry", "East Godavari"];
+
+function getCropPhotoUrl(crop) {
+  if (crop?.image && typeof crop.image === "string" && (crop.image.startsWith("http") || crop.image.startsWith("data:") || crop.image.startsWith("/"))) {
+    return crop.image;
+  }
+  const lower = ((crop?.name || "") + " " + (crop?.category || "")).toLowerCase();
+  if (lower.includes("chilli") || lower.includes("mirchi") || lower.includes("మిరప") || lower.includes("మిర్చి") || lower.includes("मिर्च")) {
+    return "/crops/chillies.svg";
+  }
+  if (lower.includes("carrot") || lower.includes("క్యారెట్") || lower.includes("गाजर")) {
+    return "/crops/carrots.svg";
+  }
+  if (lower.includes("mustard") || lower.includes("ఆవాలు") || lower.includes("सरसों")) {
+    return "/crops/mustard.svg";
+  }
+  if (lower.includes("wheat") || lower.includes("గోధుమ") || lower.includes("गेहूं")) {
+    return "/crops/wheat.svg";
+  }
+  if (lower.includes("rice") || lower.includes("paddy") || lower.includes("వరి") || lower.includes("బియ్యం") || lower.includes("धान") || lower.includes("चावल")) {
+    return "/crops/rice.svg";
+  }
+  if (lower.includes("tomato") || lower.includes("టమోటా") || lower.includes("టమాట") || lower.includes("टमाटर")) {
+    return "/crops/tomatoes.svg";
+  }
+  if (lower.includes("maize") || lower.includes("corn") || lower.includes("మొక్కజొన్న") || lower.includes("मक्का")) {
+    return "/crops/maize.svg";
+  }
+  if (lower.includes("groundnut") || lower.includes("peanut") || lower.includes("వేరుశనగ") || lower.includes("పల్లీ") || lower.includes("मूंगफली")) {
+    return "/crops/groundnut.svg";
+  }
+  if (lower.includes("spice") || lower.includes("masala") || lower.includes("turmeric") || lower.includes("పసుపు") || lower.includes("हल्दी")) {
+    return "/crops/chillies.svg";
+  }
+  if (lower.includes("veg") || lower.includes("కూరగాయలు") || lower.includes("సబ్జీ")) {
+    return "/crops/carrots.svg";
+  }
+  return "/crops/default.svg";
+}
 
 function getCropVisualTheme(name = "", category = "") {
   const lower = name.toLowerCase();
@@ -93,7 +134,7 @@ function formatEnquiryDate(dateStr, lang) {
 }
 
 function App() {
-  const { language, t, getCropDisplayTag } = useLanguage();
+  const { language, t } = useLanguage();
 
   const [crops, setCrops] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -117,6 +158,38 @@ function App() {
     }
   });
 
+  const currentUserRef = useRef(currentUser);
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
+
+  // Dark mode theme state
+  const [darkMode, setDarkMode] = useState(() => {
+    try {
+      const stored = localStorage.getItem("agroconnectTheme");
+      if (stored) return stored === "dark";
+      return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      if (darkMode) {
+        document.documentElement.setAttribute("data-theme", "dark");
+        document.body.classList.add("dark-theme");
+        localStorage.setItem("agroconnectTheme", "dark");
+      } else {
+        document.documentElement.removeAttribute("data-theme");
+        document.body.classList.remove("dark-theme");
+        localStorage.setItem("agroconnectTheme", "light");
+      }
+    } catch {
+      // ignore
+    }
+  }, [darkMode]);
+
   // Crop creation form state
   const [listing, setListing] = useState({
     name: "",
@@ -138,6 +211,43 @@ function App() {
     password: "",
     role: "Farmer"
   });
+  const [authModalKey, setAuthModalKey] = useState(0);
+  const [formReady, setFormReady] = useState(false);
+
+  const openLoginModal = useCallback((role = "Buyer") => {
+    setAccount({ name: "", email: "", password: "", role });
+    setAuthModalKey((k) => k + 1);
+    setFormReady(false);
+    setModal("login");
+  }, []);
+
+  const openRegisterModal = useCallback((role = "Farmer") => {
+    setAccount({ name: "", email: "", password: "", role });
+    setAuthModalKey((k) => k + 1);
+    setFormReady(false);
+    setModal("register");
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setModal("");
+    setAccount({ name: "", email: "", password: "", role: "Farmer" });
+    setFormReady(false);
+  }, []);
+
+  // Ensure login/register credentials do not linger in state when auth modal is closed
+  useEffect(() => {
+    if (!modal) {
+      setAccount({ name: "", email: "", password: "", role: "Farmer" });
+      setFormReady(false);
+    } else if (modal === "login" || modal === "register") {
+      setAccount((prev) => ({ ...prev, email: "", password: "" }));
+      const timer = setTimeout(() => {
+        setFormReady(true);
+        setAccount((prev) => ({ ...prev, email: "", password: "" }));
+      }, 80);
+      return () => clearTimeout(timer);
+    }
+  }, [modal]);
 
   // Farmer Dashboard states
   const [dashboardListings, setDashboardListings] = useState([]);
@@ -204,7 +314,10 @@ function App() {
       const user = stored ? JSON.parse(stored) : null;
       const hash = window.location.hash.toLowerCase();
 
-      if (!user) return "home";
+      if (!user) {
+        if (hash === "#home" || hash === "#how-it-works") return "home";
+        return "marketplace";
+      }
       if (user.role === "Farmer") {
         if (hash === "#farmers") return "farmers";
         return "farmer-dashboard";
@@ -216,7 +329,7 @@ function App() {
     } catch {
       // ignore
     }
-    return "home";
+    return "marketplace";
   });
 
   // Farmer discovery data
@@ -228,7 +341,7 @@ function App() {
   const fetchFarmersList = useCallback(async () => {
     try {
       setFarmersLoading(true);
-      const res = await fetch("/api/farmers");
+      const res = await fetch(apiUrl("/api/farmers"));
       if (res.ok) {
         const data = await res.json();
         const list = Array.isArray(data) ? data : [];
@@ -251,8 +364,8 @@ function App() {
     try {
       const headers = { Authorization: `Bearer ${token}` };
       const [listingsRes, enquiriesRes] = await Promise.all([
-        fetch("/api/crops/my-listings", { headers }),
-        fetch("/api/enquiries/farmer", { headers })
+        fetch(apiUrl("/api/crops/my-listings"), { headers }),
+        fetch(apiUrl("/api/enquiries/farmer"), { headers })
       ]);
 
       if (listingsRes.ok && enquiriesRes.ok) {
@@ -278,7 +391,7 @@ function App() {
     setBuyerLoading(true);
     setBuyerError("");
     try {
-      const res = await fetch("/api/enquiries/my-enquiries", {
+      const res = await fetch(apiUrl("/api/enquiries/my-enquiries"), {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -314,43 +427,62 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [fetchFarmerDashboardData]);
 
-  const navigateToMarketplace = useCallback(() => {
-    if (!currentUser) {
-      triggerNotice(t("notices.loginToExploreMarketplace"), "info");
-      setAccount({ name: "", email: "", password: "", role: "Buyer" });
-      setModal("login");
-      return;
+  const resolveActiveUser = useCallback((userOverride) => {
+    // If userOverride is a DOM or React event (e.g. from an onClick handler), ignore it
+    if (
+      userOverride &&
+      (userOverride.nativeEvent ||
+        typeof userOverride.preventDefault === "function" ||
+        userOverride.target)
+    ) {
+      userOverride = undefined;
     }
-    if (currentUser.role === "Farmer") {
+    if (userOverride && typeof userOverride === "object" && userOverride.role) {
+      return userOverride;
+    }
+    if (currentUserRef.current) return currentUserRef.current;
+    if (currentUser) return currentUser;
+    try {
+      const stored = sessionStorage.getItem("agroconnectUser");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  }, [currentUser]);
+
+  const navigateToMarketplace = useCallback((userOverride) => {
+    const activeUser = resolveActiveUser(userOverride);
+    if (activeUser?.role === "Farmer") {
       triggerNotice(t("notices.buyerOnlyArea"), "info");
       goToFarmerDashboard();
       return;
     }
     goToMarketplace();
-  }, [currentUser, t, goToFarmerDashboard, goToMarketplace]);
+  }, [resolveActiveUser, t, goToFarmerDashboard, goToMarketplace]);
 
-  const navigateToFarmerDashboard = useCallback(() => {
-    if (!currentUser) {
+  const navigateToFarmerDashboard = useCallback((userOverride) => {
+    const activeUser = resolveActiveUser(userOverride);
+    if (!activeUser) {
       triggerNotice(t("notices.loginToAccess"), "info");
-      setAccount({ name: "", email: "", password: "", role: "Farmer" });
-      setModal("login");
+      openLoginModal("Farmer");
       return;
     }
-    if (currentUser.role !== "Farmer") {
+    if (activeUser.role !== "Farmer") {
       triggerNotice(t("notices.farmerOnlyArea"), "info");
       goToMarketplace();
       return;
     }
     goToFarmerDashboard();
-  }, [currentUser, t, goToFarmerDashboard, goToMarketplace]);
+  }, [resolveActiveUser, t, goToFarmerDashboard, goToMarketplace, openLoginModal]);
 
   const navigateToHome = useCallback(() => {
-    if (currentUser?.role === "Buyer") {
-      navigateToMarketplace();
+    const activeUser = resolveActiveUser();
+    if (activeUser?.role === "Buyer") {
+      navigateToMarketplace(activeUser);
       return;
     }
-    if (currentUser?.role === "Farmer") {
-      navigateToFarmerDashboard();
+    if (activeUser?.role === "Farmer") {
+      navigateToFarmerDashboard(activeUser);
       return;
     }
     setCurrentView("home");
@@ -359,18 +491,22 @@ function App() {
       window.location.hash = "home";
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [currentUser, navigateToMarketplace, navigateToFarmerDashboard]);
+  }, [resolveActiveUser, navigateToMarketplace, navigateToFarmerDashboard]);
 
-  const navigateToBuyerDashboard = useCallback(() => {
-    if (!currentUser) {
+  const navigateToBuyerDashboard = useCallback((userOverride) => {
+    const activeUser = resolveActiveUser(userOverride);
+    if (!activeUser) {
       triggerNotice(t("notices.loginToAccess"), "info");
-      setAccount({ name: "", email: "", password: "", role: "Buyer" });
-      setModal("login");
+      openLoginModal("Buyer");
       return;
     }
-    if (currentUser.role !== "Buyer") {
+    if (activeUser.role !== "Buyer") {
       triggerNotice(t("notices.buyerOnlyArea"), "info");
-      navigateToFarmerDashboard();
+      if (activeUser.role === "Farmer") {
+        goToFarmerDashboard();
+      } else {
+        goToMarketplace();
+      }
       return;
     }
     setCurrentView("buyer-dashboard");
@@ -380,12 +516,13 @@ function App() {
     }
     fetchBuyerEnquiries();
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [currentUser, t, fetchBuyerEnquiries, navigateToFarmerDashboard]);
+  }, [resolveActiveUser, t, goToFarmerDashboard, goToMarketplace, fetchBuyerEnquiries, openLoginModal]);
 
-  const navigateToFarmerDiscovery = useCallback(() => {
-    if (!currentUser || currentUser.role !== "Farmer") {
+  const navigateToFarmerDiscovery = useCallback((userOverride) => {
+    const activeUser = resolveActiveUser(userOverride);
+    if (!activeUser || activeUser.role !== "Farmer") {
       triggerNotice(t("notices.farmerOnlyArea"), "info");
-      if (currentUser?.role === "Buyer") navigateToMarketplace();
+      if (activeUser?.role === "Buyer") goToMarketplace();
       else navigateToHome();
       return;
     }
@@ -396,23 +533,22 @@ function App() {
     }
     fetchFarmersList();
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [currentUser, t, fetchFarmersList, navigateToMarketplace, navigateToHome]);
+  }, [resolveActiveUser, t, fetchFarmersList, goToMarketplace, navigateToHome]);
 
   const handleJoinRole = useCallback((role) => {
-    setAccount((prev) => ({ ...prev, role }));
-    setModal("register");
-  }, []);
+    openRegisterModal(role);
+  }, [openRegisterModal]);
 
   const openListingModal = useCallback(() => {
     const token = sessionStorage.getItem("agroconnectToken");
-    if (!token || !currentUser) {
+    const activeUser = currentUserRef.current || currentUser;
+    if (!token || !activeUser) {
       triggerNotice(t("notices.loginAsFarmerToList"), "info");
-      setAccount({ name: "", email: "", password: "", role: "Farmer" });
-      setModal("register");
+      openRegisterModal("Farmer");
       return;
     }
 
-    if (currentUser.role !== "Farmer") {
+    if (activeUser.role !== "Farmer") {
       triggerNotice(t("notices.buyerCannotList"), "error");
       return;
     }
@@ -427,19 +563,26 @@ function App() {
       description: ""
     });
     setModal("listing");
-  }, [currentUser, t]);
+  }, [currentUser, t, openRegisterModal]);
 
   // Synchronize route and enforce role access on hash changes
   useEffect(() => {
     const syncRouteFromHash = () => {
       const hash = window.location.hash.toLowerCase();
+      const activeUser = currentUserRef.current || currentUser || (() => {
+        try {
+          const stored = sessionStorage.getItem("agroconnectUser");
+          return stored ? JSON.parse(stored) : null;
+        } catch {
+          return null;
+        }
+      })();
 
-      if (!currentUser) {
+      if (!activeUser) {
         // GUEST RULES: only #home and #how-it-works permitted
         if (hash === "#marketplace" || hash === "#buyer-dashboard" || hash === "#farmer-dashboard" || hash === "#list-crop" || hash === "#farmers" || hash === "#profile") {
           triggerNotice(t("notices.loginToExploreMarketplace"), "info");
-          setAccount({ name: "", email: "", password: "", role: "Buyer" });
-          setModal("login");
+          openLoginModal("Buyer");
           setCurrentView("home");
           setMobileNavActive("home");
           window.history.replaceState(null, "", "#home");
@@ -450,7 +593,7 @@ function App() {
         return;
       }
 
-      if (currentUser.role === "Buyer") {
+      if (activeUser.role === "Buyer") {
         // BUYER RULES: only #marketplace, #buyer-dashboard, #profile permitted
         if (hash === "#buyer-dashboard") {
           setCurrentView("buyer-dashboard");
@@ -475,7 +618,7 @@ function App() {
         return;
       }
 
-      if (currentUser.role === "Farmer") {
+      if (activeUser.role === "Farmer") {
         // FARMER RULES: only #farmer-dashboard, #farmers, #list-crop, #profile permitted
         if (hash === "#farmers") {
           setCurrentView("farmers");
@@ -508,7 +651,7 @@ function App() {
     syncRouteFromHash();
     window.addEventListener("hashchange", syncRouteFromHash);
     return () => window.removeEventListener("hashchange", syncRouteFromHash);
-  }, [currentUser, t, fetchBuyerEnquiries, fetchFarmerDashboardData, fetchFarmersList, openListingModal]);
+  }, [currentUser, t, fetchBuyerEnquiries, fetchFarmerDashboardData, fetchFarmersList, openListingModal, openLoginModal]);
 
   // Enquiry quick message templates
   const [enquiryMessage, setEnquiryMessage] = useState("");
@@ -535,7 +678,7 @@ function App() {
       return;
     }
     try {
-      const res = await fetch("/api/chat/conversations", {
+      const res = await fetch(apiUrl("/api/chat/conversations"), {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -553,8 +696,7 @@ function App() {
   const handleStartChat = (recipient, crop = null) => {
     if (!currentUser) {
       triggerNotice(t("chat.loginRequired") || "Please sign in to start chatting.", "info");
-      setAccount({ name: "", email: "", password: "", role: "Buyer" });
-      setModal("login");
+      openLoginModal("Buyer");
       return;
     }
     setChatRecipient(recipient);
@@ -599,8 +741,7 @@ function App() {
       if (currentUser) {
         setUserProfileModalOpen(true);
       } else {
-        setAccount({ name: "", email: "", password: "", role: "Buyer" });
-        setModal("login");
+        openLoginModal("Buyer");
       }
     }
   };
@@ -650,16 +791,18 @@ function App() {
     if (!token) return;
 
     try {
-      const res = await fetch("/api/auth/me", {
+      const res = await fetch(apiUrl("/api/auth/me"), {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
+        currentUserRef.current = data.user;
         setCurrentUser(data.user);
         sessionStorage.setItem("agroconnectUser", JSON.stringify(data.user));
       } else {
         sessionStorage.removeItem("agroconnectToken");
         sessionStorage.removeItem("agroconnectUser");
+        currentUserRef.current = null;
         setCurrentUser(null);
       }
     } catch (err) {
@@ -671,7 +814,7 @@ function App() {
     try {
       setLoading(true);
       setCropsError("");
-      const res = await fetch("/api/crops");
+      const res = await fetch(apiUrl("/api/crops"));
       if (!res.ok) throw new Error("Failed to fetch crops from server");
       const data = await res.json();
       setCrops(Array.isArray(data) ? data : []);
@@ -739,25 +882,50 @@ function App() {
   function handleLogout() {
     sessionStorage.removeItem("agroconnectToken");
     sessionStorage.removeItem("agroconnectUser");
+    currentUserRef.current = null;
     setCurrentUser(null);
+    setAccount({ name: "", email: "", password: "", role: "Farmer" });
     setDashboardListings([]);
     setDashboardEnquiries([]);
     setBuyerEnquiries([]);
-    triggerNotice(t("notices.loggedOut"), "success");
+    setBuyerError("");
+    setChatRecipient(null);
+    setChatCrop(null);
+    setUnreadChatCount(0);
+    setEnquiryMessage("");
+    setSelectedCrop(null);
+    setEditingCrop(null);
+    setListing({
+      name: "",
+      category: "Grains",
+      price: "",
+      unit: "kg",
+      quantity: "",
+      location: "",
+      description: ""
+    });
     setModal("");
     setUserProfileModalOpen(false);
+    setFarmerProfileModalOpen(false);
+    setBuyerDirectoryModalOpen(false);
+    setProductDetailsModalOpen(false);
+    setWeatherModalOpen(false);
+    setChatModalOpen(false);
     setCurrentView("home");
     setMobileNavActive("home");
-    window.location.hash = "home";
+    if (window.location.hash !== "#home") {
+      window.location.hash = "home";
+    }
+    window.history.replaceState(null, "", "#home");
     window.scrollTo({ top: 0, behavior: "smooth" });
+    triggerNotice(t("notices.loggedOut"), "success");
   }
 
   function showEnquiry(crop) {
     const token = sessionStorage.getItem("agroconnectToken");
     if (!token || !currentUser) {
       triggerNotice(t("notices.loginAsBuyerForEnquiry"), "info");
-      setAccount({ name: "", email: "", password: "", role: "Buyer" });
-      setModal("login");
+      openLoginModal("Buyer");
       return;
     }
 
@@ -793,7 +961,7 @@ function App() {
         description: listing.description ? listing.description.trim() : ""
       };
 
-      const res = await fetch("/api/crops", {
+      const res = await fetch(apiUrl("/api/crops"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -860,7 +1028,7 @@ function App() {
         description: editingCrop.description ? editingCrop.description.trim() : ""
       };
 
-      const res = await fetch(`/api/crops/${editingCrop._id}`, {
+      const res = await fetch(apiUrl(`/api/crops/${editingCrop._id}`), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -896,7 +1064,7 @@ function App() {
 
     try {
       const token = sessionStorage.getItem("agroconnectToken");
-      const res = await fetch(`/api/crops/${cropId}`, {
+      const res = await fetch(apiUrl(`/api/crops/${cropId}`), {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -938,7 +1106,7 @@ function App() {
           password: account.password
         };
 
-      const res = await fetch(endpoint, {
+      const res = await fetch(apiUrl(endpoint), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -952,6 +1120,7 @@ function App() {
 
       sessionStorage.setItem("agroconnectToken", data.token);
       sessionStorage.setItem("agroconnectUser", JSON.stringify(data.user));
+      currentUserRef.current = data.user;
       setCurrentUser(data.user);
 
       const translatedRole = t(`nav.role${data.user.role}`) || data.user.role;
@@ -964,12 +1133,13 @@ function App() {
       setAccount({ name: "", email: "", password: "", role: "Farmer" });
 
       if (data.user.role === "Farmer") {
-        navigateToFarmerDashboard();
+        goToFarmerDashboard();
       } else {
-        navigateToMarketplace();
+        goToMarketplace();
       }
     } catch (error) {
       triggerNotice(error.message || t("notices.authFailed"), "error");
+      setAccount((prev) => ({ ...prev, password: "" }));
     }
   }
 
@@ -980,7 +1150,7 @@ function App() {
 
     if (!token || !currentUser) {
       triggerNotice(t("notices.loginAsBuyerForEnquiry"), "info");
-      setModal("login");
+      openLoginModal("Buyer");
       return;
     }
 
@@ -1001,7 +1171,7 @@ Phone/Contact: ${contact}
 Message: ${messageText}`;
 
     try {
-      const res = await fetch("/api/enquiries", {
+      const res = await fetch(apiUrl("/api/enquiries"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1036,8 +1206,7 @@ Message: ${messageText}`;
 
     if (!token || !currentUser) {
       triggerNotice(t("notices.loginForFarmerDash"), "info");
-      setAccount({ name: "", email: "", password: "", role: "Farmer" });
-      setModal("login");
+      openLoginModal("Farmer");
       return;
     }
 
@@ -1054,8 +1223,7 @@ Message: ${messageText}`;
 
     if (!token || !currentUser) {
       triggerNotice(t("notices.loginForBuyerDash"), "info");
-      setAccount({ name: "", email: "", password: "", role: "Buyer" });
-      setModal("login");
+      openLoginModal("Buyer");
       return;
     }
 
@@ -1071,7 +1239,7 @@ Message: ${messageText}`;
     const token = sessionStorage.getItem("agroconnectToken");
 
     try {
-      const res = await fetch(`/api/enquiries/${enquiryId}/status`, {
+      const res = await fetch(apiUrl(`/api/enquiries/${enquiryId}/status`), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -1128,21 +1296,7 @@ Message: ${messageText}`;
         </div>
       )}
 
-      {/* TOP REGIONAL BANNER */}
-      <div className="top-regional-banner">
-        <div className="banner-inner">
-          <div className="banner-left">
-            <span className="regional-tag">🌾 {t("banner.regionalTag")}</span>
-            <span className="banner-sep">|</span>
-            <span className="banner-subtext">{t("banner.subtext")}</span>
-          </div>
-          <div className="banner-right">
-            <span className="location-pill">📍 {t("banner.locationPill")}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* NAVIGATION BAR */}
+      {/* SINGLE CLEAN NAVBAR (White/Cream bar, logo left, nav center, user & lang right) */}
       <nav className="main-navbar">
         <div className="navbar-container">
           <a
@@ -1171,8 +1325,16 @@ Message: ${messageText}`;
               <>
                 <button
                   type="button"
+                  className={`nav-link-btn ${currentView === "marketplace" ? "active" : ""}`}
+                  onClick={goToMarketplace}
+                >
+                  <Store size={16} />
+                  <span>{t("nav.freshHarvests") || "Marketplace"}</span>
+                </button>
+                <button
+                  type="button"
                   className={`nav-link-btn ${currentView === "home" ? "active" : ""}`}
-                  onClick={navigateToHome}
+                  onClick={() => navigateToHome()}
                 >
                   <Home size={16} />
                   <span>{t("nav.home") || "Home"}</span>
@@ -1196,7 +1358,7 @@ Message: ${messageText}`;
                 <button
                   type="button"
                   className={`nav-link-btn ${currentView === "marketplace" ? "active" : ""}`}
-                  onClick={navigateToMarketplace}
+                  onClick={() => navigateToMarketplace()}
                 >
                   <Store size={16} />
                   <span>{t("nav.freshHarvests") || "Fresh Harvests"}</span>
@@ -1204,7 +1366,7 @@ Message: ${messageText}`;
                 <button
                   type="button"
                   className={`nav-link-btn ${currentView === "buyer-dashboard" ? "active" : ""}`}
-                  onClick={navigateToBuyerDashboard}
+                  onClick={() => navigateToBuyerDashboard()}
                 >
                   <ShoppingCart size={16} />
                   <span>{t("nav.buyerDashboard") || "Buyer Dashboard"}</span>
@@ -1225,7 +1387,7 @@ Message: ${messageText}`;
                 <button
                   type="button"
                   className={`nav-link-btn ${currentView === "farmers" ? "active" : ""}`}
-                  onClick={navigateToFarmerDiscovery}
+                  onClick={() => navigateToFarmerDiscovery()}
                 >
                   <Tractor size={16} />
                   <span>{t("nav.farmers") || "Farmer Discovery"}</span>
@@ -1233,7 +1395,7 @@ Message: ${messageText}`;
                 <button
                   type="button"
                   className={`nav-link-btn ${currentView === "farmer-dashboard" ? "active" : ""}`}
-                  onClick={navigateToFarmerDashboard}
+                  onClick={() => navigateToFarmerDashboard()}
                 >
                   <Layers size={16} />
                   <span>{t("nav.farmerDashboard") || "Farmer Dashboard"}</span>
@@ -1257,7 +1419,7 @@ Message: ${messageText}`;
                     {currentUser.role === "Farmer" ? "🧑‍🌾" : "🛒"}
                   </div>
                   <div className="profile-info">
-                    <span className="profile-name">{currentUser.name}</span>
+                    <span className="profile-name">{currentUser.name || currentUser.username || currentUser.email?.split("@")[0] || "User"}</span>
                     <span className="profile-role">
                       {t(`nav.role${currentUser.role}`) || currentUser.role}
                     </span>
@@ -1273,20 +1435,14 @@ Message: ${messageText}`;
               <div className="guest-action-cluster">
                 <button
                   className="btn-text-login"
-                  onClick={() => {
-                    setAccount({ name: "", email: "", password: "", role: "Buyer" });
-                    setModal("login");
-                  }}
+                  onClick={() => openLoginModal("Buyer")}
                 >
                   <User size={16} />
                   <span>{t("nav.logIn")}</span>
                 </button>
                 <button
                   className="btn-register-highlight"
-                  onClick={() => {
-                    setAccount({ name: "", email: "", password: "", role: "Farmer" });
-                    setModal("register");
-                  }}
+                  onClick={() => openRegisterModal("Farmer")}
                 >
                   <Sparkles size={16} />
                   <span>{t("nav.joinAgroConnect")}</span>
@@ -1294,13 +1450,24 @@ Message: ${messageText}`;
               </div>
             )}
 
+            {/* DARK MODE THEME TOGGLE */}
+            <button
+              type="button"
+              className="btn-theme-toggle"
+              onClick={() => setDarkMode(!darkMode)}
+              title={darkMode ? "Switch to Warm Cream Light Mode" : "Switch to Dark Earth Mode"}
+              aria-label="Toggle theme"
+            >
+              {darkMode ? <Sun size={17} className="theme-icon-sun" /> : <Moon size={17} className="theme-icon-moon" />}
+            </button>
+
             {/* TOP-RIGHT LANGUAGE SELECTOR */}
             <LanguageSelector />
           </div>
         </div>
       </nav>
 
-      {!currentUser ? (
+      {(!currentUser || currentView === "home") ? (
         <>
           {/* SECTION 1: DIRECT FARM MARKETPLACE FOR HARDWORKING FARMERS & SMART BUYERS */}
           <header className="hero-section" id="home">
@@ -1330,7 +1497,7 @@ Message: ${messageText}`;
                 <button
                   type="button"
                   className="btn-hero-primary"
-                  onClick={navigateToMarketplace}
+                  onClick={() => navigateToMarketplace()}
                 >
                   <Store size={19} />
                   <span>{t("hero.exploreMarketplace")}</span>
@@ -1410,8 +1577,8 @@ Message: ${messageText}`;
             </div>
           </section>
         </>
-      ) : currentUser.role === "Buyer" ? (
-        currentView === "buyer-dashboard" ? (
+      ) : (!currentUser || currentUser.role === "Buyer") ? (
+        currentView === "buyer-dashboard" && currentUser ? (
           <main className="dashboard-page-view" id="buyer-dashboard">
             <div className="section-container">
               <div className="dashboard-top-header">
@@ -1425,7 +1592,7 @@ Message: ${messageText}`;
                     <RefreshCw size={15} />
                     <span>{t("buyerDashboard.refresh")}</span>
                   </button>
-                  <button className="btn-dashboard-add" onClick={navigateToMarketplace}>
+                  <button className="btn-dashboard-add" onClick={() => navigateToMarketplace()}>
                     <Store size={16} />
                     <span>{t("buyerDashboard.browseMoreCrops")}</span>
                   </button>
@@ -1501,7 +1668,7 @@ Message: ${messageText}`;
                         <p>{t("buyerDashboard.emptyDesc")}</p>
                         <button
                           className="btn-modal-submit green"
-                          onClick={navigateToMarketplace}
+                          onClick={() => navigateToMarketplace()}
                         >
                           <span>{t("buyerDashboard.exploreBtn")}</span>
                         </button>
@@ -1562,97 +1729,110 @@ Message: ${messageText}`;
           /* MARKETPLACE SECTION */
           <main className="marketplace-section" id="marketplace">
             <div className="section-container">
-              <div className="marketplace-header-row">
-                <div>
-                  <div className="market-badge">
-                    <Store size={15} />
-                    <span>{t("marketplace.badge")}</span>
+              {/* HERO AREA (Large friendly heading & prominent search bar) */}
+              <div className="marketplace-hero-area">
+                <h1 className="marketplace-main-title">
+                  Fresh from the farm to your business
+                </h1>
+                <p className="marketplace-main-subtitle">
+                  {t("marketplace.subtitle") || "Directly sourced from verified regional growers in Andhra Pradesh. Zero middlemen."}
+                </p>
+
+                {/* PROMINENT SEARCH BAR (Rounded-full, soft warm shadow, search button in saffron) */}
+                <div className="prominent-search-bar">
+                  <div className="search-input-wrapper">
+                    <Search className="search-lead-icon" size={20} />
+                    <input
+                      type="text"
+                      className="prominent-search-input"
+                      placeholder={t("marketplace.searchPlaceholder") || "Search fresh crops (e.g. Paddy, Guntur Chillies, Sweet Corn, Tomatoes)..."}
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      aria-label="Search crops"
+                    />
+                    {search && (
+                      <button className="search-clear-action" onClick={() => setSearch("")} aria-label="Clear search">
+                        <X size={16} />
+                      </button>
+                    )}
                   </div>
-                  <h2>{t("marketplace.title")}</h2>
-                  <p>{t("marketplace.subtitle")}</p>
+                  <button type="button" className="btn-search-saffron" aria-label="Search button">
+                    <Search size={16} />
+                    <span>Search</span>
+                  </button>
                 </div>
               </div>
 
-              {/* SEARCH & FILTERS BAR */}
-              <div className="filter-panel-card">
-                <div className="search-input-group">
-                  <Search className="search-icon-inside" size={20} />
-                  <input
-                    type="text"
-                    className="search-field"
-                    placeholder={t("marketplace.searchPlaceholder")}
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    aria-label="Search crops"
-                  />
-                  {search && (
-                    <button className="search-clear-btn" onClick={() => setSearch("")} aria-label="Clear search">
-                      <X size={16} />
-                    </button>
-                  )}
-                </div>
-
-                {/* ROW 2: LOCATION, SORT & CROP COUNT */}
-                <div className="filter-controls-row">
-                  <LocationSelector
-                    value={locationFilter}
-                    onChange={setLocationFilter}
-                    availableLocations={availableLocations}
-                    t={t}
-                  />
-
-                  <div className="filter-control-item sort-control-item">
-                    <SlidersHorizontal size={15} className="control-icon" />
-                    <label htmlFor="sortSelect">{t("marketplace.sortByLabel")}</label>
-                    <select
-                      id="sortSelect"
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="control-select"
-                    >
-                      <option value="featured">{t("marketplace.sortFeatured")}</option>
-                      <option value="price-asc">{t("marketplace.sortPriceAsc")}</option>
-                      <option value="price-desc">{t("marketplace.sortPriceDesc")}</option>
-                      <option value="qty-desc">{t("marketplace.sortQtyDesc")}</option>
-                    </select>
-                  </div>
-
-                  <div className="results-counter-pill">
-                    <strong>{filteredCrops.length}</strong> {t("marketplace.cropsAvailable")}
-                  </div>
-                </div>
-
-                {/* ROW 3: CATEGORY TABS */}
-                <div className="category-chips-row" role="tablist">
+              {/* FILTERS AREA: Horizontal pills for categories, location/sort dropdowns on same row, plain muted text count */}
+              <div className="marketplace-filter-section">
+                {/* CATEGORY PILL CHIPS */}
+                <div className="category-pill-track" role="tablist">
                   {categories.map((cat) => (
                     <button
                       key={cat.id}
-                      className={`category-chip-btn ${category === cat.id ? "active" : ""}`}
+                      className={`filter-pill-chip ${category === cat.id ? "active" : ""}`}
                       onClick={() => setCategory(cat.id)}
                       role="tab"
                       aria-selected={category === cat.id}
                     >
-                      <span className="cat-icon">{cat.icon}</span>
-                      <span className="cat-label">{cat.label}</span>
+                      <span className="pill-icon">{cat.icon}</span>
+                      <span className="pill-text">{cat.label}</span>
                     </button>
                   ))}
+                </div>
+
+                {/* COMPACT CONTROLS ROW */}
+                <div className="compact-filter-row">
+                  <div className="dropdowns-group">
+                    <LocationSelector
+                      value={locationFilter}
+                      onChange={setLocationFilter}
+                      availableLocations={availableLocations}
+                      t={t}
+                    />
+
+                    <div className="compact-sort-dropdown">
+                      <SlidersHorizontal size={14} className="control-icon" />
+                      <select
+                        id="sortSelect"
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="sort-dropdown-select"
+                        aria-label={t("marketplace.sortByLabel")}
+                      >
+                        <option value="featured">{t("marketplace.sortFeatured")}</option>
+                        <option value="price-asc">{t("marketplace.sortPriceAsc")}</option>
+                        <option value="price-desc">{t("marketplace.sortPriceDesc")}</option>
+                        <option value="qty-desc">{t("marketplace.sortQtyDesc")}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Plain muted count text, not a boxed badge */}
+                  <div className="plain-crop-count">
+                    <span>{filteredCrops.length} {t("marketplace.cropsAvailable") || "crops available"}</span>
+                  </div>
                 </div>
               </div>
 
               {/* CROPS GRID */}
               {loading ? (
-                <div className="state-box loading-box">
-                  <div className="inpage-loading-emblem">
-                    <div className="inpage-loading-pulse" />
-                    <div className="inpage-icon-box">
-                      <Sprout size={32} className="inpage-sprout-icon" />
+                <div className="crops-grid">
+                  {[1, 2, 3, 4].map((item) => (
+                    <div className="crop-card-skeleton" key={item}>
+                      <div className="skeleton-photo-box" />
+                      <div className="skeleton-content-box">
+                        <div className="skeleton-bar skeleton-title" />
+                        <div className="skeleton-bar skeleton-location" />
+                        <div className="skeleton-bar skeleton-farmer" />
+                        <div className="skeleton-row-split">
+                          <div className="skeleton-bar skeleton-price" />
+                          <div className="skeleton-bar skeleton-qty" />
+                        </div>
+                        <div className="skeleton-bar skeleton-button" />
+                      </div>
                     </div>
-                  </div>
-                  <h3>{t("marketplace.loadingTitle")}</h3>
-                  <p>{t("marketplace.loadingDesc")}</p>
-                  <div className="inpage-loading-bar">
-                    <div className="inpage-loading-bar-fill" />
-                  </div>
+                  ))}
                 </div>
               ) : cropsError ? (
                 <div className="state-box error-box">
@@ -1668,54 +1848,53 @@ Message: ${messageText}`;
               ) : filteredCrops.length > 0 ? (
                 <div className="crops-grid">
                   {filteredCrops.map((crop, index) => {
-                    const theme = getCropVisualTheme(crop.name, crop.category);
-                    const translatedCropTag = getCropDisplayTag(crop.name, crop.category);
                     const isOwner =
                       currentUser &&
                       (crop.farmer === currentUser.id ||
                         crop.farmer?._id === currentUser.id ||
                         crop.farmer === currentUser._id);
 
-                    const totalVal =
-                      crop.price && crop.quantity
-                        ? (crop.price * crop.quantity).toLocaleString("en-IN")
-                        : null;
-
                     const localizedUnit = t(`units.${crop.unit}`) || crop.unit || "kg";
-                    const localizedCategory = t(`categories.${crop.category}`) || crop.category;
+                    const photoUrl = getCropPhotoUrl(crop);
 
                     return (
                       <article className="crop-card-modern" key={crop._id || index}>
-                        <div className={`crop-card-banner ${theme.bgClass}`}>
-                          <div className="card-top-badges">
-                            <span className="pill-category">{localizedCategory}</span>
+                        {/* Real Crop Photo: 4:3 Ratio, Hover Zoom, Rounded Top */}
+                        <div className="crop-photo-wrap">
+                          <img
+                            src={photoUrl}
+                            alt={crop.name}
+                            className="crop-card-photo"
+                            loading="lazy"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "/crops/default.svg";
+                            }}
+                          />
+                          {/* Single small Fresh badge on image corner */}
+                          <div className="crop-card-badge-tag">
                             {isOwner ? (
-                              <span className="pill-owner">{t("marketplace.card.yourListing")}</span>
+                              <span className="badge-tag-owner">🧑‍🌾 {t("marketplace.card.yourListing") || "Your Listing"}</span>
                             ) : (
-                              <span className="pill-fresh">{t("marketplace.card.freshStock")}</span>
+                              <span className="badge-tag-fresh">✨ Fresh Stock</span>
                             )}
-                          </div>
-
-                          <div className="crop-center-emoji" aria-hidden="true">
-                            {theme.emoji}
-                          </div>
-
-                          <div className="crop-telugu-subtag">
-                            <span>{translatedCropTag}</span>
                           </div>
                         </div>
 
-                        <div className="crop-card-body">
-                          <div className="crop-heading-area">
-                            <h3 className="crop-name">{crop.name}</h3>
-                            <div className="crop-location-badge">
-                              <MapPin size={13} />
-                              <span>{crop.location}</span>
-                            </div>
+                        {/* Card Details Body */}
+                        <div className="crop-card-details">
+                          {/* Crop Name (18px, bold) */}
+                          <h3 className="crop-title-heading">{crop.name}</h3>
+
+                          {/* Location with Pin Icon */}
+                          <div className="crop-location-row">
+                            <MapPin size={13} className="pin-icon-warm" />
+                            <span>{crop.location}</span>
                           </div>
 
+                          {/* Farmer name with small green Verified tick */}
                           <div
-                            className="farmer-attribution clickable"
+                            className="crop-farmer-row clickable"
                             onClick={(e) => {
                               e.stopPropagation();
                               if (crop.farmer) {
@@ -1726,96 +1905,50 @@ Message: ${messageText}`;
                             role="button"
                             tabIndex={0}
                           >
-                            <div className="farmer-avatar-mini">🧑‍🌾</div>
-                            <div className="farmer-meta">
-                              <span className="farmer-name">{crop.farmerName || t("marketplace.card.verifiedLocalFarmer")}</span>
-                              <span className="verified-status">
-                                <CheckCircle2 size={12} /> {t("marketplace.card.verifiedGrower")}
-                              </span>
+                            <span className="farmer-name-text">🧑‍🌾 {crop.farmerName || t("marketplace.card.verifiedLocalFarmer")}</span>
+                            <span className="verified-badge-inline">
+                              <CheckCircle2 size={12} className="verified-check-icon" />
+                              <span>Verified</span>
+                            </span>
+                          </div>
+
+                          {/* Price & Quantity Available */}
+                          <div className="crop-price-stock-row">
+                            <div className="crop-price-display">
+                              <span className="currency-sign">₹</span>
+                              <span className="price-bold">{crop.price}</span>
+                              <span className="price-unit-tag">/{localizedUnit}</span>
+                            </div>
+                            <div className="crop-stock-display">
+                              <span>{crop.quantity} {localizedUnit} available</span>
                             </div>
                           </div>
 
-                          {crop.description && (
-                            <p className="crop-notes">"{crop.description}"</p>
-                          )}
-
-                          <div className="crop-specs-container">
-                            <div className="spec-item">
-                              <span className="spec-label">{t("marketplace.card.availableLot")}</span>
-                              <strong className="spec-value">{crop.quantity} {localizedUnit}</strong>
-                            </div>
-                            {totalVal && (
-                              <div className="spec-item right">
-                                <span className="spec-label">{t("marketplace.card.totalLotValue")}</span>
-                                <span className="spec-value-sub">~₹{totalVal}</span>
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="crop-card-footer">
-                            <div className="crop-price-row">
-                              <div className="price-box">
-                                <span className="price-tag-label">{t("marketplace.card.farmerRate")}</span>
-                                <div className="price-main">
-                                  <span className="currency-symbol">₹</span>
-                                  <span className="price-amount">{crop.price}</span>
-                                  <span className="price-unit">/{localizedUnit}</span>
-                                </div>
-                              </div>
-                              <div className="crop-quality-tag">
-                                <span className="quality-pill">
-                                  <Sparkles size={11} className="quality-icon" />
-                                  <span>{crop.category || "Fresh"}</span>
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="crop-actions-cluster">
+                          {/* ONE Primary Button: "View / Buy" (or "Manage Listing" if owner) */}
+                          <div className="crop-action-single">
+                            {isOwner ? (
                               <button
                                 type="button"
-                                className="btn-crop-action btn-view-details"
-                                onClick={() => handleOpenProductDetails(crop)}
-                                title={t("marketplace.card.viewDetails") || "View Details"}
-                                aria-label="View Details"
+                                className="btn-card-primary is-owner-btn"
+                                onClick={openFarmerDashboard}
+                                title={t("marketplace.card.manage") || "Manage Listing"}
                               >
-                                <Eye size={15} className="btn-action-icon btn-icon-eye" />
-                                <span className="btn-action-label">{t("marketplace.card.viewDetails") || "Details"}</span>
+                                <Edit2 size={15} />
+                                <span>{t("marketplace.card.manage") || "Manage Listing"}</span>
                               </button>
-
-                              {isOwner ? (
-                                <button
-                                  type="button"
-                                  className="btn-manage-crop"
-                                  onClick={openFarmerDashboard}
-                                  title={t("marketplace.card.manage")}
-                                >
-                                  <Edit2 size={15} className="btn-action-icon" />
-                                  <span>{t("marketplace.card.manage")}</span>
-                                </button>
-                              ) : (
-                                <>
-                                  <button
-                                    type="button"
-                                    className="btn-crop-action btn-chat-action"
-                                    onClick={() => handleStartChat(crop.farmer, crop)}
-                                    title={t("chat.startConversation") || "Direct Chat"}
-                                    aria-label="Direct Chat"
-                                  >
-                                    <MessageSquare size={15} className="btn-action-icon btn-icon-chat" />
-                                    <span className="btn-action-label">{t("marketplace.card.chat") || "Chat"}</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="btn-enquire-crop"
-                                    onClick={() => showEnquiry(crop)}
-                                    title={t("marketplace.card.enquire") || "Enquire"}
-                                  >
-                                    <span className="enquire-label">{t("marketplace.card.enquire") || "Enquire"}</span>
-                                    <ArrowRight size={14} className="enquire-arrow" />
-                                  </button>
-                                </>
-                              )}
-                            </div>
+                            ) : (
+                              <button
+                                type="button"
+                                className="btn-card-primary"
+                                onClick={() => handleOpenProductDetails(crop)}
+                                title="View / Buy"
+                                aria-label={`View or Buy ${crop.name}`}
+                              >
+                                <ShoppingCart size={15} />
+                                <span>View / Buy</span>
+                                <ArrowRight size={14} className="btn-arrow-icon" />
+                              </button>
+                            )}
                           </div>
                         </div>
                       </article>
@@ -2219,7 +2352,7 @@ Message: ${messageText}`;
               <h4>{t("footer.quickLinks")}</h4>
               {!currentUser ? (
                 <>
-                  <button type="button" className="footer-link-btn" onClick={navigateToHome}>{t("nav.home") || "Home"}</button>
+                  <button type="button" className="footer-link-btn" onClick={() => navigateToHome()}>{t("nav.home") || "Home"}</button>
                   <button
                     type="button"
                     className="footer-link-btn"
@@ -2235,15 +2368,15 @@ Message: ${messageText}`;
                 </>
               ) : currentUser.role === "Buyer" ? (
                 <>
-                  <button type="button" className="footer-link-btn" onClick={navigateToMarketplace}>{t("nav.freshHarvests") || "Fresh Harvests"}</button>
-                  <button type="button" className="footer-link-btn" onClick={navigateToBuyerDashboard}>{t("nav.buyerDashboard") || "Buyer Dashboard"}</button>
+                  <button type="button" className="footer-link-btn" onClick={() => navigateToMarketplace()}>{t("nav.freshHarvests") || "Fresh Harvests"}</button>
+                  <button type="button" className="footer-link-btn" onClick={() => navigateToBuyerDashboard()}>{t("nav.buyerDashboard") || "Buyer Dashboard"}</button>
                   <button type="button" className="footer-link-btn" onClick={() => setUserProfileModalOpen(true)}>{t("profile.title") || "My Profile"}</button>
                 </>
               ) : (
                 <>
                   <button type="button" className="footer-link-btn" onClick={openListingModal}>{t("nav.listCrop") || "List Crop"}</button>
-                  <button type="button" className="footer-link-btn" onClick={navigateToFarmerDiscovery}>{t("nav.farmers") || "Farmer Discovery"}</button>
-                  <button type="button" className="footer-link-btn" onClick={navigateToFarmerDashboard}>{t("nav.farmerDashboard") || "Farmer Dashboard"}</button>
+                  <button type="button" className="footer-link-btn" onClick={() => navigateToFarmerDiscovery()}>{t("nav.farmers") || "Farmer Discovery"}</button>
+                  <button type="button" className="footer-link-btn" onClick={() => navigateToFarmerDashboard()}>{t("nav.farmerDashboard") || "Farmer Dashboard"}</button>
                   <button type="button" className="footer-link-btn" onClick={() => setUserProfileModalOpen(true)}>{t("profile.title") || "My Profile"}</button>
                 </>
               )}
@@ -2258,9 +2391,9 @@ Message: ${messageText}`;
                 </>
               ) : (
                 <>
-                  <button className="footer-link-btn" onClick={() => { setAccount({ ...account, role: "Farmer" }); setModal("register"); }}>{t("footer.joinAsFarmer")}</button>
-                  <button className="footer-link-btn" onClick={() => { setAccount({ ...account, role: "Buyer" }); setModal("register"); }}>{t("footer.joinAsBuyer")}</button>
-                  <button className="footer-link-btn" onClick={() => setModal("login")}>{t("footer.signIn")}</button>
+                  <button className="footer-link-btn" onClick={() => openRegisterModal("Farmer")}>{t("footer.joinAsFarmer")}</button>
+                  <button className="footer-link-btn" onClick={() => openRegisterModal("Buyer")}>{t("footer.joinAsBuyer")}</button>
+                  <button className="footer-link-btn" onClick={() => openLoginModal("Farmer")}>{t("footer.signIn")}</button>
                 </>
               )}
             </div>
@@ -2277,14 +2410,14 @@ Message: ${messageText}`;
       {/* MODALS */}
       {/* ========================================================= */}
       {modal && (
-        <div className="modal-backdrop-modern" onClick={() => setModal("")}>
+        <div className="modal-backdrop-modern" onClick={closeModal}>
           <div
             className={`modal-window ${modal === "dashboard" || modal === "buyerDashboard" ? "modal-large" : ""}`}
             role="dialog"
             aria-modal="true"
             onClick={(e) => e.stopPropagation()}
           >
-            <button className="modal-close-round" onClick={() => setModal("")} aria-label="Close dialog">
+            <button className="modal-close-round" onClick={closeModal} aria-label="Close dialog">
               <X size={18} />
             </button>
 
@@ -2570,13 +2703,23 @@ Message: ${messageText}`;
                 <div className="auth-tab-switch">
                   <button
                     className={`auth-tab-btn ${modal === "login" ? "active" : ""}`}
-                    onClick={() => setModal("login")}
+                    onClick={() => {
+                      setAccount({ name: "", email: "", password: "", role: "Farmer" });
+                      setFormReady(false);
+                      setAuthModalKey((k) => k + 1);
+                      setModal("login");
+                    }}
                   >
                     {t("authModal.tabLogin")}
                   </button>
                   <button
                     className={`auth-tab-btn ${modal === "register" ? "active" : ""}`}
-                    onClick={() => setModal("register")}
+                    onClick={() => {
+                      setAccount({ name: "", email: "", password: "", role: "Farmer" });
+                      setFormReady(false);
+                      setAuthModalKey((k) => k + 1);
+                      setModal("register");
+                    }}
                   >
                     {t("authModal.tabRegister")}
                   </button>
@@ -2589,7 +2732,25 @@ Message: ${messageText}`;
                   </div>
                 </div>
 
-                <form onSubmit={submitAccount} className="modern-form">
+                <form key={`${modal}-${authModalKey}`} onSubmit={submitAccount} className="modern-form" autoComplete="off">
+                  {/* Invisible decoy inputs to divert aggressive browser credential autofill */}
+                  <input
+                    type="text"
+                    name="prevent_autofill_email_decoy"
+                    autoComplete="off"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    style={{ position: "absolute", opacity: 0, height: 0, width: 0, pointerEvents: "none" }}
+                  />
+                  <input
+                    type="password"
+                    name="prevent_autofill_pwd_decoy"
+                    autoComplete="new-password"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    style={{ position: "absolute", opacity: 0, height: 0, width: 0, pointerEvents: "none" }}
+                  />
+
                   {modal === "register" && (
                     <div className="role-selector-cards">
                       <label
@@ -2633,6 +2794,9 @@ Message: ${messageText}`;
                       <label htmlFor="accName">{t("authModal.fullName")}</label>
                       <input
                         id="accName"
+                        name="agro_reg_name"
+                        type="text"
+                        autoComplete="off"
                         required
                         placeholder={t("authModal.fullNamePlaceholder")}
                         value={account.name}
@@ -2645,7 +2809,11 @@ Message: ${messageText}`;
                     <label htmlFor="accEmail">{t("authModal.email")}</label>
                     <input
                       id="accEmail"
+                      name="agro_login_email"
                       type="email"
+                      autoComplete="off"
+                      readOnly={!formReady}
+                      onFocus={() => setFormReady(true)}
                       required
                       placeholder={t("authModal.emailPlaceholder")}
                       value={account.email}
@@ -2657,7 +2825,11 @@ Message: ${messageText}`;
                     <label htmlFor="accPassword">{t("authModal.password")}</label>
                     <input
                       id="accPassword"
+                      name="agro_login_password"
                       type="password"
+                      autoComplete="new-password"
+                      readOnly={!formReady}
+                      onFocus={() => setFormReady(true)}
                       required
                       minLength={8}
                       placeholder={t("authModal.passwordPlaceholder")}
@@ -2674,14 +2846,32 @@ Message: ${messageText}`;
                     {modal === "register" ? (
                       <p>
                         {t("authModal.alreadyAccount")}{" "}
-                        <button type="button" onClick={() => setModal("login")} className="link-text">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAccount({ name: "", email: "", password: "", role: "Farmer" });
+                            setFormReady(false);
+                            setAuthModalKey((k) => k + 1);
+                            setModal("login");
+                          }}
+                          className="link-text"
+                        >
                           {t("authModal.loginHere")}
                         </button>
                       </p>
                     ) : (
                       <p>
                         {t("authModal.noAccount")}{" "}
-                        <button type="button" onClick={() => setModal("register")} className="link-text">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAccount({ name: "", email: "", password: "", role: "Farmer" });
+                            setFormReady(false);
+                            setAuthModalKey((k) => k + 1);
+                            setModal("register");
+                          }}
+                          className="link-text"
+                        >
                           {t("authModal.createFree")}
                         </button>
                       </p>
@@ -3232,7 +3422,7 @@ Message: ${messageText}`;
           }}
           onRequestLogin={() => {
             setChatModalOpen(false);
-            setModal("login");
+            openLoginModal("Buyer");
           }}
         />
       )}
@@ -3256,7 +3446,7 @@ Message: ${messageText}`;
           }}
           onRequestLogin={() => {
             setFarmerProfileModalOpen(false);
-            setModal("login");
+            openLoginModal("Buyer");
           }}
         />
       )}
@@ -3272,7 +3462,7 @@ Message: ${messageText}`;
           }}
           onRequestLogin={() => {
             setBuyerDirectoryModalOpen(false);
-            setModal("login");
+            openLoginModal("Farmer");
           }}
         />
       )}

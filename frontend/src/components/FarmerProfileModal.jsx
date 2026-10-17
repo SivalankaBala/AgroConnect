@@ -12,6 +12,7 @@ import {
   Plus
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
+import { apiUrl } from "../config/api";
 
 export function FarmerProfileModal({
   farmerId,
@@ -36,7 +37,7 @@ export function FarmerProfileModal({
       setLoading(true);
       setError("");
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await fetch(`/api/farmers/${farmerId}`, { headers });
+      const res = await fetch(apiUrl(`/api/farmers/${farmerId}`), { headers });
       if (!res.ok) {
         throw new Error("Could not load farmer profile.");
       }
@@ -66,7 +67,7 @@ export function FarmerProfileModal({
 
     try {
       setFollowLoading(true);
-      const res = await fetch(`/api/farmers/${farmerId}/follow`, {
+      const res = await fetch(apiUrl(`/api/farmers/${farmerId}/follow`), {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });

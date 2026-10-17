@@ -13,8 +13,31 @@ const weatherRoutes = require('./routes/weather');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// Allow CORS from configured client URL (e.g. Vercel domain) or any origin if not restricted
+const allowedOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(',').map((url) => url.trim())
+  : '*';
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  })
+);
+
 app.use(express.json());
+
+// Root endpoint for status / health checks on Render
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    service: 'AgroConnect Backend API',
+    status: 'online',
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.use('/api/crops', cropRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/enquiries', enquiryRoutes);
