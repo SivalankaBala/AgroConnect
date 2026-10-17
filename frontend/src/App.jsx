@@ -28,7 +28,8 @@ import {
   Eye,
   LogOut,
   Sun,
-  Moon
+  Moon,
+  Menu
 } from "lucide-react";
 import "./App.css";
 import { useLanguage } from "./context/LanguageContext";
@@ -42,6 +43,7 @@ import BuyerDirectoryModal from "./components/BuyerDirectoryModal";
 import ProductDetailsModal from "./components/ProductDetailsModal";
 import UserProfileModal from "./components/UserProfileModal";
 import MobileBottomNav from "./components/MobileBottomNav";
+import MobileHeaderMenu from "./components/MobileHeaderMenu";
 import LocationSelector from "./components/LocationSelector";
 import { apiUrl } from "./config/api";
 
@@ -173,6 +175,9 @@ function App() {
       return false;
     }
   });
+
+  // Mobile top header hamburger drawer menu state
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -913,6 +918,7 @@ function App() {
     setChatModalOpen(false);
     setCurrentView("home");
     setMobileNavActive("home");
+    setMobileMenuOpen(false);
     if (window.location.hash !== "#home") {
       window.location.hash = "home";
     }
@@ -1314,7 +1320,16 @@ Message: ${messageText}`;
             </div>
             <div className="brand-text">
               <span className="brand-title">{t("nav.brandTitle")}</span>
-              <span className="brand-telugu">{t("nav.brandSubtitle")}</span>
+              <div className="brand-subtitle-marquee" title={t("nav.brandSubtitle")}>
+                <div className="brand-cylinder-track">
+                  <span className="brand-telugu brand-cylinder-item">
+                    {t("nav.brandSubtitle")} <span className="brand-sep" aria-hidden="true">•</span>
+                  </span>
+                  <span className="brand-telugu brand-cylinder-item" aria-hidden="true">
+                    {t("nav.brandSubtitle")} <span className="brand-sep">•</span>
+                  </span>
+                </div>
+              </div>
             </div>
           </a>
 
@@ -1406,65 +1421,132 @@ Message: ${messageText}`;
           </div>
 
           <div className="nav-actions">
-            {currentUser ? (
-              <div className="user-action-cluster">
-                <div
-                  className="user-profile-badge clickable"
-                  onClick={() => setUserProfileModalOpen(true)}
-                  title={t("profile.title") || "My Profile"}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <div className="profile-avatar">
-                    {currentUser.role === "Farmer" ? "🧑‍🌾" : "🛒"}
+            {/* Desktop Actions Cluster (visible on desktop > 768px, hidden on mobile) */}
+            <div className="nav-actions-desktop">
+              {currentUser ? (
+                <div className="user-action-cluster">
+                  <div
+                    className="user-profile-badge clickable"
+                    onClick={() => setUserProfileModalOpen(true)}
+                    title={t("profile.title") || "My Profile"}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <div className="profile-avatar">
+                      {currentUser.role === "Farmer" ? "🧑‍🌾" : "🛒"}
+                    </div>
+                    <div className="profile-info">
+                      <span className="profile-name">{currentUser.name || currentUser.username || currentUser.email?.split("@")[0] || "User"}</span>
+                      <span className="profile-role">
+                        {t(`nav.role${currentUser.role}`) || currentUser.role}
+                      </span>
+                    </div>
                   </div>
-                  <div className="profile-info">
-                    <span className="profile-name">{currentUser.name || currentUser.username || currentUser.email?.split("@")[0] || "User"}</span>
-                    <span className="profile-role">
-                      {t(`nav.role${currentUser.role}`) || currentUser.role}
-                    </span>
-                  </div>
+
+                  <button className="btn-logout" onClick={handleLogout} title={t("nav.logout")}>
+                    <LogOut size={15} style={{ marginRight: 4, verticalAlign: "middle" }} />
+                    {t("nav.logout")}
+                  </button>
                 </div>
+              ) : (
+                <div className="guest-action-cluster">
+                  <button
+                    className="btn-text-login"
+                    onClick={() => openLoginModal("Buyer")}
+                  >
+                    <User size={16} />
+                    <span>{t("nav.logIn")}</span>
+                  </button>
+                  <button
+                    className="btn-register-highlight"
+                    onClick={() => openRegisterModal("Farmer")}
+                  >
+                    <Sparkles size={16} />
+                    <span>{t("nav.joinAgroConnect")}</span>
+                  </button>
+                </div>
+              )}
 
-                <button className="btn-logout" onClick={handleLogout} title={t("nav.logout")}>
-                  <LogOut size={15} style={{ marginRight: 4, verticalAlign: "middle" }} />
-                  {t("nav.logout")}
-                </button>
-              </div>
-            ) : (
-              <div className="guest-action-cluster">
-                <button
-                  className="btn-text-login"
-                  onClick={() => openLoginModal("Buyer")}
-                >
-                  <User size={16} />
-                  <span>{t("nav.logIn")}</span>
-                </button>
-                <button
-                  className="btn-register-highlight"
-                  onClick={() => openRegisterModal("Farmer")}
-                >
-                  <Sparkles size={16} />
-                  <span>{t("nav.joinAgroConnect")}</span>
-                </button>
-              </div>
-            )}
-
-            {/* DARK MODE THEME TOGGLE */}
-            <button
-              type="button"
-              className="btn-theme-toggle"
-              onClick={() => setDarkMode(!darkMode)}
-              title={darkMode ? "Switch to Warm Cream Light Mode" : "Switch to Dark Earth Mode"}
-              aria-label="Toggle theme"
-            >
-              {darkMode ? <Sun size={17} className="theme-icon-sun" /> : <Moon size={17} className="theme-icon-moon" />}
-            </button>
+              {/* DARK MODE THEME TOGGLE (Desktop) */}
+              <button
+                type="button"
+                className="btn-theme-toggle"
+                onClick={() => setDarkMode(!darkMode)}
+                title={darkMode ? "Switch to Warm Cream Light Mode" : "Switch to Dark Earth Mode"}
+                aria-label="Toggle theme"
+              >
+                {darkMode ? <Sun size={17} className="theme-icon-sun" /> : <Moon size={17} className="theme-icon-moon" />}
+              </button>
+            </div>
 
             {/* TOP-RIGHT LANGUAGE SELECTOR */}
             <LanguageSelector />
+
+            {/* TOP-RIGHT MOBILE HAMBURGER BUTTON (Mobile only) */}
+            <button
+              type="button"
+              className={`mobile-hamburger-btn ${mobileMenuOpen ? "active" : ""}`}
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={mobileMenuOpen}
+              id="mobile-nav-hamburger"
+            >
+              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
           </div>
         </div>
+
+        {/* MOBILE SLIDE-OVER DRAWER MENU */}
+        <MobileHeaderMenu
+          isOpen={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          currentUser={currentUser}
+          onOpenProfile={() => {
+            setMobileMenuOpen(false);
+            setUserProfileModalOpen(true);
+          }}
+          onLogout={() => {
+            setMobileMenuOpen(false);
+            handleLogout();
+          }}
+          darkMode={darkMode}
+          onToggleDarkMode={() => setDarkMode(!darkMode)}
+          onOpenLogin={(role) => {
+            setMobileMenuOpen(false);
+            openLoginModal(role);
+          }}
+          onOpenRegister={(role) => {
+            setMobileMenuOpen(false);
+            openRegisterModal(role);
+          }}
+          currentView={currentView}
+          onNavigateHome={() => {
+            setMobileMenuOpen(false);
+            navigateToHome();
+          }}
+          onNavigateMarketplace={() => {
+            setMobileMenuOpen(false);
+            navigateToMarketplace();
+          }}
+          onNavigateBuyerDashboard={() => {
+            setMobileMenuOpen(false);
+            navigateToBuyerDashboard();
+          }}
+          onNavigateFarmerDashboard={() => {
+            setMobileMenuOpen(false);
+            navigateToFarmerDashboard();
+          }}
+          onNavigateFarmerDiscovery={() => {
+            setMobileMenuOpen(false);
+            navigateToFarmerDiscovery();
+          }}
+          onOpenListingModal={() => {
+            setMobileMenuOpen(false);
+            openListingModal();
+          }}
+          buyerRespondedCount={buyerRespondedCount}
+          farmerPendingCount={farmerPendingCount}
+        />
       </nav>
 
       {(!currentUser || currentView === "home") ? (

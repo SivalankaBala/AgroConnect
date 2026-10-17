@@ -52,7 +52,12 @@ export const translations = {
       logout: "Logout",
       roleFarmer: "Farmer",
       roleBuyer: "Buyer",
-      freshHarvests: "Fresh Harvests"
+      freshHarvests: "Fresh Harvests",
+      darkMode: "Dark Mode",
+      lightMode: "Light Mode",
+      theme: "Theme",
+      menu: "Menu",
+      viewProfile: "View Profile"
     },
     hero: {
       title: "Direct Farm Marketplace for Hardworking Farmers & Smart Buyers",
@@ -544,7 +549,12 @@ export const translations = {
       logout: "లాగ్ అవుట్",
       roleFarmer: "రైతు",
       roleBuyer: "కొనుగోలుదారు",
-      freshHarvests: "తాజా పంటలు"
+      freshHarvests: "తాజా పంటలు",
+      darkMode: "డార్క్ మోడ్",
+      lightMode: "లైట్ మోడ్",
+      theme: "థీమ్",
+      menu: "మెనూ",
+      viewProfile: "ప్రొఫైల్ చూడండి"
     },
     hero: {
       title: "కష్టజీవులైన రైతులు మరియు వివేకవంతులైన కొనుగోలుదారుల ప్రత్యక్ష వ్యవసాయ విపణి",
@@ -1036,7 +1046,12 @@ export const translations = {
       logout: "लॉग आउट",
       roleFarmer: "किसान",
       roleBuyer: "खरीदार",
-      freshHarvests: "ताज़ी फसलें"
+      freshHarvests: "ताज़ी फसलें",
+      darkMode: "डार्क मोड",
+      lightMode: "लाइट मोड",
+      theme: "थीम",
+      menu: "मेनू",
+      viewProfile: "प्रोफ़ाइल देखें"
     },
     hero: {
       title: "मेहनती किसानों और स्मार्ट खरीदारों के लिए सीधा कृषि बाज़ार",
