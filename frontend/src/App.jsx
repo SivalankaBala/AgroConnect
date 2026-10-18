@@ -2535,8 +2535,9 @@ Message: ${messageText}`;
         )
       )}
 
-      {/* MODERN FOOTER */}
-      <footer className="agro-footer">
+      {/* MODERN FOOTER (Hidden on messages page) */}
+      {currentView !== "messages" && (
+        <footer className="agro-footer">
         <div className="footer-container">
           <div className="footer-main-row">
             <div className="footer-brand-col">
@@ -2618,6 +2619,7 @@ Message: ${messageText}`;
           </div>
         </div>
       </footer>
+      )}
 
       {/* ========================================================= */}
       {/* MODALS */}

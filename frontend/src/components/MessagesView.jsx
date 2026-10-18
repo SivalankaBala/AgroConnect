@@ -16,7 +16,9 @@ import {
   MapPin,
   Clock,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  Maximize2,
+  Minimize2
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { apiUrl } from "../config/api";
@@ -44,15 +46,68 @@ export default function MessagesView({
   const [sending, setSending] = useState(false);
   const [errorNotice, setErrorNotice] = useState("");
   const [isSocketConnected, setIsSocketConnected] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const textareaRef = useRef(null);
   const selectedConvIdRef = useRef(null);
 
   selectedConvIdRef.current = selectedConv?._id;
 
+  // Sync fullscreen state with document fullscreenchange
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener("fullscreenchange", handleFsChange);
+    document.addEventListener("webkitfullscreenchange", handleFsChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFsChange);
+      document.removeEventListener("webkitfullscreenchange", handleFsChange);
+    };
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement && !isFullscreen) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+      setIsFullscreen(true);
+    } else {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+      setIsFullscreen(false);
+    }
+  };
+
+  // Stick the messages page by locking body/window scroll and managing active conversation state
+  useEffect(() => {
+    document.body.classList.add("messages-active");
+    if (selectedConv) {
+      document.body.classList.add("chat-active-conv");
+    } else {
+      document.body.classList.remove("chat-active-conv");
+    }
+
+    return () => {
+      document.body.classList.remove("messages-active");
+      document.body.classList.remove("chat-active-conv");
+    };
+  }, [selectedConv]);
+
   const scrollToBottom = useCallback((smooth = true) => {
-    messagesEndRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      if (smooth) {
+        container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+      } else {
+        container.scrollTop = container.scrollHeight;
+      }
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "nearest" });
+    }
   }, []);
 
   // Fetch all conversations for the user
@@ -321,8 +376,9 @@ export default function MessagesView({
             }
           }
         );
-        sentViaSocket = true;
-        setInputText("");
+        if (sentViaSocket) {
+          if (textareaRef.current) textareaRef.current.style.height = "auto";
+        }
       }
 
       // If socket not connected or as verified fallback, call REST API
@@ -339,6 +395,7 @@ export default function MessagesView({
         if (res.ok) {
           const data = await res.json();
           setInputText("");
+          if (textareaRef.current) textareaRef.current.style.height = "auto";
           setMessages((prev) => [...prev, data.message]);
           scrollToBottom(true);
         } else {
@@ -351,8 +408,16 @@ export default function MessagesView({
       setErrorNotice("Could not connect to send message. Please retry.");
     } finally {
       setSending(false);
-      setTimeout(() => textareaRef.current?.focus(), 50);
+      setTimeout(() => textareaRef.current?.focus({ preventScroll: true }), 50);
     }
+  };
+
+  // Handle input typing without page shift
+  const handleInputChange = (e) => {
+    setInputText(e.target.value);
+    const target = e.target;
+    target.style.height = "auto";
+    target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
   };
 
   // Keyboard Enter to send
@@ -385,7 +450,7 @@ export default function MessagesView({
   ];
 
   return (
-    <div className="messages-page-wrapper">
+    <div className={`messages-page-wrapper ${isFullscreen ? "fullscreen-chat" : ""}`}>
       <div className="messages-layout-container">
         {/* SIDEBAR: CONVERSATIONS LIST */}
         <aside className={`messages-sidebar ${selectedConv ? "has-active-conv" : ""}`}>
@@ -402,15 +467,26 @@ export default function MessagesView({
                   </span>
                 </div>
               </div>
-              <button
-                type="button"
-                className="btn-refresh-convs"
-                onClick={() => fetchConversations()}
-                title="Refresh conversations"
-                aria-label="Refresh"
-              >
-                <RefreshCw size={15} />
-              </button>
+              <div className="sidebar-action-buttons">
+                <button
+                  type="button"
+                  className="btn-refresh-convs"
+                  onClick={() => fetchConversations()}
+                  title="Refresh conversations"
+                  aria-label="Refresh"
+                >
+                  <RefreshCw size={15} />
+                </button>
+                <button
+                  type="button"
+                  className="btn-chat-fullscreen"
+                  onClick={toggleFullscreen}
+                  title={isFullscreen ? "Exit Fullscreen" : "Full Screen Chat"}
+                  aria-label="Toggle Fullscreen"
+                >
+                  {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                </button>
+              </div>
             </div>
 
             {/* Search Input */}
@@ -593,27 +669,39 @@ export default function MessagesView({
                   </div>
                 </div>
 
-                {/* Crop Association Chip */}
-                {selectedConv.crop && (
-                  <div
-                    className="chat-crop-card-chip clickable"
-                    onClick={() => onOpenProductDetails && onOpenProductDetails(selectedConv.crop)}
-                    title="View crop listing"
-                  >
-                    <div className="crop-chip-icon">🌾</div>
-                    <div className="crop-chip-details">
-                      <span className="crop-chip-name">{selectedConv.crop.name}</span>
-                      <span className="crop-chip-price">
-                        ₹{selectedConv.crop.price}/{selectedConv.crop.unit || "kg"}
-                      </span>
+                <div className="chat-header-right-actions">
+                  {/* Crop Association Chip */}
+                  {selectedConv.crop && (
+                    <div
+                      className="chat-crop-card-chip clickable"
+                      onClick={() => onOpenProductDetails && onOpenProductDetails(selectedConv.crop)}
+                      title="View crop listing"
+                    >
+                      <div className="crop-chip-icon">🌾</div>
+                      <div className="crop-chip-details">
+                        <span className="crop-chip-name">{selectedConv.crop.name}</span>
+                        <span className="crop-chip-price">
+                          ₹{selectedConv.crop.price}/{selectedConv.crop.unit || "kg"}
+                        </span>
+                      </div>
+                      <ChevronRight size={14} className="crop-chip-chevron" />
                     </div>
-                    <ChevronRight size={14} className="crop-chip-chevron" />
-                  </div>
-                )}
+                  )}
+
+                  <button
+                    type="button"
+                    className="btn-chat-fullscreen"
+                    onClick={toggleFullscreen}
+                    title={isFullscreen ? "Exit Fullscreen" : "Full Screen Chat"}
+                    aria-label="Toggle Fullscreen"
+                  >
+                    {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                  </button>
+                </div>
               </header>
 
               {/* MESSAGES SCROLL CONTAINER */}
-              <div className="chat-messages-scroll-area">
+              <div className="chat-messages-scroll-area" ref={messagesContainerRef}>
                 {/* Crop Context Notification Banner */}
                 {selectedConv.crop && (
                   <div className="chat-thread-crop-banner">
@@ -716,7 +804,7 @@ export default function MessagesView({
                     ref={textareaRef}
                     rows={1}
                     value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
+                    onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
                     placeholder={t("chat.typeMessage") || "Type a message in English, తెలుగు, हिन्दी..."}
                     className="composer-textarea"

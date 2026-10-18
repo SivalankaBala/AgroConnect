@@ -6,7 +6,9 @@ import {
   RefreshCw,
   Store,
   ShieldCheck,
-  CheckCheck
+  CheckCheck,
+  Maximize2,
+  Minimize2
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { apiUrl } from "../config/api";
@@ -26,12 +28,21 @@ export function DirectChatModal({
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const messagesEndRef = useRef(null);
+  const messagesStreamRef = useRef(null);
 
   const token = sessionStorage.getItem("agroconnectToken");
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesStreamRef.current) {
+      messagesStreamRef.current.scrollTo({
+        top: messagesStreamRef.current.scrollHeight,
+        behavior: "smooth"
+      });
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   };
 
   const fetchConversations = useCallback(async () => {
@@ -198,14 +209,25 @@ export function DirectChatModal({
   return (
     <div className="modal-backdrop-modern" onClick={onClose}>
       <div
-        className="modal-window chat-modal-window"
+        className={`modal-window chat-modal-window ${isFullScreen ? "fullscreen-modal" : ""}`}
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="modal-close-round" onClick={onClose} aria-label="Close chat">
-          <X size={18} />
-        </button>
+        <div className="modal-top-actions">
+          <button
+            type="button"
+            className="modal-action-round"
+            onClick={() => setIsFullScreen((prev) => !prev)}
+            title={isFullScreen ? "Restore Size" : "Full Screen Chat"}
+            aria-label="Toggle Fullscreen"
+          >
+            {isFullScreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          </button>
+          <button className="modal-close-round" onClick={onClose} aria-label="Close chat">
+            <X size={18} />
+          </button>
+        </div>
 
         <div className="chat-modal-layout">
           {/* SIDEBAR: CONVERSATION LIST */}
@@ -311,7 +333,7 @@ export function DirectChatModal({
                 </div>
 
                 {/* MESSAGES STREAM */}
-                <div className="chat-messages-stream">
+                <div className="chat-messages-stream" ref={messagesStreamRef}>
                   <div className="chat-security-ribbon">
                     <ShieldCheck size={14} />
                     <span>{t("chat.dealSafety")}</span>
