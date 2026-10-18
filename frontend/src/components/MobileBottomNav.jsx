@@ -1,10 +1,11 @@
-import { Sprout, ShoppingCart, User, Plus, Tractor, Layers } from "lucide-react";
+import { Sprout, ShoppingCart, User, Plus, Tractor, Layers, MessageSquare } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function MobileBottomNav({
   activeNav = "home",
   onNavClick,
-  currentUser = null
+  currentUser = null,
+  unreadChatCount = 0
 }) {
   const { t } = useLanguage();
 
@@ -24,6 +25,20 @@ export default function MobileBottomNav({
         >
           <Sprout size={20} className="bottom-nav-icon" />
           <span className="bottom-nav-label">{t("nav.freshHarvests") || "Fresh Harvests"}</span>
+        </button>
+
+        <button
+          type="button"
+          className={`bottom-nav-item ${activeNav === "messages" ? "active" : ""}`}
+          onClick={() => onNavClick("messages")}
+        >
+          <div className="bottom-nav-icon-wrapper">
+            <MessageSquare size={20} className="bottom-nav-icon" />
+            {unreadChatCount > 0 && (
+              <span className="bottom-nav-badge">{unreadChatCount}</span>
+            )}
+          </div>
+          <span className="bottom-nav-label">{t("nav.messages") || "Messages"}</span>
         </button>
 
         <button
@@ -61,6 +76,20 @@ export default function MobileBottomNav({
 
       <button
         type="button"
+        className={`bottom-nav-item ${activeNav === "messages" ? "active" : ""}`}
+        onClick={() => onNavClick("messages")}
+      >
+        <div className="bottom-nav-icon-wrapper">
+          <MessageSquare size={20} className="bottom-nav-icon" />
+          {unreadChatCount > 0 && (
+            <span className="bottom-nav-badge">{unreadChatCount}</span>
+          )}
+        </div>
+        <span className="bottom-nav-label">{t("nav.messages") || "Messages"}</span>
+      </button>
+
+      <button
+        type="button"
         className={`bottom-nav-item ${activeNav === "farmers" ? "active" : ""}`}
         onClick={() => onNavClick("farmers")}
       >
@@ -88,3 +117,4 @@ export default function MobileBottomNav({
     </nav>
   );
 }
+

@@ -14,7 +14,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { apiUrl } from "../config/api";
 
 const SUPPORTED_LOCATIONS = [
-  "Tuni",
+  "Bhimavaram",
   "Kakinada",
   "Rajahmundry",
   "Anakapalli",

@@ -11,15 +11,22 @@ const conversationSchema = new mongoose.Schema(
     ],
     crop: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Crop'
+      ref: 'Crop',
+      default: null
     },
     lastMessage: {
       type: String,
-      default: ''
+      default: '',
+      trim: true
     },
     lastSender: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: 'User',
+      default: null
+    },
+    lastMessageAt: {
+      type: Date,
+      default: Date.now
     },
     unreadBy: [
       {
@@ -30,5 +37,10 @@ const conversationSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+conversationSchema.index({ participants: 1 });
+conversationSchema.index({ updatedAt: -1 });
+conversationSchema.index({ lastMessageAt: -1 });
+conversationSchema.index({ participants: 1, crop: 1 });
 
 module.exports = mongoose.model('Conversation', conversationSchema);

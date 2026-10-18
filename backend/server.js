@@ -1,3 +1,4 @@
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -9,8 +10,10 @@ const chatRoutes = require('./routes/chat');
 const farmerRoutes = require('./routes/farmers');
 const buyerRoutes = require('./routes/buyers');
 const weatherRoutes = require('./routes/weather');
+const { initSocket } = require('./socket');
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 
 // Allow CORS from configured client URL (e.g. Vercel domain) or any origin if not restricted
@@ -60,7 +63,11 @@ async function startServer() {
     }
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('MongoDB connected successfully!');
-    app.listen(PORT, () => {
+
+    initSocket(server, allowedOrigins);
+    console.log('Socket.IO real-time engine initialized.');
+
+    server.listen(PORT, () => {
       console.log(`AgroConnect server running on port ${PORT}`);
     });
   } catch (error) {

@@ -14,7 +14,8 @@ import {
   Tractor,
   ChevronRight,
   Globe,
-  Sparkles
+  Sparkles,
+  MessageSquare
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { SUPPORTED_LANGUAGES } from "../i18n/translations";
@@ -35,9 +36,11 @@ export default function MobileHeaderMenu({
   onNavigateBuyerDashboard,
   onNavigateFarmerDashboard,
   onNavigateFarmerDiscovery,
+  onNavigateMessages,
   onOpenListingModal,
   buyerRespondedCount = 0,
-  farmerPendingCount = 0
+  farmerPendingCount = 0,
+  unreadChatCount = 0
 }) {
   const { t, language, setLanguage } = useLanguage();
   const drawerRef = useRef(null);
@@ -289,6 +292,20 @@ export default function MobileHeaderMenu({
                       <span className="badge-count-pulse">{buyerRespondedCount}</span>
                     )}
                   </button>
+                  <button
+                    type="button"
+                    className={`mobile-menu-nav-link ${currentView === "messages" ? "active" : ""}`}
+                    onClick={() => {
+                      onClose();
+                      onNavigateMessages && onNavigateMessages();
+                    }}
+                  >
+                    <MessageSquare size={18} />
+                    <span>{t("nav.messages") || "Messages"}</span>
+                    {unreadChatCount > 0 && (
+                      <span className="badge-count-pulse">{unreadChatCount}</span>
+                    )}
+                  </button>
                 </>
               ) : (
                 // Farmer Links
@@ -327,6 +344,20 @@ export default function MobileHeaderMenu({
                     <span>{t("nav.farmerDashboard") || "Farmer Dashboard"}</span>
                     {farmerPendingCount > 0 && (
                       <span className="badge-count-pulse">{farmerPendingCount}</span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className={`mobile-menu-nav-link ${currentView === "messages" ? "active" : ""}`}
+                    onClick={() => {
+                      onClose();
+                      onNavigateMessages && onNavigateMessages();
+                    }}
+                  >
+                    <MessageSquare size={18} />
+                    <span>{t("nav.messages") || "Messages"}</span>
+                    {unreadChatCount > 0 && (
+                      <span className="badge-count-pulse">{unreadChatCount}</span>
                     )}
                   </button>
                 </>

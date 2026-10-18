@@ -45,6 +45,8 @@ import UserProfileModal from "./components/UserProfileModal";
 import MobileBottomNav from "./components/MobileBottomNav";
 import MobileHeaderMenu from "./components/MobileHeaderMenu";
 import LocationSelector from "./components/LocationSelector";
+import MessagesView from "./components/MessagesView";
+import { connectChatSocket, getChatSocket } from "./services/socket";
 import { apiUrl } from "./config/api";
 
 const PRESET_LOCATIONS = ["All", "Bhimavaram", "Anakapalli", "Kakinada", "Rajahmundry", "East Godavari"];
@@ -540,6 +542,23 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [resolveActiveUser, t, fetchFarmersList, goToMarketplace, navigateToHome]);
 
+  const navigateToMessages = useCallback((recipient = null, crop = null) => {
+    const activeUser = currentUserRef.current || currentUser;
+    if (!activeUser) {
+      triggerNotice(t("chat.loginRequired") || "Please sign in to view your messages.", "info");
+      openLoginModal("Buyer");
+      return;
+    }
+    setChatRecipient(recipient);
+    setChatCrop(crop);
+    setCurrentView("messages");
+    setMobileNavActive("messages");
+    if (window.location.hash !== "#messages") {
+      window.location.hash = "messages";
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [currentUser, openLoginModal, t]);
+
   const handleJoinRole = useCallback((role) => {
     openRegisterModal(role);
   }, [openRegisterModal]);
@@ -585,8 +604,8 @@ function App() {
 
       if (!activeUser) {
         // GUEST RULES: only #home and #how-it-works permitted
-        if (hash === "#marketplace" || hash === "#buyer-dashboard" || hash === "#farmer-dashboard" || hash === "#list-crop" || hash === "#farmers" || hash === "#profile") {
-          triggerNotice(t("notices.loginToExploreMarketplace"), "info");
+        if (hash === "#messages" || hash === "#marketplace" || hash === "#buyer-dashboard" || hash === "#farmer-dashboard" || hash === "#list-crop" || hash === "#farmers" || hash === "#profile") {
+          triggerNotice(t("chat.loginRequired") || t("notices.loginToExploreMarketplace"), "info");
           openLoginModal("Buyer");
           setCurrentView("home");
           setMobileNavActive("home");
@@ -599,8 +618,12 @@ function App() {
       }
 
       if (activeUser.role === "Buyer") {
-        // BUYER RULES: only #marketplace, #buyer-dashboard, #profile permitted
-        if (hash === "#buyer-dashboard") {
+        // BUYER RULES: #messages, #marketplace, #buyer-dashboard, #profile permitted
+        if (hash === "#messages") {
+          setCurrentView("messages");
+          setMobileNavActive("messages");
+          fetchUnreadChats();
+        } else if (hash === "#buyer-dashboard") {
           setCurrentView("buyer-dashboard");
           setMobileNavActive("buyerDashboard");
           fetchBuyerEnquiries();
@@ -624,8 +647,12 @@ function App() {
       }
 
       if (activeUser.role === "Farmer") {
-        // FARMER RULES: only #farmer-dashboard, #farmers, #list-crop, #profile permitted
-        if (hash === "#farmers") {
+        // FARMER RULES: #messages, #farmer-dashboard, #farmers, #list-crop, #profile permitted
+        if (hash === "#messages") {
+          setCurrentView("messages");
+          setMobileNavActive("messages");
+          fetchUnreadChats();
+        } else if (hash === "#farmers") {
           setCurrentView("farmers");
           setMobileNavActive("farmers");
           fetchFarmersList();
@@ -683,31 +710,61 @@ function App() {
       return;
     }
     try {
-      const res = await fetch(apiUrl("/api/chat/conversations"), {
+      const res = await fetch(apiUrl("/api/chat/unread-count"), {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data)) {
-          const count = data.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
-          setUnreadChatCount(count);
-        }
+        setUnreadChatCount(typeof data.unreadCount === "number" ? data.unreadCount : 0);
       }
     } catch {
       // ignore
     }
   }, [currentUser]);
 
-  const handleStartChat = (recipient, crop = null) => {
+  // Global socket listener & reactive unread chats counter
+  useEffect(() => {
+    if (!currentUser) {
+      setUnreadChatCount(0);
+      return;
+    }
+
+    const token = sessionStorage.getItem("agroconnectToken");
+    if (!token) return;
+
+    fetchUnreadChats();
+
+    const socket = connectChatSocket(token);
+    const handleUpdate = () => {
+      fetchUnreadChats();
+    };
+
+    if (socket) {
+      socket.on("new_message", handleUpdate);
+      socket.on("conversation_updated", handleUpdate);
+      socket.on("messages_read", handleUpdate);
+    }
+
+    const pollInterval = setInterval(fetchUnreadChats, 12000);
+
+    return () => {
+      clearInterval(pollInterval);
+      if (socket) {
+        socket.off("new_message", handleUpdate);
+        socket.off("conversation_updated", handleUpdate);
+        socket.off("messages_read", handleUpdate);
+      }
+    };
+  }, [currentUser, fetchUnreadChats]);
+
+  const handleStartChat = useCallback((recipient, crop = null) => {
     if (!currentUser) {
       triggerNotice(t("chat.loginRequired") || "Please sign in to start chatting.", "info");
       openLoginModal("Buyer");
       return;
     }
-    setChatRecipient(recipient);
-    setChatCrop(crop);
-    setChatModalOpen(true);
-  };
+    navigateToMessages(recipient, crop);
+  }, [currentUser, openLoginModal, t, navigateToMessages]);
 
   const handleOpenFarmerProfile = (farmerId) => {
     if (!farmerId) {
@@ -742,6 +799,8 @@ function App() {
       navigateToFarmerDiscovery();
     } else if (tab === "farmerDashboard") {
       navigateToFarmerDashboard();
+    } else if (tab === "messages") {
+      navigateToMessages();
     } else if (tab === "profile") {
       if (currentUser) {
         setUserProfileModalOpen(true);
@@ -897,6 +956,8 @@ function App() {
     setChatRecipient(null);
     setChatCrop(null);
     setUnreadChatCount(0);
+    const socket = getChatSocket();
+    if (socket) socket.disconnect();
     setEnquiryMessage("");
     setSelectedCrop(null);
     setEditingCrop(null);
@@ -1368,7 +1429,7 @@ Message: ${messageText}`;
                 </button>
               </>
             ) : currentUser.role === "Buyer" ? (
-              // BUYER NAVBAR: Fresh Harvests, Buyer Dashboard
+              // BUYER NAVBAR: Fresh Harvests, Messages, Buyer Dashboard
               <>
                 <button
                   type="button"
@@ -1377,6 +1438,15 @@ Message: ${messageText}`;
                 >
                   <Store size={16} />
                   <span>{t("nav.freshHarvests") || "Fresh Harvests"}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`nav-link-btn ${currentView === "messages" ? "active" : ""}`}
+                  onClick={() => navigateToMessages()}
+                >
+                  <MessageSquare size={16} />
+                  <span>{t("nav.messages") || "Messages"}</span>
+                  {unreadChatCount > 0 && <span className="badge-count-pulse">{unreadChatCount}</span>}
                 </button>
                 <button
                   type="button"
@@ -1389,7 +1459,7 @@ Message: ${messageText}`;
                 </button>
               </>
             ) : (
-              // FARMER NAVBAR: List Crop, Farmer Discovery, Farmer Dashboard
+              // FARMER NAVBAR: List Crop, Messages, Farmer Discovery, Farmer Dashboard
               <>
                 <button
                   type="button"
@@ -1398,6 +1468,15 @@ Message: ${messageText}`;
                 >
                   <Plus size={16} />
                   <span>{t("nav.listCrop") || "List Crop"}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`nav-link-btn ${currentView === "messages" ? "active" : ""}`}
+                  onClick={() => navigateToMessages()}
+                >
+                  <MessageSquare size={16} />
+                  <span>{t("nav.messages") || "Messages"}</span>
+                  {unreadChatCount > 0 && <span className="badge-count-pulse">{unreadChatCount}</span>}
                 </button>
                 <button
                   type="button"
@@ -1540,12 +1619,17 @@ Message: ${messageText}`;
             setMobileMenuOpen(false);
             navigateToFarmerDiscovery();
           }}
+          onNavigateMessages={() => {
+            setMobileMenuOpen(false);
+            navigateToMessages();
+          }}
           onOpenListingModal={() => {
             setMobileMenuOpen(false);
             openListingModal();
           }}
           buyerRespondedCount={buyerRespondedCount}
           farmerPendingCount={farmerPendingCount}
+          unreadChatCount={unreadChatCount}
         />
       </nav>
 
@@ -1659,6 +1743,23 @@ Message: ${messageText}`;
             </div>
           </section>
         </>
+      ) : currentView === "messages" && currentUser ? (
+        <MessagesView
+          currentUser={currentUser}
+          initialTargetUser={chatRecipient}
+          initialTargetCrop={chatCrop}
+          onOpenProductDetails={(crop) => {
+            setProductDetailsCrop(crop);
+            setProductDetailsModalOpen(true);
+          }}
+          onOpenFarmerProfile={(farmerId) => {
+            setActiveFarmerId(farmerId);
+            setFarmerProfileModalOpen(true);
+          }}
+          onConversationChange={() => {
+            fetchUnreadChats();
+          }}
+        />
       ) : (!currentUser || currentUser.role === "Buyer") ? (
         currentView === "buyer-dashboard" && currentUser ? (
           <main className="dashboard-page-view" id="buyer-dashboard">
@@ -1797,6 +1898,22 @@ Message: ${messageText}`;
                                     ? t("buyerDashboard.noteResponded")
                                     : t("buyerDashboard.noteClosed")}
                               </span>
+                            </div>
+
+                            <div className="enquiry-chat-action-strip">
+                              <button
+                                type="button"
+                                className="btn-chat-with-user"
+                                onClick={() => {
+                                  const farmerObj = typeof enquiry.crop?.farmer === "object"
+                                    ? enquiry.crop.farmer
+                                    : { _id: enquiry.crop?.farmer, role: "Farmer" };
+                                  handleStartChat(farmerObj, enquiry.crop);
+                                }}
+                              >
+                                <MessageSquare size={14} />
+                                <span>{t("chat.chatWithFarmer") || "Chat with Farmer"}</span>
+                              </button>
                             </div>
                           </div>
                         ))}
@@ -2390,6 +2507,20 @@ Message: ${messageText}`;
                                   <option value="Responded">{t("statuses.RespondedDetailed")}</option>
                                   <option value="Closed">{t("statuses.ClosedDetailed")}</option>
                                 </select>
+
+                                <button
+                                  type="button"
+                                  className="btn-chat-with-user"
+                                  onClick={() => {
+                                    const buyerObj = typeof enquiry.buyer === "object"
+                                      ? enquiry.buyer
+                                      : { _id: enquiry.buyer, name: enquiry.buyerName, email: enquiry.buyerEmail, role: "Buyer" };
+                                    handleStartChat(buyerObj, enquiry.crop);
+                                  }}
+                                >
+                                  <MessageSquare size={14} />
+                                  <span>{t("chat.chatWithBuyer") || "Chat with Buyer"}</span>
+                                </button>
                               </div>
                             </div>
                           ))}
@@ -3605,6 +3736,7 @@ Message: ${messageText}`;
       <MobileBottomNav
         activeNav={mobileNavActive}
         onNavClick={handleMobileNavClick}
+        unreadChatCount={unreadChatCount}
         unreadCount={unreadChatCount}
         currentUser={currentUser}
       />
