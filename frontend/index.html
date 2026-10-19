@@ -12,11 +12,15 @@
     <script>
       (function() {
         try {
+          var explicit = localStorage.getItem("agroconnectThemeExplicit");
           var stored = localStorage.getItem("agroconnectTheme");
-          var isDark = stored !== null ? stored === "dark" : (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          var isDark = explicit === "true" && stored === "dark";
           if (isDark) {
             document.documentElement.setAttribute("data-theme", "dark");
             document.documentElement.classList.add("dark-theme");
+          } else {
+            document.documentElement.removeAttribute("data-theme");
+            document.documentElement.classList.remove("dark-theme");
           }
         } catch (e) {}
       })();

@@ -33,7 +33,6 @@ import {
 } from "lucide-react";
 import "./App.css";
 import { useLanguage } from "./context/LanguageContext";
-import LanguageSelector from "./components/LanguageSelector";
 import { translations } from "./i18n/translations";
 import SplashScreen from "./components/SplashScreen";
 import WeatherModal from "./components/WeatherModal";
@@ -137,6 +136,32 @@ function formatEnquiryDate(dateStr, lang) {
   }
 }
 
+function playChatNotificationSound() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08); // A5
+
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.38);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.4);
+  } catch {
+    // browser audio autoplay restrictions ignored safely
+  }
+}
+
 function App() {
   const { language, t } = useLanguage();
 
@@ -167,16 +192,29 @@ function App() {
     currentUserRef.current = currentUser;
   }, [currentUser]);
 
-  // Dark mode theme state
+  // Theme state - Default is white (light mode)
   const [darkMode, setDarkMode] = useState(() => {
     try {
-      const stored = localStorage.getItem("agroconnectTheme");
-      if (stored) return stored === "dark";
-      return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const explicit = localStorage.getItem("agroconnectThemeExplicit");
+      if (explicit === "true") {
+        return localStorage.getItem("agroconnectTheme") === "dark";
+      }
+      return false; // Default theme is white
     } catch {
       return false;
     }
   });
+
+  const toggleTheme = (newMode) => {
+    setDarkMode((prev) => {
+      const updated = typeof newMode === "boolean" ? newMode : !prev;
+      try {
+        localStorage.setItem("agroconnectThemeExplicit", "true");
+        localStorage.setItem("agroconnectTheme", updated ? "dark" : "light");
+      } catch {}
+      return updated;
+    });
+  };
 
   // Mobile top header hamburger drawer menu state
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -186,11 +224,9 @@ function App() {
       if (darkMode) {
         document.documentElement.setAttribute("data-theme", "dark");
         document.body.classList.add("dark-theme");
-        localStorage.setItem("agroconnectTheme", "dark");
       } else {
         document.documentElement.removeAttribute("data-theme");
         document.body.classList.remove("dark-theme");
-        localStorage.setItem("agroconnectTheme", "light");
       }
     } catch {
       // ignore
@@ -282,6 +318,8 @@ function App() {
   const [chatRecipient, setChatRecipient] = useState(null);
   const [chatCrop, setChatCrop] = useState(null);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [chatNotification, setChatNotification] = useState(null);
+  const [activeChatConversationId, setActiveChatConversationId] = useState(null);
 
   const [farmerProfileModalOpen, setFarmerProfileModalOpen] = useState(false);
   const [activeFarmerId, setActiveFarmerId] = useState(null);
@@ -542,7 +580,7 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [resolveActiveUser, t, fetchFarmersList, goToMarketplace, navigateToHome]);
 
-  const navigateToMessages = useCallback((recipient = null, crop = null) => {
+  const navigateToMessages = useCallback((recipient = null, crop = null, conversationId = null) => {
     const activeUser = currentUserRef.current || currentUser;
     if (!activeUser) {
       triggerNotice(t("chat.loginRequired") || "Please sign in to view your messages.", "info");
@@ -551,6 +589,10 @@ function App() {
     }
     setChatRecipient(recipient);
     setChatCrop(crop);
+    if (conversationId) {
+      setActiveChatConversationId(conversationId);
+    }
+    setChatNotification(null);
     setCurrentView("messages");
     setMobileNavActive("messages");
     if (window.location.hash !== "#messages") {
@@ -722,10 +764,48 @@ function App() {
     }
   }, [currentUser]);
 
-  // Global socket listener & reactive unread chats counter
+  const currentViewRef = useRef(currentView);
+  useEffect(() => {
+    currentViewRef.current = currentView;
+  }, [currentView]);
+
+  const activeChatConvRef = useRef(activeChatConversationId);
+  useEffect(() => {
+    activeChatConvRef.current = activeChatConversationId;
+  }, [activeChatConversationId]);
+
+  // Auto-dismiss floating chat notification after 7 seconds
+  useEffect(() => {
+    if (!chatNotification) return;
+    const timer = setTimeout(() => {
+      setChatNotification(null);
+    }, 7000);
+    return () => clearTimeout(timer);
+  }, [chatNotification]);
+
+  // If user opens the conversation that the notification belongs to, dismiss notification immediately
+  useEffect(() => {
+    if (
+      chatNotification &&
+      currentView === "messages" &&
+      activeChatConversationId &&
+      (chatNotification.conversationId || "").toString() === activeChatConversationId.toString()
+    ) {
+      setChatNotification(null);
+    }
+  }, [chatNotification, currentView, activeChatConversationId]);
+
+  const handleOpenChatNotification = useCallback((notif) => {
+    if (!notif) return;
+    setChatNotification(null);
+    navigateToMessages(null, null, notif.conversationId);
+  }, [navigateToMessages]);
+
+  // Global socket listener & reactive unread chats counter & notifications
   useEffect(() => {
     if (!currentUser) {
       setUnreadChatCount(0);
+      setChatNotification(null);
       return;
     }
 
@@ -735,27 +815,68 @@ function App() {
     fetchUnreadChats();
 
     const socket = connectChatSocket(token);
+
+    const handleMessageArrival = (msg) => {
+      fetchUnreadChats();
+      if (!msg) return;
+
+      const recipientId = (msg.recipient?._id || msg.recipient?.id || msg.recipient || "").toString();
+      const senderId = (msg.sender?._id || msg.sender?.id || msg.sender || "").toString();
+      const myId = (currentUser?.id || currentUser?._id || "").toString();
+
+      // Only notify if message was sent TO current user and NOT BY current user
+      if (recipientId && myId && recipientId === myId && senderId !== myId) {
+        // If user is currently looking at this active conversation in MessagesView, don't show toast
+        const isCurrentlyViewingConv =
+          currentViewRef.current === "messages" &&
+          activeChatConvRef.current &&
+          activeChatConvRef.current.toString() === (msg.conversation || "").toString();
+
+        if (!isCurrentlyViewingConv) {
+          playChatNotificationSound();
+          const senderName = msg.sender?.name || t("chat.someone") || "Someone";
+          const senderRole = msg.sender?.role || "User";
+          const senderAvatar = msg.sender?.avatar || (senderRole === "Farmer" ? "🧑‍🌾" : "🛒");
+          const textPreview = msg.text || "Sent a message";
+
+          setChatNotification({
+            id: msg._id || Date.now(),
+            conversationId: msg.conversation,
+            senderName,
+            senderRole,
+            senderAvatar,
+            text: textPreview,
+            crop: msg.crop?.name || null
+          });
+        }
+      }
+    };
+
     const handleUpdate = () => {
       fetchUnreadChats();
     };
 
     if (socket) {
-      socket.on("new_message", handleUpdate);
+      socket.on("new_message", handleMessageArrival);
+      socket.on("message_notification", handleMessageArrival);
+      socket.on("unread_count_updated", handleUpdate);
       socket.on("conversation_updated", handleUpdate);
       socket.on("messages_read", handleUpdate);
     }
 
-    const pollInterval = setInterval(fetchUnreadChats, 12000);
+    const pollInterval = setInterval(fetchUnreadChats, 10000);
 
     return () => {
       clearInterval(pollInterval);
       if (socket) {
-        socket.off("new_message", handleUpdate);
+        socket.off("new_message", handleMessageArrival);
+        socket.off("message_notification", handleMessageArrival);
+        socket.off("unread_count_updated", handleUpdate);
         socket.off("conversation_updated", handleUpdate);
         socket.off("messages_read", handleUpdate);
       }
     };
-  }, [currentUser, fetchUnreadChats]);
+  }, [currentUser, fetchUnreadChats, t]);
 
   const handleStartChat = useCallback((recipient, crop = null) => {
     if (!currentUser) {
@@ -1363,6 +1484,49 @@ Message: ${messageText}`;
         </div>
       )}
 
+      {/* REAL-TIME IN-APP CHAT MESSAGE NOTIFICATION TOAST */}
+      {chatNotification && (
+        <aside
+          className="chat-floating-notification"
+          role="status"
+          aria-live="polite"
+          onClick={() => handleOpenChatNotification(chatNotification)}
+        >
+          <div className="notif-avatar-col">
+            <div className="notif-avatar">
+              {chatNotification.senderAvatar?.length === 2 || !chatNotification.senderAvatar ? (
+                <span>{chatNotification.senderAvatar || "💬"}</span>
+              ) : (
+                <img src={chatNotification.senderAvatar} alt={chatNotification.senderName} />
+              )}
+            </div>
+            <span className="notif-pulse-dot" />
+          </div>
+          <div className="notif-content-col">
+            <div className="notif-header-line">
+              <strong className="notif-sender-name">{chatNotification.senderName}</strong>
+              <span className={`notif-role-badge ${chatNotification.senderRole?.toLowerCase()}`}>
+                {t(`nav.role${chatNotification.senderRole}`) || chatNotification.senderRole}
+              </span>
+              <span className="notif-new-tag">{t("chat.newBadge") || "New"}</span>
+            </div>
+            <p className="notif-message-text">{chatNotification.text}</p>
+            <span className="notif-tap-hint">{t("chat.clickToReply") || "Click to open chat"}</span>
+          </div>
+          <button
+            type="button"
+            className="notif-close-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              setChatNotification(null);
+            }}
+            aria-label="Dismiss message notification"
+          >
+            <X size={15} />
+          </button>
+        </aside>
+      )}
+
       {/* SINGLE CLEAN NAVBAR (White/Cream bar, logo left, nav center, user & lang right) */}
       <nav className="main-navbar">
         <div className="navbar-container">
@@ -1429,7 +1593,7 @@ Message: ${messageText}`;
                 </button>
               </>
             ) : currentUser.role === "Buyer" ? (
-              // BUYER NAVBAR: Fresh Harvests, Messages, Buyer Dashboard
+              // BUYER NAVBAR: Fresh Harvests, Buyer Dashboard, Messages
               <>
                 <button
                   type="button"
@@ -1441,15 +1605,6 @@ Message: ${messageText}`;
                 </button>
                 <button
                   type="button"
-                  className={`nav-link-btn ${currentView === "messages" ? "active" : ""}`}
-                  onClick={() => navigateToMessages()}
-                >
-                  <MessageSquare size={16} />
-                  <span>{t("nav.messages") || "Messages"}</span>
-                  {unreadChatCount > 0 && <span className="badge-count-pulse">{unreadChatCount}</span>}
-                </button>
-                <button
-                  type="button"
                   className={`nav-link-btn ${currentView === "buyer-dashboard" ? "active" : ""}`}
                   onClick={() => navigateToBuyerDashboard()}
                 >
@@ -1457,18 +1612,19 @@ Message: ${messageText}`;
                   <span>{t("nav.buyerDashboard") || "Buyer Dashboard"}</span>
                   {buyerRespondedCount > 0 && <span className="badge-count-pulse">{buyerRespondedCount}</span>}
                 </button>
-              </>
-            ) : (
-              // FARMER NAVBAR: List Crop, Messages, Farmer Discovery, Farmer Dashboard
-              <>
                 <button
                   type="button"
-                  className="nav-link-btn"
-                  onClick={openListingModal}
+                  className={`nav-link-btn ${currentView === "messages" ? "active" : ""}`}
+                  onClick={() => navigateToMessages()}
                 >
-                  <Plus size={16} />
-                  <span>{t("nav.listCrop") || "List Crop"}</span>
+                  <MessageSquare size={16} />
+                  <span>{t("nav.messages") || "Messages"}</span>
+                  {unreadChatCount > 0 && <span className="badge-count-pulse">{unreadChatCount}</span>}
                 </button>
+              </>
+            ) : (
+              // FARMER NAVBAR: Messages, Farmer Discovery, Farmer Dashboard
+              <>
                 <button
                   type="button"
                   className={`nav-link-btn ${currentView === "messages" ? "active" : ""}`}
@@ -1504,27 +1660,25 @@ Message: ${messageText}`;
             <div className="nav-actions-desktop">
               {currentUser ? (
                 <div className="user-action-cluster">
-                  <div
+                  <button
+                    type="button"
                     className="user-profile-badge clickable"
                     onClick={() => setUserProfileModalOpen(true)}
-                    title={t("profile.title") || "My Profile"}
-                    role="button"
-                    tabIndex={0}
+                    title={`${currentUser.name || "User"} (${t(`nav.role${currentUser.role}`) || currentUser.role}) - ${t("profile.title") || "My Profile"}`}
+                    aria-label={t("profile.title") || "My Profile"}
                   >
-                    <div className="profile-avatar">
-                      {currentUser.role === "Farmer" ? "🧑‍🌾" : "🛒"}
+                    <div className="profile-avatar-circle">
+                      {currentUser.avatar ? (
+                        <img src={currentUser.avatar} alt="" className="avatar-img" />
+                      ) : (
+                        <span className="avatar-role-icon">
+                          {currentUser.role === "Farmer" ? "🧑‍🌾" : "🛒"}
+                        </span>
+                      )}
                     </div>
-                    <div className="profile-info">
-                      <span className="profile-name">{currentUser.name || currentUser.username || currentUser.email?.split("@")[0] || "User"}</span>
-                      <span className="profile-role">
-                        {t(`nav.role${currentUser.role}`) || currentUser.role}
-                      </span>
-                    </div>
-                  </div>
-
-                  <button className="btn-logout" onClick={handleLogout} title={t("nav.logout")}>
-                    <LogOut size={15} style={{ marginRight: 4, verticalAlign: "middle" }} />
-                    {t("nav.logout")}
+                    <span className="profile-name">
+                      {currentUser.name || currentUser.username || currentUser.email?.split("@")[0] || "User"}
+                    </span>
                   </button>
                 </div>
               ) : (
@@ -1550,16 +1704,13 @@ Message: ${messageText}`;
               <button
                 type="button"
                 className="btn-theme-toggle"
-                onClick={() => setDarkMode(!darkMode)}
+                onClick={() => toggleTheme(!darkMode)}
                 title={darkMode ? "Switch to Warm Cream Light Mode" : "Switch to Dark Earth Mode"}
                 aria-label="Toggle theme"
               >
                 {darkMode ? <Sun size={17} className="theme-icon-sun" /> : <Moon size={17} className="theme-icon-moon" />}
               </button>
             </div>
-
-            {/* TOP-RIGHT LANGUAGE SELECTOR */}
-            <LanguageSelector />
 
             {/* TOP-RIGHT MOBILE HAMBURGER BUTTON (Mobile only) */}
             <button
@@ -1589,7 +1740,7 @@ Message: ${messageText}`;
             handleLogout();
           }}
           darkMode={darkMode}
-          onToggleDarkMode={() => setDarkMode(!darkMode)}
+          onToggleDarkMode={(target) => toggleTheme(target)}
           onOpenLogin={(role) => {
             setMobileMenuOpen(false);
             openLoginModal(role);
@@ -1746,6 +1897,7 @@ Message: ${messageText}`;
       ) : currentView === "messages" && currentUser ? (
         <MessagesView
           currentUser={currentUser}
+          activeConversationId={activeChatConversationId}
           initialTargetUser={chatRecipient}
           initialTargetCrop={chatCrop}
           onOpenProductDetails={(crop) => {
@@ -1756,7 +1908,11 @@ Message: ${messageText}`;
             setActiveFarmerId(farmerId);
             setFarmerProfileModalOpen(true);
           }}
-          onConversationChange={() => {
+          onConversationChange={(convId) => {
+            setActiveChatConversationId(convId);
+            if (chatNotification && (chatNotification.conversationId || "").toString() === (convId || "").toString()) {
+              setChatNotification(null);
+            }
             fetchUnreadChats();
           }}
         />
@@ -1937,10 +2093,9 @@ Message: ${messageText}`;
                   {t("marketplace.subtitle") || "Directly sourced from verified regional growers in Andhra Pradesh. Zero middlemen."}
                 </p>
 
-                {/* PROMINENT SEARCH BAR (Rounded-full, soft warm shadow, search button in saffron) */}
+                {/* PROMINENT SEARCH BAR (Seamless borderless, saffron search button) */}
                 <div className="prominent-search-bar">
                   <div className="search-input-wrapper">
-                    <Search className="search-lead-icon" size={20} />
                     <input
                       type="text"
                       className="prominent-search-input"
@@ -1948,6 +2103,12 @@ Message: ${messageText}`;
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       aria-label="Search crops"
+                      style={{
+                        border: "none",
+                        outline: "none",
+                        boxShadow: "none",
+                        background: "transparent"
+                      }}
                     />
                     {search && (
                       <button className="search-clear-action" onClick={() => setSearch("")} aria-label="Clear search">
@@ -2070,14 +2231,12 @@ Message: ${messageText}`;
                               e.target.src = "/crops/default.svg";
                             }}
                           />
-                          {/* Single small Fresh badge on image corner */}
-                          <div className="crop-card-badge-tag">
-                            {isOwner ? (
+                          {/* Owner badge on image corner if current user */}
+                          {isOwner && (
+                            <div className="crop-card-badge-tag">
                               <span className="badge-tag-owner">🧑‍🌾 {t("marketplace.card.yourListing") || "Your Listing"}</span>
-                            ) : (
-                              <span className="badge-tag-fresh">✨ Fresh Stock</span>
-                            )}
-                          </div>
+                            </div>
+                          )}
                         </div>
 
                         {/* Card Details Body */}
@@ -2559,63 +2718,11 @@ Message: ${messageText}`;
                   <span className="brand-telugu">{t("nav.brandSubtitle")}</span>
                 </div>
               </a>
-              <p className="footer-summary">{t("footer.summary")}</p>
-            </div>
-
-            <div className="footer-nav-col">
-              <h4>{t("footer.quickLinks")}</h4>
-              {!currentUser ? (
-                <>
-                  <button type="button" className="footer-link-btn" onClick={() => navigateToHome()}>{t("nav.home") || "Home"}</button>
-                  <button
-                    type="button"
-                    className="footer-link-btn"
-                    onClick={() => {
-                      const el = document.getElementById("how-it-works");
-                      if (el) el.scrollIntoView({ behavior: "smooth" });
-                    }}
-                  >
-                    {t("footer.howItWorks")}
-                  </button>
-                  <button type="button" className="footer-link-btn" onClick={() => handleJoinRole("Farmer")}>{t("footer.joinAsFarmer")}</button>
-                  <button type="button" className="footer-link-btn" onClick={() => handleJoinRole("Buyer")}>{t("footer.joinAsBuyer")}</button>
-                </>
-              ) : currentUser.role === "Buyer" ? (
-                <>
-                  <button type="button" className="footer-link-btn" onClick={() => navigateToMarketplace()}>{t("nav.freshHarvests") || "Fresh Harvests"}</button>
-                  <button type="button" className="footer-link-btn" onClick={() => navigateToBuyerDashboard()}>{t("nav.buyerDashboard") || "Buyer Dashboard"}</button>
-                  <button type="button" className="footer-link-btn" onClick={() => setUserProfileModalOpen(true)}>{t("profile.title") || "My Profile"}</button>
-                </>
-              ) : (
-                <>
-                  <button type="button" className="footer-link-btn" onClick={openListingModal}>{t("nav.listCrop") || "List Crop"}</button>
-                  <button type="button" className="footer-link-btn" onClick={() => navigateToFarmerDiscovery()}>{t("nav.farmers") || "Farmer Discovery"}</button>
-                  <button type="button" className="footer-link-btn" onClick={() => navigateToFarmerDashboard()}>{t("nav.farmerDashboard") || "Farmer Dashboard"}</button>
-                  <button type="button" className="footer-link-btn" onClick={() => setUserProfileModalOpen(true)}>{t("profile.title") || "My Profile"}</button>
-                </>
-              )}
-            </div>
-
-            <div className="footer-nav-col">
-              <h4>{t("footer.accountPortals")}</h4>
-              {currentUser ? (
-                <>
-                  <button className="footer-link-btn" onClick={() => setUserProfileModalOpen(true)}>{t("profile.title") || "My Profile"}</button>
-                  <button className="footer-link-btn" onClick={handleLogout}>{t("footer.logout")}</button>
-                </>
-              ) : (
-                <>
-                  <button className="footer-link-btn" onClick={() => openRegisterModal("Farmer")}>{t("footer.joinAsFarmer")}</button>
-                  <button className="footer-link-btn" onClick={() => openRegisterModal("Buyer")}>{t("footer.joinAsBuyer")}</button>
-                  <button className="footer-link-btn" onClick={() => openLoginModal("Farmer")}>{t("footer.signIn")}</button>
-                </>
-              )}
             </div>
           </div>
 
           <div className="footer-bottom-bar">
             <span>{t("footer.copyright", { year: new Date().getFullYear() })}</span>
-            <span className="footer-tagline">{t("footer.tagline")}</span>
           </div>
         </div>
       </footer>
@@ -3729,7 +3836,7 @@ Message: ${messageText}`;
             setUserProfileModalOpen(false);
             setChatRecipient(null);
             setChatCrop(null);
-            setChatModalOpen(true);
+            navigateToMessages();
           }}
         />
       )}

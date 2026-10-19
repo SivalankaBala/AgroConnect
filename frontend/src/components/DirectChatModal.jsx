@@ -1,14 +1,12 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import {
   MessageSquare,
   X,
   Send,
   RefreshCw,
-  Store,
   ShieldCheck,
   CheckCheck,
-  Maximize2,
-  Minimize2
+  ArrowLeft
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { apiUrl } from "../config/api";
@@ -28,9 +26,15 @@ export function DirectChatModal({
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [showMobileChat, setShowMobileChat] = useState(Boolean(selectedConvId || targetRecipient));
   const messagesEndRef = useRef(null);
   const messagesStreamRef = useRef(null);
+
+  useEffect(() => {
+    if (selectedConvId || targetRecipient) {
+      setShowMobileChat(true);
+    }
+  }, [selectedConvId, targetRecipient]);
 
   const token = sessionStorage.getItem("agroconnectToken");
 
@@ -201,6 +205,36 @@ export function DirectChatModal({
     );
   }
 
+  const uniqueConversations = useMemo(() => {
+    const personMap = new Map();
+    const sorted = [...conversations].sort((a, b) => {
+      const timeA = new Date(a.lastMessageAt || a.updatedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.lastMessageAt || b.updatedAt || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+
+    for (const conv of sorted) {
+      const partner = getOtherParticipant(conv);
+      const partnerId = (partner?._id || partner?.id || partner || "").toString();
+
+      if (!partnerId) {
+        if (!personMap.has(conv._id)) personMap.set(conv._id, { ...conv });
+        continue;
+      }
+
+      if (!personMap.has(partnerId)) {
+        personMap.set(partnerId, { ...conv, otherParticipantId: partnerId });
+      } else {
+        const existing = personMap.get(partnerId);
+        if (conv.unreadCount) {
+          existing.unreadCount = (existing.unreadCount || 0) + conv.unreadCount;
+        }
+      }
+    }
+
+    return Array.from(personMap.values());
+  }, [conversations, currentUser]);
+
   const selectedConversation = conversations.find((c) => c._id === selectedConvId);
   const activePartner = selectedConversation
     ? getOtherParticipant(selectedConversation)
@@ -209,34 +243,24 @@ export function DirectChatModal({
   return (
     <div className="modal-backdrop-modern" onClick={onClose}>
       <div
-        className={`modal-window chat-modal-window ${isFullScreen ? "fullscreen-modal" : ""}`}
+        className="modal-window chat-modal-window"
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="modal-top-actions">
-          <button
-            type="button"
-            className="modal-action-round"
-            onClick={() => setIsFullScreen((prev) => !prev)}
-            title={isFullScreen ? "Restore Size" : "Full Screen Chat"}
-            aria-label="Toggle Fullscreen"
-          >
-            {isFullScreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-          </button>
-          <button className="modal-close-round" onClick={onClose} aria-label="Close chat">
-            <X size={18} />
-          </button>
-        </div>
+        <button className="modal-close-round" onClick={onClose} aria-label="Close chat">
+          <X size={18} />
+        </button>
 
-        <div className="chat-modal-layout">
+        <div className={`chat-modal-layout ${selectedConvId || (targetRecipient && showMobileChat) ? "has-active-conv" : "no-active-conv"}`}>
           {/* SIDEBAR: CONVERSATION LIST */}
           <aside className="chat-sidebar">
             <div className="chat-sidebar-header">
               <div className="sidebar-title-row">
-                <MessageSquare size={18} className="chat-icon" />
-                <h3>{t("chat.conversationsTitle")}</h3>
-              </div>
+                <div className="sidebar-title-group">
+                  <MessageSquare size={18} className="chat-icon" />
+                  <h3>{t("chat.conversationsTitle")}</h3>
+                </div>
               <button
                 className="chat-refresh-mini"
                 onClick={fetchConversations}
@@ -245,25 +269,37 @@ export function DirectChatModal({
                 <RefreshCw size={14} className={loading ? "spinner-icon" : ""} />
               </button>
             </div>
+            </div>
 
             <div className="chat-conv-list">
               {targetRecipient && !selectedConvId && (
-                <div className="conv-item active new-target">
+                <div
+                  className="conv-item active new-target"
+                  onClick={() => setShowMobileChat(true)}
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="conv-avatar">🧑‍🌾</div>
                   <div className="conv-meta">
-                    <strong>{targetRecipient.name}</strong>
+                    <div className="conv-name-row">
+                      <div className="conv-user-info-group">
+                        <strong className="conv-partner-name">{targetRecipient.name}</strong>
+                        <span className="conv-role-tag">
+                          {targetRecipient.role === "Farmer" ? (t("nav.roleFarmer") || "Farmer") : (t("nav.roleBuyer") || "Buyer")}
+                        </span>
+                      </div>
+                    </div>
                     <span className="conv-preview">New conversation</span>
                   </div>
                 </div>
               )}
 
-              {conversations.length === 0 && !targetRecipient ? (
+              {uniqueConversations.length === 0 && !targetRecipient ? (
                 <div className="chat-empty-sidebar">
                   <p>{t("chat.noConversations")}</p>
                   <small>{t("chat.noConversationsSub")}</small>
                 </div>
               ) : (
-                conversations.map((c) => {
+                uniqueConversations.map((c) => {
                   const partner = getOtherParticipant(c);
                   const isSelected = c._id === selectedConvId;
                   const hasUnread = (c.unreadBy || []).some(
@@ -275,20 +311,26 @@ export function DirectChatModal({
                       key={c._id}
                       type="button"
                       className={`conv-item ${isSelected ? "active" : ""} ${hasUnread ? "unread" : ""}`}
-                      onClick={() => setSelectedConvId(c._id)}
+                      onClick={() => {
+                        setSelectedConvId(c._id);
+                        setShowMobileChat(true);
+                      }}
                     >
                       <div className="conv-avatar">
                         {partner?.role === "Farmer" ? "🧑‍🌾" : "🛒"}
                       </div>
                       <div className="conv-meta">
                         <div className="conv-name-row">
-                          <strong className="conv-partner-name">{partner?.name || "User"}</strong>
+                          <div className="conv-user-info-group">
+                            <strong className="conv-partner-name">{partner?.name || "User"}</strong>
+                            <span className={`conv-role-tag ${partner?.role === "Farmer" ? "role-farmer" : "role-buyer"}`}>
+                              {partner?.role === "Farmer" ? (t("nav.roleFarmer") || "Farmer") : (t("nav.roleBuyer") || "Buyer")}
+                            </span>
+                          </div>
+                          <span className="conv-timestamp">{formatTime(c.lastMessageAt || c.updatedAt)}</span>
                           {hasUnread && <span className="unread-dot" />}
                         </div>
-                        <span className="conv-last-msg">{c.lastMessage || "..."}</span>
-                        {c.crop && (
-                          <span className="conv-crop-tag">🌾 {c.crop.name}</span>
-                        )}
+                        <span className="conv-last-msg">{c.lastMessage || "No messages yet"}</span>
                       </div>
                     </button>
                   );
@@ -299,10 +341,22 @@ export function DirectChatModal({
 
           {/* MAIN CHAT PANE */}
           <section className="chat-main-pane">
-            {activePartner || selectedConvId ? (
+            {selectedConvId || (targetRecipient && showMobileChat) ? (
               <>
                 {/* ACTIVE CHAT HEADER */}
                 <div className="chat-pane-header">
+                  <button
+                    type="button"
+                    className="btn-chat-modal-back"
+                    onClick={() => {
+                      setSelectedConvId(null);
+                      setShowMobileChat(false);
+                    }}
+                    aria-label="Back to conversations"
+                  >
+                    <ArrowLeft size={18} />
+                  </button>
+
                   <div className="partner-details">
                     <div className="partner-avatar-circle">
                       {activePartner?.role === "Farmer" ? "🧑‍🌾" : "🛒"}
@@ -320,16 +374,6 @@ export function DirectChatModal({
                     </div>
                   </div>
 
-                  {(selectedConversation?.crop || targetCrop) && (
-                    <div className="chat-crop-pill">
-                      <Store size={14} />
-                      <span>
-                        {t("chat.aboutCrop", {
-                          crop: selectedConversation?.crop?.name || targetCrop?.name
-                        })}
-                      </span>
-                    </div>
-                  )}
                 </div>
 
                 {/* MESSAGES STREAM */}
@@ -373,7 +417,7 @@ export function DirectChatModal({
                 <form className="chat-input-row" onSubmit={handleSendMessage}>
                   <input
                     type="text"
-                    placeholder={t("chat.typePlaceholder")}
+                    placeholder={t("chat.typePlaceholder") || "Type a Message..."}
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     disabled={sending}

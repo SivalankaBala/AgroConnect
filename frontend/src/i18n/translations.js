@@ -241,13 +241,13 @@ export const translations = {
       emptyThreadSub: "Discuss availability, pickup locations, quantity, and payment terms directly.",
       loadingMessages: "Loading message history...",
       loadingConversations: "Loading conversations...",
-      typeMessage: "Type a message in English, తెలుగు, हिन्दी...",
+      typeMessage: "Type a Message...",
       backToConversations: "Back to conversations",
       verifiedDirect: "Private & direct · Verified produce trade",
       noConversations: "No conversations yet",
       noConversationsSub: "Initiate an enquiry or message a farmer or buyer to begin direct messaging.",
       selectConversation: "Select a conversation to start messaging",
-      typePlaceholder: "Type your message here...",
+      typePlaceholder: "Type a Message...",
       sendBtn: "Send",
       aboutCrop: "About: {crop}",
       dealSafety: "Negotiate fairly · Zero middleman commissions · Coordinate pickup directly"
@@ -296,7 +296,17 @@ export const translations = {
       ordersUpcomingNotice: "Upcoming Feature: Direct UPI Escrow & Digital Invoicing is currently in development.",
       supportTitle: "Farmer & Buyer Support Helpline",
       supportDesc: "Need assistance with crop listings, buyer enquiries, or regional Mandi guidance?",
-      helplineNumber: "Toll-Free AP Agri Helpline: 1800-425-0302 | AgroConnect Support: +91 94401 23456"
+      helplineNumber: "Toll-Free AP Agri Helpline: 1800-425-0302 | AgroConnect Support: +91 94401 23456",
+      tabDetails: "Profile Details",
+      fullName: "Full Name",
+      editProfileTitle: "Edit Profile"
+    },
+    auth: {
+      name: "Full Name",
+      farmerRole: "Farmer",
+      buyerRole: "Buyer",
+      logout: "Logout",
+      role: "Role"
     },
     units: {
       kg: "kg",
@@ -816,7 +826,17 @@ export const translations = {
       ordersUpcomingNotice: "రాబోయే ఫీచర్: నేరుగా బ్యాంక్/యూపీఐ చెల్లింపులు మరియు డిజిటల్ బిల్లుల వ్యవస్థ త్వరలో ప్రారంభం కానుంది.",
       supportTitle: "రైతు & వ్యాపారి సహాయ కేంద్రం",
       supportDesc: "పంట నమోదు లేదా మార్కెట్ సహాయం కోసం సంప్రదించండి",
-      helplineNumber: "టోల్-ఫ్రీ వ్యవసాయ సహాయ కేంద్రం: 1800-425-0302 | ఆగ్రోకనెక్ట్ సేవలు: +91 94401 23456"
+      helplineNumber: "టోల్-ఫ్రీ వ్యవసాయ సహాయ కేంద్రం: 1800-425-0302 | ఆగ్రోకనెక్ట్ సేవలు: +91 94401 23456",
+      tabDetails: "ప్రొఫైల్ వివరాలు",
+      fullName: "పూర్తి పేరు",
+      editProfileTitle: "ప్రొఫైల్ సవరించండి"
+    },
+    auth: {
+      name: "పూర్తి పేరు",
+      farmerRole: "రైతు",
+      buyerRole: "కొనుగోలుదారు",
+      logout: "లాగ్ అవుట్",
+      role: "పాత్ర"
     },
     units: {
       kg: "కి.గ్రా",
@@ -1336,7 +1356,17 @@ export const translations = {
       ordersUpcomingNotice: "आगामी सुविधा: सीधे यूपीआई/नेटबैंकिंग भुगतान और डिजिटल बिलिंग प्रणाली जल्द शुरू होगी।",
       supportTitle: "किसान व खरीदार हेल्पलाइन",
       supportDesc: "फसल पंजीकरण या मंडी सहायता के लिए संपर्क करें",
-      helplineNumber: "टोल-फ्री कृषि हेल्पलाइन: 1800-425-0302 | एग्रोकनेक्ट सेवा: +91 94401 23456"
+      helplineNumber: "टोल-फ्री कृषि हेल्पलाइन: 1800-425-0302 | एग्रोकनेक्ट सेवा: +91 94401 23456",
+      tabDetails: "प्रोफ़ाइल विवरण",
+      fullName: "पूरा नाम",
+      editProfileTitle: "प्रोफ़ाइल संपादित करें"
+    },
+    auth: {
+      name: "पूरा नाम",
+      farmerRole: "किसान",
+      buyerRole: "खरीदार",
+      logout: "लॉग आउट",
+      role: "भूमिका"
     },
     units: {
       kg: "किग्रा",

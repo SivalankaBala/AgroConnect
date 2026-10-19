@@ -35,7 +35,7 @@ export default function UserProfileModal({
 }) {
   const { language, setLanguage, t } = useLanguage();
 
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview"); // 'overview' | 'settings'
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -63,7 +63,7 @@ export default function UserProfileModal({
     });
     setErrorMsg("");
     setSuccessMsg("");
-    setIsEditing(true);
+    setIsEditModalOpen(true);
   };
 
   const handleSave = async (e) => {
@@ -98,8 +98,8 @@ export default function UserProfileModal({
         onUserUpdate(data.user);
         sessionStorage.setItem("agroconnectUser", JSON.stringify(data.user));
       }
-      setSuccessMsg(t("notices.cropUpdated") ? "Profile updated successfully!" : "Profile updated successfully!");
-      setIsEditing(false);
+      setSuccessMsg("Profile updated successfully!");
+      setIsEditModalOpen(false);
     } catch (err) {
       setErrorMsg(err.message || "Error updating profile");
     } finally {
@@ -115,16 +115,16 @@ export default function UserProfileModal({
     : "Active Member";
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
+    <>
+      <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
       <div className="profile-modal-container" onClick={(e) => e.stopPropagation()}>
         {/* Modal Header */}
         <div className="profile-modal-header">
           <div className="profile-header-title-box">
             <h2 className="profile-modal-title">
               <User size={22} className="leaf-icon" />
-              {t("profile.title")}
+              {t("profile.title") || "My AgroConnect Profile"}
             </h2>
-            <p className="profile-modal-sub">{t("profile.subtitle")}</p>
           </div>
           <button className="modal-close-btn" onClick={onClose} aria-label="Close modal">
             <X size={20} />
@@ -139,7 +139,7 @@ export default function UserProfileModal({
             onClick={() => setActiveTab("overview")}
           >
             <User size={16} />
-            {t("auth.name")} & {t("profile.roleBadge")}
+            <span>{t("profile.tabDetails") || "Profile Details"}</span>
           </button>
           <button
             type="button"
@@ -147,7 +147,7 @@ export default function UserProfileModal({
             onClick={() => setActiveTab("settings")}
           >
             <HelpCircle size={16} />
-            {t("profile.appSettingsTab")}
+            <span>{t("profile.appSettingsTab") || "Settings & Support"}</span>
           </button>
         </div>
 
@@ -181,234 +181,77 @@ export default function UserProfileModal({
                     <h3 className="profile-display-name">{currentUser.name}</h3>
                     <span className={`profile-role-tag ${isFarmer ? "farmer" : "buyer"}`}>
                       <ShieldCheck size={14} />
-                      {isFarmer ? t("auth.farmerRole") : t("auth.buyerRole")}
-                    </span>
-                  </div>
-
-                  <div className="profile-meta-row">
-                    <span className="profile-meta-item">
-                      <Mail size={14} />
-                      {currentUser.email}
-                    </span>
-                    <span className="profile-meta-item">
-                      <Calendar size={14} />
-                      {t("profile.memberSince").replace("{date}", formattedDate)}
+                      {isFarmer ? (t("nav.roleFarmer") || "Farmer") : (t("nav.roleBuyer") || "Buyer")}
                     </span>
                   </div>
                 </div>
 
-                {!isEditing && (
-                  <button
-                    type="button"
-                    className="profile-edit-btn"
-                    onClick={handleStartEdit}
-                  >
-                    <Edit2 size={15} />
-                    {t("profile.editProfileBtn")}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className="profile-edit-btn"
+                  onClick={handleStartEdit}
+                >
+                  <Edit2 size={15} />
+                  <span>{t("profile.editProfileBtn") || "Edit Profile"}</span>
+                </button>
               </div>
 
-              {/* Edit Form or Read-only Display */}
-              {isEditing ? (
-                <form onSubmit={handleSave} className="profile-edit-form">
-                  <div className="form-grid">
-                    <div className="form-group">
-                      <label className="form-label">{t("auth.name")} *</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={form.name}
-                        onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        required
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">{t("profile.phone")}</label>
-                      <input
-                        type="tel"
-                        className="form-input"
-                        placeholder="+91 98765 43210"
-                        value={form.phone}
-                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">{t("profile.location")}</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="e.g. Tuni, Kakinada District, AP"
-                        value={form.location}
-                        onChange={(e) => setForm({ ...form, location: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">{t("profile.businessType")}</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder={isFarmer ? "e.g. Paddy & Organic Vegetables Grower" : "e.g. Wholesale Mandi Trader / Retail Store"}
-                        value={form.businessType}
-                        onChange={(e) => setForm({ ...form, businessType: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="form-group full-width">
-                      <label className="form-label">{t("profile.bio")}</label>
-                      <textarea
-                        className="form-textarea"
-                        rows="3"
-                        placeholder={isFarmer ? "Brief introduction to your agricultural produce, farming methods, and harvest schedule..." : "Brief description of the crops and quantities you are interested in sourcing..."}
-                        value={form.bio}
-                        onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                      />
-                    </div>
+              {/* Read-only Details Grid */}
+              <div className="profile-details-grid">
+                <div className="profile-detail-card">
+                  <div className="detail-icon-wrap">
+                    <Phone size={18} />
                   </div>
-
-                  <div className="profile-form-actions">
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={() => setIsEditing(false)}
-                      disabled={saving}
-                    >
-                      <X size={16} />
-                      {t("profile.cancelBtn")}
-                    </button>
-                    <button
-                      type="submit"
-                      className="btn-primary"
-                      disabled={saving}
-                    >
-                      {saving ? (
-                        <>
-                          <Loader2 size={16} className="spinner" />
-                          <span>Saving...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Check size={16} />
-                          {t("profile.saveProfileBtn")}
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <div className="profile-details-grid">
-                  <div className="profile-detail-card">
-                    <div className="detail-icon-wrap">
-                      <Phone size={18} />
-                    </div>
-                    <div>
-                      <span className="detail-label">{t("profile.phone")}</span>
-                      <p className="detail-value">{currentUser.phone || "Not provided yet"}</p>
-                    </div>
-                  </div>
-
-                  <div className="profile-detail-card">
-                    <div className="detail-icon-wrap">
-                      <MapPin size={18} />
-                    </div>
-                    <div>
-                      <span className="detail-label">{t("profile.location")}</span>
-                      <p className="detail-value">{currentUser.location || "Andhra Pradesh, India"}</p>
-                    </div>
-                  </div>
-
-                  <div className="profile-detail-card">
-                    <div className="detail-icon-wrap">
-                      <Briefcase size={18} />
-                    </div>
-                    <div>
-                      <span className="detail-label">{t("profile.businessType")}</span>
-                      <p className="detail-value">
-                        {currentUser.businessType || (isFarmer ? "Progressive Farmer" : "Direct Crop Buyer")}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="profile-detail-card">
-                    <div className="detail-icon-wrap">
-                      <ShieldCheck size={18} />
-                    </div>
-                    <div>
-                      <span className="detail-label">{t("profile.roleBadge")}</span>
-                      <p className="detail-value">{currentUser.role}</p>
-                    </div>
-                  </div>
-
-                  <div className="profile-detail-card full-width">
-                    <div className="detail-icon-wrap">
-                      <FileText size={18} />
-                    </div>
-                    <div>
-                      <span className="detail-label">{t("profile.bio")}</span>
-                      <p className="detail-value bio-text">
-                        {currentUser.bio || (isFarmer
-                          ? "Experienced grower supplying direct harvested farm produce to wholesale buyers and distributors."
-                          : "Commercial or household buyer sourcing fresh crops directly from local farmers.")}
-                      </p>
-                    </div>
+                  <div>
+                    <span className="detail-label">{t("profile.phone") || "Phone / WhatsApp:"}</span>
+                    <p className="detail-value">{currentUser.phone || "Not provided yet"}</p>
                   </div>
                 </div>
-              )}
 
-              {/* Quick Actions Shortcuts according to user role */}
-              <div className="profile-quick-actions">
-                <h4 className="quick-actions-title">Account Shortcuts</h4>
-                <div className="shortcuts-row">
-                  {isFarmer ? (
-                    <button
-                      type="button"
-                      className="shortcut-card-btn"
-                      onClick={() => {
-                        onClose();
-                        if (onOpenFarmerDashboard) onOpenFarmerDashboard();
-                      }}
-                    >
-                      <Package size={20} className="shortcut-icon" />
-                      <div>
-                        <strong>{t("profile.myHarvestsTab")}</strong>
-                        <p>Manage crops & buyer enquiries</p>
-                      </div>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="shortcut-card-btn"
-                      onClick={() => {
-                        onClose();
-                        if (onOpenBuyerDashboard) onOpenBuyerDashboard();
-                      }}
-                    >
-                      <FileText size={20} className="shortcut-icon" />
-                      <div>
-                        <strong>{t("profile.myEnquiriesTab")}</strong>
-                        <p>Review contact history & quotes</p>
-                      </div>
-                    </button>
-                  )}
-                  {onOpenChat && (
-                    <button
-                      type="button"
-                      className="shortcut-card-btn"
-                      onClick={() => {
-                        onClose();
-                        onOpenChat();
-                      }}
-                    >
-                      <MessageSquare size={20} className="shortcut-icon" />
-                      <div>
-                        <strong>{t("chat.title") || "Messages & Chat"}</strong>
-                        <p>Chat directly with farmers & buyers</p>
-                      </div>
-                    </button>
-                  )}
+                <div className="profile-detail-card">
+                  <div className="detail-icon-wrap">
+                    <MapPin size={18} />
+                  </div>
+                  <div>
+                    <span className="detail-label">{t("profile.location") || "Farm / Business Location:"}</span>
+                    <p className="detail-value">{currentUser.location || "Andhra Pradesh, India"}</p>
+                  </div>
+                </div>
+
+                <div className="profile-detail-card">
+                  <div className="detail-icon-wrap">
+                    <Briefcase size={18} />
+                  </div>
+                  <div>
+                    <span className="detail-label">{t("profile.businessType") || "Business / Operation Type:"}</span>
+                    <p className="detail-value">
+                      {currentUser.businessType || (isFarmer ? "Progressive Farmer" : "Direct Crop Buyer")}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="profile-detail-card">
+                  <div className="detail-icon-wrap">
+                    <ShieldCheck size={18} />
+                  </div>
+                  <div>
+                    <span className="detail-label">{t("profile.roleBadge") || "Account Role:"}</span>
+                    <p className="detail-value">{currentUser.role}</p>
+                  </div>
+                </div>
+
+                <div className="profile-detail-card full-width">
+                  <div className="detail-icon-wrap">
+                    <FileText size={18} />
+                  </div>
+                  <div>
+                    <span className="detail-label">{t("profile.bio") || "About Me / Bio:"}</span>
+                    <p className="detail-value bio-text">
+                      {currentUser.bio || (isFarmer
+                        ? "Experienced grower supplying direct harvested farm produce to wholesale buyers and distributors."
+                        : "Commercial or household buyer sourcing fresh crops directly from local farmers.")}
+                    </p>
+                  </div>
                 </div>
               </div>
             </>
@@ -422,7 +265,6 @@ export default function UserProfileModal({
                   <Globe size={18} className="settings-icon" />
                   <div>
                     <h5>{t("profile.appLanguage")}</h5>
-                    <p>{t("profile.selectLanguageNote")}</p>
                   </div>
                 </div>
                 <div className="language-pills-row">
@@ -504,13 +346,139 @@ export default function UserProfileModal({
             }}
           >
             <LogOut size={16} />
-            {t("auth.logout")}
+            <span>{t("nav.logout") || "Logout"}</span>
           </button>
           <button type="button" className="btn-secondary" onClick={onClose}>
-            {t("profile.cancelBtn")}
+            <span>{t("profile.cancelBtn") || "Close"}</span>
           </button>
         </div>
       </div>
     </div>
+
+    {/* SEPARATE EDIT PROFILE MODAL WINDOW */}
+    {isEditModalOpen && (
+      <div className="edit-profile-modal-overlay" onClick={() => setIsEditModalOpen(false)}>
+        <div
+          className="edit-profile-modal-window"
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="edit-profile-header">
+            <div className="edit-header-title-row">
+              <Edit2 size={18} className="edit-title-icon" />
+              <h3>{t("profile.editProfileTitle") || "Edit Profile"}</h3>
+            </div>
+            <button
+              type="button"
+              className="modal-close-btn edit-profile-close-btn"
+              onClick={() => setIsEditModalOpen(false)}
+              aria-label="Close edit profile"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <form onSubmit={handleSave} className="edit-profile-form">
+            <div className="edit-profile-body">
+              {errorMsg && (
+                <div className="profile-alert error">
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
+              <div className="form-group">
+                <label className="form-label">{t("profile.fullName") || "Full Name"} *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t("profile.phone") || "Phone / WhatsApp"}</label>
+                <input
+                  type="tel"
+                  className="form-input"
+                  placeholder="+91 98765 43210"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t("profile.location") || "Farm / Business Location"}</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Tuni, Kakinada District, AP"
+                  value={form.location}
+                  onChange={(e) => setForm({ ...form, location: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t("profile.businessType") || "Business / Operation Type"}</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder={
+                    isFarmer
+                      ? "e.g. Paddy & Organic Vegetables Grower"
+                      : "e.g. Wholesale Mandi Trader / Retail Store"
+                  }
+                  value={form.businessType}
+                  onChange={(e) => setForm({ ...form, businessType: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group full-width">
+                <label className="form-label">{t("profile.bio") || "About Me / Bio"}</label>
+                <textarea
+                  className="form-textarea"
+                  rows="3"
+                  placeholder={
+                    isFarmer
+                      ? "Brief introduction to your agricultural produce, farming methods, and harvest schedule..."
+                      : "Brief description of the crops and quantities you are interested in sourcing..."
+                  }
+                  value={form.bio}
+                  onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="edit-profile-footer">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setIsEditModalOpen(false)}
+                disabled={saving}
+              >
+                <X size={16} />
+                <span>{t("profile.cancelBtn") || "Cancel"}</span>
+              </button>
+              <button type="submit" className="btn-primary" disabled={saving}>
+                {saving ? (
+                  <>
+                    <Loader2 size={16} className="spinner" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={16} />
+                    <span>{t("profile.saveProfileBtn") || "Save Profile Changes"}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

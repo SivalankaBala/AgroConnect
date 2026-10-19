@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import {
   MessageSquare,
   Search,
@@ -15,10 +15,7 @@ import {
   Phone,
   MapPin,
   Clock,
-  ShieldCheck,
-  ChevronRight,
-  Maximize2,
-  Minimize2
+  ShieldCheck
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { apiUrl } from "../config/api";
@@ -46,7 +43,6 @@ export default function MessagesView({
   const [sending, setSending] = useState(false);
   const [errorNotice, setErrorNotice] = useState("");
   const [isSocketConnected, setIsSocketConnected] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -54,33 +50,6 @@ export default function MessagesView({
   const selectedConvIdRef = useRef(null);
 
   selectedConvIdRef.current = selectedConv?._id;
-
-  // Sync fullscreen state with document fullscreenchange
-  useEffect(() => {
-    const handleFsChange = () => {
-      setIsFullscreen(Boolean(document.fullscreenElement));
-    };
-    document.addEventListener("fullscreenchange", handleFsChange);
-    document.addEventListener("webkitfullscreenchange", handleFsChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFsChange);
-      document.removeEventListener("webkitfullscreenchange", handleFsChange);
-    };
-  }, []);
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement && !isFullscreen) {
-      if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      }
-      setIsFullscreen(true);
-    } else {
-      if (document.fullscreenElement && document.exitFullscreen) {
-        document.exitFullscreen().catch(() => {});
-      }
-      setIsFullscreen(false);
-    }
-  };
 
   // Stick the messages page by locking body/window scroll and managing active conversation state
   useEffect(() => {
@@ -151,13 +120,14 @@ export default function MessagesView({
         setConversations((prev) =>
           prev.map((c) => (c._id === convId ? { ...c, unreadCount: 0 } : c))
         );
+        if (onConversationChange) onConversationChange(convId);
       }
     } catch (err) {
       console.warn("Could not fetch messages:", err);
     } finally {
       if (isInitialLoad) setLoadingMsgs(false);
     }
-  }, [token]);
+  }, [token, onConversationChange]);
 
   // Helper to get or create conversation with initial recipient / crop
   const initTargetChat = useCallback(async () => {
@@ -224,8 +194,11 @@ export default function MessagesView({
           scrollToBottom(true);
 
           // Mark message read if received by current user
-          if (msg.recipient?._id === currentUser.id || msg.recipient === currentUser.id) {
+          const myId = (currentUser?.id || currentUser?._id || "").toString();
+          const recId = (msg.recipient?._id || msg.recipient?.id || msg.recipient || "").toString();
+          if (recId === myId) {
             socket.emit("mark_read", msg.conversation);
+            if (onConversationChange) onConversationChange(msg.conversation);
           }
         }
 
@@ -307,7 +280,14 @@ export default function MessagesView({
 
   // Handle select conversation
   const handleSelectConv = (conv) => {
-    setSelectedConv(conv);
+    setSelectedConv({ ...conv, unreadCount: 0 });
+    setConversations((prev) =>
+      prev.map((c) => (c._id === conv._id ? { ...c, unreadCount: 0 } : c))
+    );
+    const socket = getChatSocket();
+    if (socket && socket.connected) {
+      socket.emit("mark_read", conv._id);
+    }
     if (onConversationChange) onConversationChange(conv._id);
   };
 
@@ -428,16 +408,49 @@ export default function MessagesView({
     }
   };
 
-  // Filter conversations by search
-  const filteredConversations = conversations.filter((c) => {
-    if (!searchQuery.trim()) return true;
-    const other = getOtherParticipant(c);
+  // Deduplicate conversations so each unique person only has ONE section/entry
+  const uniqueConversations = useMemo(() => {
+    const personMap = new Map();
+    const sorted = [...conversations].sort((a, b) => {
+      const timeA = new Date(a.lastMessageAt || a.updatedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.lastMessageAt || b.updatedAt || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+
+    for (const conv of sorted) {
+      const other = getOtherParticipant(conv);
+      const otherId = (other?._id || other?.id || other || "").toString();
+
+      if (!otherId) {
+        if (!personMap.has(conv._id)) personMap.set(conv._id, { ...conv });
+        continue;
+      }
+
+      if (!personMap.has(otherId)) {
+        personMap.set(otherId, { ...conv, otherParticipantId: otherId });
+      } else {
+        const existing = personMap.get(otherId);
+        if (conv.unreadCount) {
+          existing.unreadCount = (existing.unreadCount || 0) + conv.unreadCount;
+        }
+      }
+    }
+
+    return Array.from(personMap.values());
+  }, [conversations, currentUser]);
+
+  // Filter deduplicated conversations by search
+  const filteredConversations = useMemo(() => {
+    if (!searchQuery.trim()) return uniqueConversations;
     const q = searchQuery.toLowerCase();
-    const otherName = (other?.name || "").toLowerCase();
-    const cropName = (c.crop?.name || "").toLowerCase();
-    const lastMsg = (c.lastMessage || "").toLowerCase();
-    return otherName.includes(q) || cropName.includes(q) || lastMsg.includes(q);
-  });
+    return uniqueConversations.filter((c) => {
+      const other = getOtherParticipant(c);
+      const otherName = (other?.name || "").toLowerCase();
+      const otherRole = (other?.role || "").toLowerCase();
+      const lastMsg = (c.lastMessage || "").toLowerCase();
+      return otherName.includes(q) || otherRole.includes(q) || lastMsg.includes(q);
+    });
+  }, [uniqueConversations, searchQuery]);
 
   const otherUser = getOtherParticipant(selectedConv);
 
@@ -450,7 +463,7 @@ export default function MessagesView({
   ];
 
   return (
-    <div className={`messages-page-wrapper ${isFullscreen ? "fullscreen-chat" : ""}`}>
+    <div className="messages-page-wrapper">
       <div className="messages-layout-container">
         {/* SIDEBAR: CONVERSATIONS LIST */}
         <aside className={`messages-sidebar ${selectedConv ? "has-active-conv" : ""}`}>
@@ -476,15 +489,6 @@ export default function MessagesView({
                   aria-label="Refresh"
                 >
                   <RefreshCw size={15} />
-                </button>
-                <button
-                  type="button"
-                  className="btn-chat-fullscreen"
-                  onClick={toggleFullscreen}
-                  title={isFullscreen ? "Exit Fullscreen" : "Full Screen Chat"}
-                  aria-label="Toggle Fullscreen"
-                >
-                  {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
                 </button>
               </div>
             </div>
@@ -533,7 +537,9 @@ export default function MessagesView({
             ) : (
               filteredConversations.map((conv) => {
                 const other = getOtherParticipant(conv);
-                const isSelected = selectedConv?._id === conv._id;
+                const isSelected =
+                  selectedConv?._id === conv._id ||
+                  (otherUser && other && (otherUser._id || otherUser.id) === (other._id || other.id));
                 const hasUnread = conv.unreadCount > 0;
 
                 return (
@@ -553,28 +559,17 @@ export default function MessagesView({
 
                     <div className="conv-card-content">
                       <div className="conv-top-row">
-                        <span className="conv-user-name">
-                          {other?.name || "AgroConnect User"}
-                        </span>
+                        <div className="conv-user-info-group">
+                          <span className="conv-user-name">
+                            {other?.name || "AgroConnect User"}
+                          </span>
+                          <span className={`conv-role-tag ${other?.role === "Farmer" ? "role-farmer" : "role-buyer"}`}>
+                            {other?.role === "Farmer" ? (t("nav.roleFarmer") || "Farmer") : (t("nav.roleBuyer") || "Buyer")}
+                          </span>
+                        </div>
                         <span className="conv-timestamp">
                           {formatTime(conv.lastMessageAt || conv.updatedAt)}
                         </span>
-                      </div>
-
-                      <div className="conv-meta-row">
-                        <span className="conv-role-tag">
-                          {t(`nav.role${other?.role}`) || other?.role || "User"}
-                        </span>
-                        {conv.crop && (
-                          <span className="conv-crop-tag" title={conv.crop.name}>
-                            🌾 {conv.crop.name}
-                          </span>
-                        )}
-                        {other?.location && (
-                          <span className="conv-location-tag">
-                            📍 {other.location.split(",")[0]}
-                          </span>
-                        )}
                       </div>
 
                       <div className="conv-preview-row">
@@ -655,62 +650,19 @@ export default function MessagesView({
                       </span>
                     </div>
 
-                    <div className="chat-header-subrow">
-                      {otherUser?.location && (
+                    {otherUser?.location && (
+                      <div className="chat-header-subrow">
                         <span className="chat-header-location">
                           <MapPin size={12} /> {otherUser.location}
                         </span>
-                      )}
-                      <span className="chat-status-indicator online">
-                        <span className="status-dot-pulse" />
-                        <span>{isSocketConnected ? t("chat.live") || "Live Chat" : t("chat.online") || "Connected"}</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="chat-header-right-actions">
-                  {/* Crop Association Chip */}
-                  {selectedConv.crop && (
-                    <div
-                      className="chat-crop-card-chip clickable"
-                      onClick={() => onOpenProductDetails && onOpenProductDetails(selectedConv.crop)}
-                      title="View crop listing"
-                    >
-                      <div className="crop-chip-icon">🌾</div>
-                      <div className="crop-chip-details">
-                        <span className="crop-chip-name">{selectedConv.crop.name}</span>
-                        <span className="crop-chip-price">
-                          ₹{selectedConv.crop.price}/{selectedConv.crop.unit || "kg"}
-                        </span>
                       </div>
-                      <ChevronRight size={14} className="crop-chip-chevron" />
-                    </div>
-                  )}
-
-                  <button
-                    type="button"
-                    className="btn-chat-fullscreen"
-                    onClick={toggleFullscreen}
-                    title={isFullscreen ? "Exit Fullscreen" : "Full Screen Chat"}
-                    aria-label="Toggle Fullscreen"
-                  >
-                    {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-                  </button>
+                    )}
+                  </div>
                 </div>
               </header>
 
               {/* MESSAGES SCROLL CONTAINER */}
               <div className="chat-messages-scroll-area" ref={messagesContainerRef}>
-                {/* Crop Context Notification Banner */}
-                {selectedConv.crop && (
-                  <div className="chat-thread-crop-banner">
-                    <Sprout size={16} className="crop-banner-icon" />
-                    <span>
-                      Direct discussion regarding <strong>{selectedConv.crop.name}</strong> • ₹{selectedConv.crop.price}/{selectedConv.crop.unit || "kg"}
-                    </span>
-                  </div>
-                )}
 
                 {loadingMsgs ? (
                   <div className="messages-loading-state">
@@ -806,7 +758,7 @@ export default function MessagesView({
                     value={inputText}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
-                    placeholder={t("chat.typeMessage") || "Type a message in English, తెలుగు, हिन्दी..."}
+                    placeholder={t("chat.typeMessage") || "Type a Message..."}
                     className="composer-textarea"
                     disabled={sending}
                   />

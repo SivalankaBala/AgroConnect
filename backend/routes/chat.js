@@ -438,6 +438,8 @@ async function processSendMessage(userId, { conversationId, recipientId, cropId,
   if (io) {
     io.to(`conversation:${conversation._id}`).emit('new_message', populatedMessage);
     io.to(`user:${targetRecipientId}`).emit('new_message', populatedMessage);
+    io.to(`user:${targetRecipientId}`).emit('unread_count_updated');
+    io.to(`user:${targetRecipientId}`).emit('message_notification', populatedMessage);
     io.to(`user:${targetRecipientId}`).emit('conversation_updated', {
       conversationId: conversation._id,
       lastMessage: trimmedText,

@@ -55,10 +55,8 @@ export function ProductDetailsModal({
           <div className="product-details-banner">
             <div className="product-banner-badges">
               <span className="pill-category">{localizedCategory}</span>
-              {isOwner ? (
+              {isOwner && (
                 <span className="pill-owner">{t("marketplace.card.yourListing")}</span>
-              ) : (
-                <span className="pill-fresh">{t("marketplace.card.freshStock")}</span>
               )}
             </div>
 

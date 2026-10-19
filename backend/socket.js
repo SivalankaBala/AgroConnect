@@ -159,6 +159,8 @@ function initSocket(httpServer, allowedOrigins) {
         // Broadcast to conversation room and to both participants
         io.to(`conversation:${conv._id}`).emit('new_message', populatedMessage);
         io.to(`user:${targetRecipient}`).emit('new_message', populatedMessage);
+        io.to(`user:${targetRecipient}`).emit('unread_count_updated');
+        io.to(`user:${targetRecipient}`).emit('message_notification', populatedMessage);
         io.to(`user:${targetRecipient}`).emit('conversation_updated', {
           conversationId: conv._id,
           lastMessage: text.trim(),
@@ -207,6 +209,7 @@ function initSocket(httpServer, allowedOrigins) {
             readBy: userId,
             readAt: new Date()
           });
+          io.to(`user:${userId}`).emit('unread_count_updated');
         }
       } catch (err) {
         console.error('Socket mark_read error:', err);

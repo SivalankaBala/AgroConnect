@@ -29,6 +29,15 @@ export default function MobileBottomNav({
 
         <button
           type="button"
+          className={`bottom-nav-item ${activeNav === "buyerDashboard" || activeNav === "dashboard" ? "active" : ""}`}
+          onClick={() => onNavClick("buyerDashboard")}
+        >
+          <ShoppingCart size={20} className="bottom-nav-icon" />
+          <span className="bottom-nav-label">{t("nav.buyerDashboard") || "Dashboard"}</span>
+        </button>
+
+        <button
+          type="button"
           className={`bottom-nav-item ${activeNav === "messages" ? "active" : ""}`}
           onClick={() => onNavClick("messages")}
         >
@@ -39,15 +48,6 @@ export default function MobileBottomNav({
             )}
           </div>
           <span className="bottom-nav-label">{t("nav.messages") || "Messages"}</span>
-        </button>
-
-        <button
-          type="button"
-          className={`bottom-nav-item ${activeNav === "buyerDashboard" || activeNav === "dashboard" ? "active" : ""}`}
-          onClick={() => onNavClick("buyerDashboard")}
-        >
-          <ShoppingCart size={20} className="bottom-nav-icon" />
-          <span className="bottom-nav-label">{t("nav.buyerDashboard") || "Dashboard"}</span>
         </button>
 
         <button

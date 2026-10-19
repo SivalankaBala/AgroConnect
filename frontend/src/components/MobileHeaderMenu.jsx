@@ -312,17 +312,6 @@ export default function MobileHeaderMenu({
                 <>
                   <button
                     type="button"
-                    className="mobile-menu-nav-link highlight"
-                    onClick={() => {
-                      onClose();
-                      onOpenListingModal();
-                    }}
-                  >
-                    <Plus size={18} />
-                    <span>{t("nav.listCrop") || "List Crop"}</span>
-                  </button>
-                  <button
-                    type="button"
                     className={`mobile-menu-nav-link ${currentView === "farmers" ? "active" : ""}`}
                     onClick={() => {
                       onClose();
