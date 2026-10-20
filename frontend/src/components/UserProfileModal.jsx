@@ -38,13 +38,13 @@ export default function UserProfileModal({
   const { language, setLanguage, t } = useLanguage();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState(
-    initialTab === "settings" ? "settings" : "overview"
-  );
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
-    setActiveTab(initialTab === "settings" ? "settings" : "overview");
-  }, [initialTab]);
+    if (isOpen) {
+      setActiveTab("overview");
+    }
+  }, [isOpen]);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");

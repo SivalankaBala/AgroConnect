@@ -18,7 +18,7 @@ import {
   MessageSquare,
   CheckCircle2
 } from "lucide-react";
-import { UserAvatar } from "./UserAvatarLogo";
+import { UserAvatar, AgroConnectBrandLogoSvg } from "./UserAvatarLogo";
 import { useLanguage } from "../context/LanguageContext";
 import { SUPPORTED_LANGUAGES } from "../i18n/translations";
 
@@ -81,7 +81,7 @@ export default function MobileHeaderMenu({
         <div className="mobile-drawer-header">
           <div className="mobile-drawer-brand">
             <div className="brand-icon-box small">
-              <Sprout className="sprout-icon" size={20} />
+              <AgroConnectBrandLogoSvg size={28} />
             </div>
             <div className="brand-text">
               <span className="brand-title">{t("nav.brandTitle")}</span>
@@ -237,17 +237,19 @@ export default function MobileHeaderMenu({
               {!currentUser ? (
                 // Guest Links
                 <>
-                  <button
-                    type="button"
-                    className={`mobile-menu-nav-link ${currentView === "marketplace" ? "active" : ""}`}
-                    onClick={() => {
-                      onClose();
-                      onNavigateMarketplace();
-                    }}
-                  >
-                    <Store size={18} className="mobile-nav-icon" />
-                    <span className="mobile-nav-label">{t("nav.freshHarvests") || "Fresh Harvests"}</span>
-                  </button>
+                  {currentView !== "home" && (
+                    <button
+                      type="button"
+                      className={`mobile-menu-nav-link ${currentView === "marketplace" ? "active" : ""}`}
+                      onClick={() => {
+                        onClose();
+                        onNavigateMarketplace();
+                      }}
+                    >
+                      <Store size={18} className="mobile-nav-icon" />
+                      <span className="mobile-nav-label">{t("nav.freshHarvests") || "Fresh Harvests"}</span>
+                    </button>
+                  )}
                   <button
                     type="button"
                     className={`mobile-menu-nav-link ${currentView === "home" && window.location.hash !== "#how-it-works" ? "active" : ""}`}

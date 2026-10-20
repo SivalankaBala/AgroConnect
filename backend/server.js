@@ -1,3 +1,9 @@
+const dns = require('dns');
+// Ensure IPv4 is prioritized to avoid DNS64/NAT64 timeouts with MongoDB Atlas on cellular/ISP networks
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
+
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
@@ -60,10 +66,13 @@ app.get('/api/health', (req, res) => {
 
 async function startServer() {
   try {
-    if (!process.env.MONGODB_URI) {
-      throw new Error("MONGODB_URI is not set! Please add MONGODB_URI in your Render service dashboard under Environment.");
+    const uri = (process.env.MONGODB_URI || '').trim();
+    if (!uri) {
+      throw new Error("MONGODB_URI is not set! Please add MONGODB_URI in your environment.");
     }
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 10000
+    });
     console.log('MongoDB connected successfully!');
 
     initSocket(server, allowedOrigins);

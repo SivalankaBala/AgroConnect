@@ -8,7 +8,8 @@ import {
   Settings,
   Store,
   Bell,
-  ChevronRight
+  ChevronRight,
+  Tractor
 } from "lucide-react";
 import { AgroConnectBrandLogoSvg, UserAvatar } from "./UserAvatarLogo";
 
@@ -80,6 +81,20 @@ export default function SidebarNav({
         badge: null
       },
       {
+        id: "marketplace",
+        label: "Fresh Harvests",
+        icon: Store,
+        active: currentView === "marketplace",
+        badge: null
+      },
+      {
+        id: "farmers",
+        label: "Discover Farmers",
+        icon: Tractor,
+        active: currentView === "farmers",
+        badge: null
+      },
+      {
         id: "messages",
         label: "Messages",
         icon: MessageSquare,
@@ -100,7 +115,7 @@ export default function SidebarNav({
     navItems = [
       {
         id: "dashboard",
-        label: "Dashboard",
+        label: "Overview",
         icon: LayoutDashboard,
         active: currentView === "buyer-dashboard" && buyerDashboardTab === "all",
         badge: null
@@ -115,7 +130,7 @@ export default function SidebarNav({
       },
       {
         id: "orders",
-        label: "Orders",
+        label: "Orders & Deals",
         icon: ShoppingCart,
         active: currentView === "buyer-dashboard" && buyerDashboardTab === "orders",
         badge: buyerConfirmedCount > 0 ? buyerConfirmedCount : unreadNotificationCount > 0 ? unreadNotificationCount : null,
@@ -130,9 +145,16 @@ export default function SidebarNav({
       },
       {
         id: "marketplace",
-        label: "Browse Crops",
+        label: "Fresh Harvests",
         icon: Store,
         active: currentView === "marketplace",
+        badge: null
+      },
+      {
+        id: "farmers",
+        label: "Discover Farmers",
+        icon: Tractor,
+        active: currentView === "farmers",
         badge: null
       },
       {
@@ -145,7 +167,7 @@ export default function SidebarNav({
       },
       {
         id: "settings",
-        label: "Settings",
+        label: "Profile & Settings",
         icon: Settings,
         active: false,
         badge: null
@@ -167,11 +189,17 @@ export default function SidebarNav({
 
   return (
     <aside className="app-sidebar" aria-label="Dashboard Sidebar Navigation">
+      {/* Portal Indicator Strip */}
+      <div className="sidebar-portal-badge-strip">
+        <span className={`sidebar-portal-badge ${isFarmer ? "farmer" : "buyer"}`}>
+          {isFarmer ? "🌾 Farmer Portal" : "🛒 Buyer Portal"}
+        </span>
+      </div>
 
       {/* Navigation Menu */}
       <div className="sidebar-nav-container">
         <div className="sidebar-section-header">
-          <span>MAIN MENU</span>
+          <span>{isFarmer ? "FARM MANAGEMENT" : "BUYER FEATURES"}</span>
         </div>
 
         <nav className="sidebar-nav-list" role="navigation">

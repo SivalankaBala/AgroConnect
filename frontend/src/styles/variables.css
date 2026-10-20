@@ -1,0 +1,256 @@
+/* ==========================================================================
+   AGROCONNECT MODERN AGRICULTURAL DESIGN SYSTEM
+   Professional, Mobile-First, Accessible UI
+   Palette:
+     Primary Green:   #237A45
+     Dark Green:      #16532F
+     Light Green:     #EAF5EC
+     Background:      #F7F9F5
+     Card Background: #FFFFFF
+     Main Text:       #202820
+     Secondary Text:  #687368
+     Accent Orange:   #E99A36
+     Borders:         #E1E8DF
+     Error:           #C62828
+   ========================================================================== */
+
+/* ==========================================================================
+   AGROCONNECT ORGANIC FARM MARKETPLACE DESIGN SYSTEM
+   Warm, Earthy, Trustworthy, Modern Organic-Farm Palette
+   Primary Green:    #1F4D36 (Deep Forest Green, buttons & active states only, ~10%)
+   Accent Saffron:   #F2A518 (Warm Turmeric/Saffron, highlights, price, CTAs)
+   Secondary Accent: #D6402B (Chilli Red, alerts & status)
+   Background:       #FBF7EF (Warm Cream)
+   Card Background:  #FFFFFF (Crisp White with soft warm shadow)
+   Main Text:        #26302B (Charcoal)
+   Muted Text:       #6B756F (Warm Muted Grey-Green)
+   Borders:          #E8E1D2 (Warm Sand)
+   ========================================================================== */
+
+:root {
+  /* Core Theme Tokens - Light Mode */
+  --bg: #FBF7EF;
+  --bg-secondary: #F7F3E9;
+  --surface-nav: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #F7F3E9;
+  --input-bg: #FFFFFF;
+  --border: #E8E1D2;
+  --text: #26302B;
+  --text-secondary: #6B756F;
+  --text-muted: #8B9690;
+  --primary: #00A63E;
+  --primary-hover: #008B34;
+  --primary-subtle: #E8F7ED;
+  --accent: #F2A518;
+  --danger: #D6402B;
+  --warning: #F2A518;
+  --info: #2563EB;
+
+  /* Design Tokens: Brand Green #00A63E */
+  --primary-forest: #00A63E;
+  --primary-forest-hover: #008B34;
+  --primary-forest-light: #E8F7ED;
+  --primary-forest-border: #A4E6BA;
+
+  --accent-saffron: #F2A518;
+  --accent-saffron-hover: #DE930C;
+  --accent-saffron-light: #FEF7EA;
+  --accent-saffron-border: #FCE1B0;
+
+  --accent-chilli: #D6402B;
+  --accent-chilli-light: #FCEDEA;
+
+  --bg-warm-cream: #FBF7EF;
+  --bg-card-white: #FFFFFF;
+  --bg-subtle-cream: #F5EFE4;
+
+  --text-charcoal: #26302B;
+  --text-soft: #8B9690;
+
+  --border-warm: #E8E1D2;
+  --border-subtle: #F0EAE0;
+  --border-focus: #00A63E;
+
+  /* Typography Stacks */
+  --font-heading: 'Plus Jakarta Sans', 'Poppins', 'Noto Sans Telugu', 'Noto Sans Devanagari', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', 'DM Sans', 'Noto Sans Telugu', 'Noto Sans Devanagari', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Aliases for backwards compatibility with all existing app components & modals */
+  --primary-green: #00A63E;
+  --dark-green: #008B34;
+  --light-green: #E8F7ED;
+  --accent-orange: #F2A518;
+  --accent-orange-hover: #DE930C;
+  --accent-orange-light: #FEF7EA;
+  --bg-page: var(--bg);
+  --bg-card: var(--surface);
+  --bg-subtle: var(--surface-2);
+  --border-default: var(--border);
+  --text-dark: var(--text);
+  --text-secondary: var(--text-muted);
+  --text-medium: #3A473A;
+  --text-light: #8B9690;
+  --error: var(--danger);
+  --error-bg: #FCEDEA;
+  --error-border: #F8B4B4;
+  --success: #1F4D36;
+  --success-bg: #EBF3EE;
+
+  /* Emerald & Amber shades compatibility */
+  --emerald-50: #F7FAF8;
+  --emerald-100: #EBF3EE;
+  --emerald-200: #D2E4D9;
+  --emerald-300: #98C4A9;
+  --emerald-400: #4B986C;
+  --emerald-500: #29704C;
+  --emerald-600: #1F4D36;
+  --emerald-700: #173B29;
+  --emerald-800: #112B1E;
+  --emerald-900: #0B1C13;
+
+  /* Shadows: Refined, Warm, Soft Shadows */
+  --shadow-warm-sm: 0 1px 3px rgba(38, 48, 43, 0.04), 0 1px 2px rgba(38, 48, 43, 0.02);
+  --shadow-warm-card: 0 4px 16px rgba(38, 48, 43, 0.05), 0 1px 3px rgba(38, 48, 43, 0.03);
+  --shadow-warm-hover: 0 14px 30px rgba(31, 77, 54, 0.12), 0 3px 8px rgba(38, 48, 43, 0.04);
+  --shadow-warm-modal: 0 20px 48px rgba(31, 77, 54, 0.16);
+
+  --shadow-subtle: var(--shadow-warm-sm);
+  --shadow-card: var(--shadow-warm-card);
+  --shadow-hover: var(--shadow-warm-hover);
+  --shadow-modal: var(--shadow-warm-modal);
+
+  /* Geometry & Radii */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  --touch-target: 44px;
+  --transition-fast: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-smooth: 200ms ease;
+}
+
+/* ==========================================================================
+   DARK MODE TOKEN SYSTEM (Near-Black Charcoal & AgroConnect Green Palette)
+   ========================================================================== */
+[data-theme="dark"],
+body.dark-theme,
+html[data-theme="dark"] {
+  /* Core Design Tokens: Near-Black Charcoal & Clean Green Palette */
+  --bg: #080B0A;
+  /* Main application background */
+  --bg-secondary: #0D1210;
+  /* Secondary background */
+  --surface-nav: #0A0F0D;
+  /* Sidebar and navbar */
+  --surface: #111815;
+  /* Card background */
+  --surface-2: #171F1B;
+  /* Elevated cards and panels */
+  --input-bg: #101613;
+  /* Input background */
+  --text: #F3F7F4;
+  /* Primary text */
+  --text-secondary: #A5B2AA;
+  /* Secondary text */
+  --text-muted: #78877D;
+  /* Muted text */
+  --border: #26342C;
+  /* Borders and dividers */
+  --primary: #16A765;
+  /* Primary AgroConnect green */
+  --primary-hover: #128653;
+  /* Hover green */
+  --primary-subtle: #103D2A;
+  /* Subtle green highlight */
+  --danger: #F04452;
+  /* Error and rejection */
+  --warning: #F5AD32;
+  /* Warning */
+  --accent: #F5AD32;
+  /* Accent */
+  --info: #4DA3FF;
+  /* Informational accent */
+
+  /* Aliases mapped to theme tokens */
+  --primary-forest: var(--primary);
+  --primary-forest-hover: var(--primary-hover);
+  --primary-forest-light: var(--primary-subtle);
+  --primary-forest-border: var(--border);
+
+  --accent-saffron: var(--warning);
+  --accent-saffron-hover: #D97706;
+  --accent-saffron-light: #242018;
+  --accent-saffron-border: #3F3320;
+
+  --accent-chilli: var(--danger);
+  --accent-chilli-light: #2A1718;
+
+  --bg-warm-cream: var(--bg);
+  --bg-card-white: var(--surface);
+  --bg-subtle-cream: var(--surface-2);
+
+  --text-charcoal: var(--text);
+  --text-soft: var(--text-muted);
+
+  --border-warm: var(--border);
+  --border-subtle: #1A241F;
+  --border-focus: var(--primary);
+
+  --bg-page: var(--bg);
+  --bg-card: var(--surface);
+  --bg-subtle: var(--surface-2);
+  --border-default: var(--border);
+  --text-dark: var(--text);
+  --text-medium: var(--text-secondary);
+  --text-light: var(--text-muted);
+
+  --primary-green: var(--primary);
+  --dark-green: var(--primary-hover);
+  --light-green: var(--surface-2);
+  --accent-orange: var(--accent);
+  --error: var(--danger);
+  --error-bg: #271415;
+  --error-border: #4C1D20;
+  --success: var(--primary);
+  --success-bg: rgba(22, 167, 101, 0.15);
+
+  --shadow-warm-card: 0 4px 20px rgba(0, 0, 0, 0.75);
+  --shadow-warm-hover: 0 14px 32px rgba(0, 0, 0, 0.9);
+  --shadow-card: var(--shadow-warm-card);
+  --shadow-hover: var(--shadow-warm-hover);
+}
+
+/* 200ms Smooth Theme Color Transitions */
+body,
+.main-navbar,
+.marketplace-section,
+.hero-section,
+.how-it-works-section,
+.crop-card-modern,
+.stat-metric-card,
+.dashboard-page-view,
+.modal-window,
+.profile-modal-container,
+.lang-selector-btn,
+.location-trigger-btn,
+.prominent-search-bar,
+.filter-pill-chip,
+.btn-dashboard-refresh,
+.farmer-crop-manage-card,
+.enquiry-detail-card,
+.dashboard-empty-state,
+.hero-benefits-wrapper,
+.how-column,
+.how-step-card,
+.farmer-card,
+.buyer-card,
+.weather-card,
+.chat-sidebar,
+.chat-main {
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, box-shadow 200ms ease !important;
+}

@@ -1,4 +1,5 @@
 import React from "react";
+import agroConnectMainLogo from "../assets/Agroconnect_ Connecting Farmers and Buyers.png";
 
 /**
  * High-definition, handcrafted vector SVG avatar for Farmers.
@@ -157,40 +158,26 @@ export const BuyerAvatarSvg = ({ size = 36, className = "" }) => (
 );
 
 /**
- * AgroConnect Brand Logo Emblem: Stylized twin wheat stalks & emerald leaves.
+ * AgroConnect Official Brand Logo Emblem.
  */
-export const AgroConnectBrandLogoSvg = ({ size = 26, className = "" }) => (
-  <svg
-    viewBox="0 0 32 32"
+export const AgroConnectBrandLogo = ({ size = 32, className = "" }) => (
+  <img
+    src={agroConnectMainLogo}
+    alt="AgroConnect Logo"
     width={size}
     height={size}
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className={`agroconnect-brand-svg ${className}`}
-    aria-label="AgroConnect Emblem"
-  >
-    <defs>
-      <linearGradient id="brandGoldGrad" x1="16" y1="4" x2="28" y2="20" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#FCD34D" />
-        <stop offset="1" stopColor="#F59E0B" />
-      </linearGradient>
-      <linearGradient id="brandGreenGrad" x1="4" y1="12" x2="20" y2="28" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#34D399" />
-        <stop offset="1" stopColor="#059669" />
-      </linearGradient>
-    </defs>
-    {/* Central Stalk */}
-    <path d="M16 28 C16 20, 16 11, 16 4" stroke="#059669" strokeWidth="2.4" strokeLinecap="round" />
-    {/* Gold Wheat Grains / Kernels on right */}
-    <path d="M16 6 C19.5 5, 24 7, 24 10.5 C24 12.5, 19.5 12.5, 16 10 Z" fill="url(#brandGoldGrad)" />
-    <path d="M16 11 C20 10, 25 12, 25 15.5 C25 17.5, 20 17.5, 16 15 Z" fill="url(#brandGoldGrad)" />
-    <path d="M16 16 C20 15, 24 17.5, 24 20.5 C24 22.5, 19.5 22.5, 16 20 Z" fill="url(#brandGoldGrad)" />
-    {/* Emerald Leaves on left */}
-    <path d="M16 9 C12.5 8, 8 10, 8 13.5 C8 15.5, 12.5 15.5, 16 13 Z" fill="url(#brandGreenGrad)" />
-    <path d="M16 14 C11.5 13, 7 15.5, 7 18.5 C7 20.5, 11.5 20.5, 16 18 Z" fill="url(#brandGreenGrad)" />
-    <path d="M16 19 C12 18, 9 20.5, 9 23.5 C9 25.5, 12.5 25.5, 16 23 Z" fill="url(#brandGreenGrad)" />
-  </svg>
+    className={`agroconnect-brand-logo-img ${className}`}
+    style={{
+      width: size,
+      height: size,
+      objectFit: "cover",
+      display: "inline-block",
+      verticalAlign: "middle"
+    }}
+  />
 );
+
+export const AgroConnectBrandLogoSvg = AgroConnectBrandLogo;
 
 /**
  * Universal UserAvatar Component.

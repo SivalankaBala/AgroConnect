@@ -1,0 +1,139 @@
+/* ==========================================================================
+   FARMER DISCOVERY VIEW (#farmers)
+   ========================================================================== */
+.discovery-header-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.discovery-header-row h2 {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin: 3px 0;
+}
+
+.discovery-header-row p {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+}
+
+.farmers-discovery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.farmer-discovery-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: var(--shadow-card);
+  transition: all var(--transition-smooth);
+  display: flex;
+  flex-direction: column;
+}
+
+.farmer-discovery-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--emerald-300);
+  box-shadow: var(--shadow-hover);
+}
+
+.farmer-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.farmer-avatar-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--light-green);
+  color: var(--primary-green);
+  font-weight: 800;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1.5px solid var(--emerald-300);
+}
+
+.farmer-card-title-group h4 {
+  font-size: 15px;
+  margin-bottom: 2px;
+}
+
+.farmer-location-tag {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.farmer-card-bio {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 12px;
+  flex-grow: 1;
+}
+
+.farmer-card-stats-row {
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0;
+  border-top: 1px dashed var(--border-default);
+  border-bottom: 1px dashed var(--border-default);
+  margin-bottom: 12px;
+}
+
+.farmer-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.farmer-stat strong {
+  font-size: 15px;
+  color: var(--primary-green);
+}
+
+.farmer-stat span {
+  font-size: 10.5px;
+  color: var(--text-secondary);
+}
+
+.farmer-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-farmer-view {
+  width: 100%;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--light-green);
+  color: var(--primary-green);
+  border: 1px solid var(--emerald-300);
+  font-size: 12.5px;
+  font-weight: 700;
+  min-height: var(--touch-target);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-farmer-view:hover {
+  background: var(--primary-green);
+  color: #FFFFFF;
+}

@@ -49,7 +49,9 @@ export const translations = {
       farmerDashboard: "Farmer Dashboard",
       buyerDashboard: "Buyer Dashboard",
       logIn: "Log In",
+      signIn: "Log In",
       joinAgroConnect: "Join AgroConnect",
+      joinUs: "Join Us",
       logout: "Logout",
       roleFarmer: "Farmer",
       roleBuyer: "Buyer",
@@ -425,7 +427,7 @@ export const translations = {
       alreadyAccount: "Already have an account?",
       loginHere: "Log in here",
       noAccount: "Don't have an account yet?",
-      createFree: "Create account for free"
+      createFree: "Create new account"
     },
     enquiryModal: {
       eyebrow: "BUYER DIRECT ENQUIRY",
@@ -626,7 +628,9 @@ export const translations = {
       farmerDashboard: "రైతు డ్యాష్‌బోర్డ్",
       buyerDashboard: "కొనుగోలుదారు డ్యాష్‌బోర్డ్",
       logIn: "లాగిన్",
+      signIn: "లాగిన్",
       joinAgroConnect: "ఖాతా తెరవండి",
+      joinUs: "చేరండి",
       logout: "లాగ్ అవుట్",
       roleFarmer: "రైతు",
       roleBuyer: "కొనుగోలుదారు",
@@ -1002,7 +1006,7 @@ export const translations = {
       alreadyAccount: "ఇప్పటికే ఖాతా ఉందా?",
       loginHere: "ఇక్కడ లాగిన్ అవ్వండి",
       noAccount: "ఇంకా ఖాతా లేదా?",
-      createFree: "ఉచితంగా ఖాతా తెరవండి"
+      createFree: "కొత్త ఖాతా సృష్టించండి"
     },
     enquiryModal: {
       eyebrow: "కొనుగోలుదారు ప్రత్యక్ష విచారణ",
@@ -1203,7 +1207,9 @@ export const translations = {
       farmerDashboard: "किसान डैशबोर्ड",
       buyerDashboard: "खरीदार डैशबोर्ड",
       logIn: "लॉग इन",
+      signIn: "लॉग इन",
       joinAgroConnect: "एग्रोकनेक्ट से जुड़ें",
+      joinUs: "जुड़ें",
       logout: "लॉग आउट",
       roleFarmer: "किसान",
       roleBuyer: "खरीदार",
@@ -1579,7 +1585,7 @@ export const translations = {
       alreadyAccount: "क्या आपका पहले से खाता है?",
       loginHere: "यहाँ लॉग इन करें",
       noAccount: "क्या आपके पास खाता नहीं है?",
-      createFree: "मुफ़्त खाता बनाएं"
+      createFree: "नया खाता बनाएं"
     },
     enquiryModal: {
       eyebrow: "खरीदार सीधी पूछताछ",
