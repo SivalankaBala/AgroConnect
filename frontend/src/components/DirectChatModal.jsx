@@ -122,12 +122,15 @@ export function DirectChatModal({
       return;
     }
 
+    const textToSend = inputText.trim();
+    setInputText("");
+
     try {
       setSending(true);
       setError("");
 
       const payload = {
-        text: inputText.trim(),
+        text: textToSend,
         conversationId: selectedConvId || undefined,
         recipientId: targetRecipient ? (targetRecipient._id || targetRecipient.id) : undefined,
         cropId: targetCrop ? (targetCrop._id || targetCrop.id) : undefined
@@ -148,11 +151,13 @@ export function DirectChatModal({
       }
 
       const data = await res.json();
-      setInputText("");
       if (!selectedConvId && data.conversationId) {
         setSelectedConvId(data.conversationId);
       }
-      setActiveMessages((prev) => [...prev, data.message]);
+      setActiveMessages((prev) => {
+        if (prev.some((m) => m._id === data.message._id)) return prev;
+        return [...prev, data.message];
+      });
       fetchConversations();
     } catch (err) {
       setError(err.message || "Could not deliver message.");

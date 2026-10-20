@@ -10,6 +10,7 @@ const chatRoutes = require('./routes/chat');
 const farmerRoutes = require('./routes/farmers');
 const buyerRoutes = require('./routes/buyers');
 const weatherRoutes = require('./routes/weather');
+const notificationRoutes = require('./routes/notifications');
 const { initSocket } = require('./socket');
 
 const app = express();
@@ -48,6 +49,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/farmers', farmerRoutes);
 app.use('/api/buyers', buyerRoutes);
 app.use('/api/weather', weatherRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({

@@ -15,7 +15,8 @@ import {
   Phone,
   MapPin,
   Clock,
-  ShieldCheck
+  ShieldCheck,
+  X
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { apiUrl } from "../config/api";
@@ -37,6 +38,7 @@ export default function MessagesView({
   const [selectedConv, setSelectedConv] = useState(null);
   const [messages, setMessages] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchActive, setIsSearchActive] = useState(false);
   const [inputText, setInputText] = useState("");
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
@@ -44,12 +46,21 @@ export default function MessagesView({
   const [errorNotice, setErrorNotice] = useState("");
   const [isSocketConnected, setIsSocketConnected] = useState(false);
 
+  const searchInputRef = useRef(null);
+
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const textareaRef = useRef(null);
   const selectedConvIdRef = useRef(null);
-
   selectedConvIdRef.current = selectedConv?._id;
+
+  const onConversationChangeRef = useRef(onConversationChange);
+  useEffect(() => {
+    onConversationChangeRef.current = onConversationChange;
+  }, [onConversationChange]);
+
+  const initializingTargetRef = useRef(false);
+  const initializedTargetIdRef = useRef(null);
 
   // Stick the messages page by locking body/window scroll and managing active conversation state
   useEffect(() => {
@@ -88,11 +99,24 @@ export default function MessagesView({
       });
       if (res.ok) {
         const data = await res.json();
-        setConversations(data || []);
+        const convList = data || [];
+        setConversations(convList);
 
         if (selectIdAfter) {
-          const matched = data.find((c) => c._id === selectIdAfter);
+          const matched = convList.find((c) => c._id === selectIdAfter);
           if (matched) setSelectedConv(matched);
+        } else if (!selectedConvIdRef.current && convList.length > 0) {
+          if (activeConversationId) {
+            const found = convList.find((c) => c._id === activeConversationId);
+            if (found) {
+              setSelectedConv(found);
+              return;
+            }
+          }
+          if (window.innerWidth > 768) {
+            setSelectedConv(convList[0]);
+            onConversationChangeRef.current?.(convList[0]._id);
+          }
         }
       }
     } catch (err) {
@@ -100,7 +124,7 @@ export default function MessagesView({
     } finally {
       setLoadingConvs(false);
     }
-  }, [token, currentUser]);
+  }, [token, currentUser, activeConversationId]);
 
   // Fetch messages for a specific conversation
   const fetchMessages = useCallback(async (convId, isInitialLoad = false) => {
@@ -120,19 +144,29 @@ export default function MessagesView({
         setConversations((prev) =>
           prev.map((c) => (c._id === convId ? { ...c, unreadCount: 0 } : c))
         );
-        if (onConversationChange) onConversationChange(convId);
+        onConversationChangeRef.current?.(convId);
       }
     } catch (err) {
       console.warn("Could not fetch messages:", err);
     } finally {
       if (isInitialLoad) setLoadingMsgs(false);
     }
-  }, [token, onConversationChange]);
+  }, [token]);
 
   // Helper to get or create conversation with initial recipient / crop
   const initTargetChat = useCallback(async () => {
     if (!token || !initialTargetUser) return;
+    const targetId = (initialTargetUser._id || initialTargetUser.id || "").toString();
+    if (!targetId) return;
+
+    if (initializingTargetRef.current || initializedTargetIdRef.current === targetId) {
+      return;
+    }
+
     try {
+      initializingTargetRef.current = true;
+      initializedTargetIdRef.current = targetId;
+
       const res = await fetch(apiUrl("/api/chat/conversations"), {
         method: "POST",
         headers: {
@@ -140,20 +174,22 @@ export default function MessagesView({
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          recipientId: initialTargetUser._id || initialTargetUser.id,
+          recipientId: targetId,
           cropId: initialTargetCrop?._id || initialTargetCrop?.id || null
         })
       });
       if (res.ok) {
         const conv = await res.json();
         setSelectedConv(conv);
-        if (onConversationChange) onConversationChange(conv._id);
+        onConversationChangeRef.current?.(conv._id);
         fetchConversations(conv._id);
       }
     } catch (err) {
       console.error("Init target chat error:", err);
+    } finally {
+      initializingTargetRef.current = false;
     }
-  }, [token, initialTargetUser, initialTargetCrop, onConversationChange, fetchConversations]);
+  }, [token, initialTargetUser, initialTargetCrop, fetchConversations]);
 
   // Initial load
   useEffect(() => {
@@ -165,13 +201,14 @@ export default function MessagesView({
 
   // If activeConversationId passed from props, select it
   useEffect(() => {
-    if (activeConversationId && conversations.length > 0) {
-      const found = conversations.find((c) => c._id === activeConversationId);
-      if (found) {
-        setSelectedConv(found);
-      }
+    if (activeConversationId) {
+      setSelectedConv((prev) => {
+        if (prev?._id === activeConversationId) return prev;
+        const found = conversations.find((c) => c._id === activeConversationId);
+        return found || prev;
+      });
     }
-  }, [activeConversationId, conversations]);
+  }, [activeConversationId]);
 
   // Socket.IO real-time setup
   useEffect(() => {
@@ -185,16 +222,44 @@ export default function MessagesView({
       const onDisconnect = () => setIsSocketConnected(false);
 
       const onNewMessage = (msg) => {
+        if (!msg || !msg._id) return;
+        const myId = (currentUser?.id || currentUser?._id || "").toString();
+
         // If message belongs to active conversation
         if (msg.conversation === selectedConvIdRef.current) {
           setMessages((prev) => {
+            // 1. If message already exists by real _id, ignore
             if (prev.some((m) => m._id === msg._id)) return prev;
+
+            // 2. If it's sent by current user, replace matching optimistic temp message
+            const senderId = (msg.sender?._id || msg.sender?.id || msg.sender || "").toString();
+            if (senderId === myId) {
+              const tempIndex = prev.findIndex((m) => m.tempId && m.text === msg.text);
+              if (tempIndex !== -1) {
+                const next = [...prev];
+                next[tempIndex] = msg;
+                return next;
+              }
+            }
+
+            // 3. Fallback deduplication: check if another message with exact same sender and text within 2s exists
+            const duplicateIndex = prev.findIndex(
+              (m) =>
+                (m.sender?._id || m.sender)?.toString() === senderId &&
+                m.text === msg.text &&
+                Math.abs(new Date(m.createdAt).getTime() - new Date(msg.createdAt).getTime()) < 2000
+            );
+            if (duplicateIndex !== -1) {
+              const next = [...prev];
+              next[duplicateIndex] = msg;
+              return next;
+            }
+
             return [...prev, msg];
           });
           scrollToBottom(true);
 
           // Mark message read if received by current user
-          const myId = (currentUser?.id || currentUser?._id || "").toString();
           const recId = (msg.recipient?._id || msg.recipient?.id || msg.recipient || "").toString();
           if (recId === myId) {
             socket.emit("mark_read", msg.conversation);
@@ -288,7 +353,7 @@ export default function MessagesView({
     if (socket && socket.connected) {
       socket.emit("mark_read", conv._id);
     }
-    if (onConversationChange) onConversationChange(conv._id);
+    onConversationChangeRef.current?.(conv._id);
   };
 
   // Helper to find the other participant in conversation
@@ -324,71 +389,124 @@ export default function MessagesView({
     return d.toLocaleDateString([], { month: "short", day: "numeric" });
   };
 
-  // Send message
+  // Send message - Instant, optimistic, zero-delay, and strictly non-duplicated
   const handleSendMessage = async (customText = null) => {
     const textToSend = typeof customText === "string" ? customText : inputText;
-    if (!textToSend.trim() || sending || !selectedConv) return;
+    if (!textToSend.trim() || !selectedConv || sending) return;
 
-    setSending(true);
+    const trimmedText = textToSend.trim();
+    const currentUserId = (currentUser?.id || currentUser?._id || "").toString();
+    const otherParticipant = getOtherParticipant(selectedConv);
+
+    // 1. Immediately clear input so the user can begin typing the next message with ZERO delay
+    setInputText("");
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.focus({ preventScroll: true });
+    }
     setErrorNotice("");
 
-    const payload = {
-      text: textToSend.trim(),
-      cropId: selectedConv.crop?._id || selectedConv.crop || null
+    // 2. Immediately add optimistic message to UI for instant feedback
+    const tempId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    const optimisticMessage = {
+      _id: tempId,
+      tempId,
+      conversation: selectedConv._id,
+      sender: {
+        _id: currentUserId,
+        name: currentUser.name || "You",
+        role: currentUser.role,
+        avatar: currentUser.avatar
+      },
+      recipient: otherParticipant?._id || otherParticipant?.id,
+      text: trimmedText,
+      read: false,
+      createdAt: new Date().toISOString()
     };
 
-    try {
-      const socket = getChatSocket();
-      let sentViaSocket = false;
+    setMessages((prev) => [...prev, optimisticMessage]);
+    scrollToBottom(true);
 
-      // Try sending via socket first if connected
-      if (socket && socket.connected) {
-        socket.emit(
-          "send_message",
-          {
-            conversationId: selectedConv._id,
-            text: payload.text,
-            cropId: payload.cropId
-          },
-          (response) => {
-            if (response && response.success) {
-              setInputText("");
+    // Immediately update sidebar preview
+    setConversations((prev) =>
+      prev.map((c) =>
+        c._id === selectedConv._id
+          ? {
+              ...c,
+              lastMessage: trimmedText,
+              lastSender: currentUserId,
+              updatedAt: new Date().toISOString()
             }
+          : c
+      )
+    );
+
+    // 3. Deliver via REST API (single reliable write to MongoDB, triggers server-side socket broadcast)
+    try {
+      setSending(true);
+      const res = await fetch(apiUrl(`/api/chat/conversations/${selectedConv._id}/messages`), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          text: trimmedText,
+          cropId: selectedConv.crop?._id || selectedConv.crop || null
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const serverMsg = data.message;
+        // Reconcile optimistic message with confirmed server message
+        setMessages((prev) => {
+          if (prev.some((m) => m._id === serverMsg._id)) {
+            // Already received via socket event
+            return prev.filter((m) => m._id !== tempId);
           }
-        );
-        if (sentViaSocket) {
-          if (textareaRef.current) textareaRef.current.style.height = "auto";
-        }
-      }
-
-      // If socket not connected or as verified fallback, call REST API
-      if (!sentViaSocket) {
-        const res = await fetch(apiUrl(`/api/chat/conversations/${selectedConv._id}/messages`), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
+          return prev.map((m) => (m._id === tempId ? serverMsg : m));
         });
-
-        if (res.ok) {
-          const data = await res.json();
-          setInputText("");
-          if (textareaRef.current) textareaRef.current.style.height = "auto";
-          setMessages((prev) => [...prev, data.message]);
-          scrollToBottom(true);
-        } else {
-          const errData = await res.json();
-          setErrorNotice(errData.message || "Failed to send message.");
-        }
+        // Ensure conversation is in sidebar with latest message
+        setConversations((prev) => {
+          const exists = prev.some((c) => c._id === selectedConv._id);
+          if (!exists) {
+            return [
+              {
+                ...selectedConv,
+                lastMessage: trimmedText,
+                lastMessageAt: new Date().toISOString(),
+                lastSender: currentUserId,
+                updatedAt: new Date().toISOString()
+              },
+              ...prev
+            ];
+          }
+          return prev.map((c) =>
+            c._id === selectedConv._id
+              ? {
+                  ...c,
+                  lastMessage: trimmedText,
+                  lastMessageAt: new Date().toISOString(),
+                  lastSender: currentUserId,
+                  updatedAt: new Date().toISOString()
+                }
+              : c
+          );
+        });
+        onConversationChangeRef.current?.(selectedConv._id);
+      } else {
+        const errData = await res.json();
+        setErrorNotice(errData.message || "Failed to deliver message.");
+        // Revert failed optimistic message
+        setMessages((prev) => prev.filter((m) => m._id !== tempId));
       }
     } catch (err) {
       console.error("Send message error:", err);
-      setErrorNotice("Could not connect to send message. Please retry.");
+      setErrorNotice("Could not deliver message. Please check connection.");
+      setMessages((prev) => prev.filter((m) => m._id !== tempId));
     } finally {
       setSending(false);
-      setTimeout(() => textareaRef.current?.focus({ preventScroll: true }), 50);
     }
   };
 
@@ -412,6 +530,8 @@ export default function MessagesView({
   const uniqueConversations = useMemo(() => {
     const personMap = new Map();
     const sorted = [...conversations].sort((a, b) => {
+      if (a.lastMessage && !b.lastMessage) return -1;
+      if (!a.lastMessage && b.lastMessage) return 1;
       const timeA = new Date(a.lastMessageAt || a.updatedAt || a.createdAt || 0).getTime();
       const timeB = new Date(b.lastMessageAt || b.updatedAt || b.createdAt || 0).getTime();
       return timeB - timeA;
@@ -454,6 +574,21 @@ export default function MessagesView({
 
   const otherUser = getOtherParticipant(selectedConv);
 
+  const handleExitSearch = () => {
+    setSearchQuery("");
+    setIsSearchActive(false);
+    if (searchInputRef.current) {
+      searchInputRef.current.blur();
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  };
+
   // Quick agricultural suggestion chips
   const quickReplies = [
     t("chat.quick1") || "Is this batch still available?",
@@ -493,25 +628,51 @@ export default function MessagesView({
               </div>
             </div>
 
-            {/* Search Input */}
-            <div className="messages-search-box">
-              <Search size={16} className="search-icon" />
+            {/* Search Input Box with Back & Clear button */}
+            <div className={`messages-search-box ${isSearchActive || searchQuery ? "active" : ""}`}>
+              {isSearchActive || searchQuery ? (
+                <button
+                  type="button"
+                  className="search-back-btn"
+                  onClick={handleExitSearch}
+                  title="Back from search"
+                  aria-label="Back from search"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+              ) : (
+                <Search size={16} className="search-icon" aria-hidden="true" />
+              )}
               <input
+                ref={searchInputRef}
                 type="text"
                 value={searchQuery}
+                onFocus={() => setIsSearchActive(true)}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t("chat.searchPlaceholder") || "Search by farmer, buyer, or crop..."}
-                className="messages-search-input"
+                className={`messages-search-input ${isSearchActive || searchQuery ? "with-back-btn" : ""}`}
               />
-              {searchQuery && (
+              {searchQuery ? (
                 <button
                   type="button"
                   className="search-clear-btn"
-                  onClick={() => setSearchQuery("")}
+                  onClick={handleClearSearch}
+                  title="Clear search text"
+                  aria-label="Clear"
                 >
-                  ✕
+                  <X size={15} />
                 </button>
-              )}
+              ) : isSearchActive ? (
+                <button
+                  type="button"
+                  className="search-clear-btn"
+                  onClick={handleExitSearch}
+                  title="Cancel search"
+                  aria-label="Cancel"
+                >
+                  <X size={15} />
+                </button>
+              ) : null}
             </div>
           </div>
 
@@ -741,7 +902,6 @@ export default function MessagesView({
                       type="button"
                       className="quick-reply-chip"
                       onClick={() => handleSendMessage(reply)}
-                      disabled={sending}
                     >
                       {reply}
                     </button>
@@ -760,13 +920,12 @@ export default function MessagesView({
                     onKeyDown={handleKeyDown}
                     placeholder={t("chat.typeMessage") || "Type a Message..."}
                     className="composer-textarea"
-                    disabled={sending}
                   />
                   <button
                     type="button"
                     className="btn-composer-send"
                     onClick={() => handleSendMessage()}
-                    disabled={!inputText.trim() || sending}
+                    disabled={!inputText.trim()}
                     aria-label="Send message"
                   >
                     <Send size={18} />

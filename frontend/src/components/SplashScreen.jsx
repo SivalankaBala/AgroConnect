@@ -1,10 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Sprout, ArrowRight } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function SplashScreen({ onFinish }) {
   const { t } = useLanguage();
   const [fading, setFading] = useState(false);
+
+  const onFinishRef = useRef(onFinish);
+  useEffect(() => {
+    onFinishRef.current = onFinish;
+  }, [onFinish]);
 
   useEffect(() => {
     // Fast and snappy splash: fade after 600ms, complete in 800ms
@@ -13,14 +18,16 @@ export default function SplashScreen({ onFinish }) {
     }, 600);
 
     const endTimer = setTimeout(() => {
-      onFinish();
+      if (onFinishRef.current) {
+        onFinishRef.current();
+      }
     }, 800);
 
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(endTimer);
     };
-  }, [onFinish]);
+  }, []);
 
   function handleSkip() {
     setFading(true);

@@ -156,9 +156,8 @@ function initSocket(httpServer, allowedOrigins) {
           .populate('recipient', 'name role avatar')
           .populate('crop', 'name price unit');
 
-        // Broadcast to conversation room and to both participants
-        io.to(`conversation:${conv._id}`).emit('new_message', populatedMessage);
-        io.to(`user:${targetRecipient}`).emit('new_message', populatedMessage);
+        // Broadcast to conversation room and recipient without duplicating to multi-room sockets
+        io.to(`conversation:${conv._id}`).to(`user:${targetRecipient}`).emit('new_message', populatedMessage);
         io.to(`user:${targetRecipient}`).emit('unread_count_updated');
         io.to(`user:${targetRecipient}`).emit('message_notification', populatedMessage);
         io.to(`user:${targetRecipient}`).emit('conversation_updated', {

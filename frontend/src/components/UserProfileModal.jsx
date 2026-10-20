@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   User,
   MapPin,
@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { apiUrl } from "../config/api";
+import { UserAvatar } from "./UserAvatarLogo";
 
 export default function UserProfileModal({
   isOpen,
@@ -31,12 +32,19 @@ export default function UserProfileModal({
   onLogout,
   onOpenFarmerDashboard,
   onOpenBuyerDashboard,
-  onOpenChat
+  onOpenChat,
+  initialTab = "overview"
 }) {
   const { language, setLanguage, t } = useLanguage();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview"); // 'overview' | 'settings'
+  const [activeTab, setActiveTab] = useState(
+    initialTab === "settings" ? "settings" : "overview"
+  );
+
+  useEffect(() => {
+    setActiveTab(initialTab === "settings" ? "settings" : "overview");
+  }, [initialTab]);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -122,7 +130,7 @@ export default function UserProfileModal({
         <div className="profile-modal-header">
           <div className="profile-header-title-box">
             <h2 className="profile-modal-title">
-              <User size={22} className="leaf-icon" />
+              <User size={18} className="leaf-icon" />
               {t("profile.title") || "My AgroConnect Profile"}
             </h2>
           </div>
@@ -169,11 +177,7 @@ export default function UserProfileModal({
               {/* Profile Card Banner */}
               <div className="profile-hero-card">
                 <div className="profile-avatar-circle">
-                  {currentUser.avatar ? (
-                    <img src={currentUser.avatar} alt={currentUser.name} className="avatar-img" />
-                  ) : (
-                    <span>{currentUser.name ? currentUser.name.charAt(0).toUpperCase() : "U"}</span>
-                  )}
+                  <UserAvatar user={currentUser} size={76} />
                 </div>
 
                 <div className="profile-hero-info">
@@ -183,6 +187,10 @@ export default function UserProfileModal({
                       <ShieldCheck size={14} />
                       {isFarmer ? (t("nav.roleFarmer") || "Farmer") : (t("nav.roleBuyer") || "Buyer")}
                     </span>
+                  </div>
+                  <div className="profile-hero-email-badge">
+                    <Mail size={13} className="hero-email-icon" />
+                    <span>{currentUser.email}</span>
                   </div>
                 </div>
 
@@ -198,6 +206,16 @@ export default function UserProfileModal({
 
               {/* Read-only Details Grid */}
               <div className="profile-details-grid">
+                <div className="profile-detail-card">
+                  <div className="detail-icon-wrap">
+                    <Mail size={18} />
+                  </div>
+                  <div>
+                    <span className="detail-label">{t("profile.email") || "Email Address:"}</span>
+                    <p className="detail-value">{currentUser.email || "Not provided"}</p>
+                  </div>
+                </div>
+
                 <div className="profile-detail-card">
                   <div className="detail-icon-wrap">
                     <Phone size={18} />
@@ -237,6 +255,16 @@ export default function UserProfileModal({
                   <div>
                     <span className="detail-label">{t("profile.roleBadge") || "Account Role:"}</span>
                     <p className="detail-value">{currentUser.role}</p>
+                  </div>
+                </div>
+
+                <div className="profile-detail-card">
+                  <div className="detail-icon-wrap">
+                    <Calendar size={18} />
+                  </div>
+                  <div>
+                    <span className="detail-label">{t("profile.memberSinceLabel") || "Member Since:"}</span>
+                    <p className="detail-value">{formattedDate}</p>
                   </div>
                 </div>
 
@@ -386,6 +414,27 @@ export default function UserProfileModal({
                   <span>{errorMsg}</span>
                 </div>
               )}
+
+              <div className="form-group">
+                <label className="form-label">
+                  {t("profile.emailEditLabel") || "Email Address"}
+                  <span className="readonly-indicator">({t("profile.readOnly") || "Non-editable"})</span>
+                </label>
+                <div className="readonly-input-container">
+                  <input
+                    type="email"
+                    className="form-input readonly-input"
+                    value={currentUser.email || ""}
+                    readOnly
+                    disabled
+                    tabIndex={-1}
+                    title="Account email is linked to your login and cannot be modified."
+                  />
+                </div>
+                <small className="form-hint-text">
+                  {t("profile.emailImmutableHint") || "Account email is permanently linked to your login credentials and cannot be edited."}
+                </small>
+              </div>
 
               <div className="form-group">
                 <label className="form-label">{t("profile.fullName") || "Full Name"} *</label>

@@ -29,7 +29,16 @@ import {
   LogOut,
   Sun,
   Moon,
-  Menu
+  Menu,
+  Bell,
+  XCircle,
+  Camera,
+  Upload,
+  ChevronDown,
+  TrendingUp,
+  Package,
+  CheckCheck,
+  Settings
 } from "lucide-react";
 import "./App.css";
 import { useLanguage } from "./context/LanguageContext";
@@ -45,6 +54,8 @@ import MobileBottomNav from "./components/MobileBottomNav";
 import MobileHeaderMenu from "./components/MobileHeaderMenu";
 import LocationSelector from "./components/LocationSelector";
 import MessagesView from "./components/MessagesView";
+import SidebarNav from "./components/SidebarNav";
+import { UserAvatar, AgroConnectBrandLogoSvg } from "./components/UserAvatarLogo";
 import { connectChatSocket, getChatSocket } from "./services/socket";
 import { apiUrl } from "./config/api";
 
@@ -136,6 +147,22 @@ function formatEnquiryDate(dateStr, lang) {
   }
 }
 
+function formatRelativeTime(dateStr, lang) {
+  if (!dateStr) return "";
+  try {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diffSec = Math.floor((now.getTime() - d.getTime()) / 1000);
+    if (diffSec < 45) return "Just now";
+    if (diffSec < 3600) return `${Math.max(1, Math.floor(diffSec / 60))}m ago`;
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+    if (diffSec < 172800) return "Yesterday";
+    return formatEnquiryDate(dateStr, lang);
+  } catch {
+    return dateStr;
+  }
+}
+
 function playChatNotificationSound() {
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -211,7 +238,7 @@ function App() {
       try {
         localStorage.setItem("agroconnectThemeExplicit", "true");
         localStorage.setItem("agroconnectTheme", updated ? "dark" : "light");
-      } catch {}
+      } catch { }
       return updated;
     });
   };
@@ -296,12 +323,38 @@ function App() {
   const [dashboardListings, setDashboardListings] = useState([]);
   const [dashboardEnquiries, setDashboardEnquiries] = useState([]);
   const [dashboardLoading, setDashboardLoading] = useState(false);
-  const [dashboardTab, setDashboardTab] = useState("all"); // 'all' | 'listings' | 'enquiries'
+  const [dashboardTab, setDashboardTab] = useState("all"); // 'all' | 'listings' | 'enquiries' | 'orders' | 'sales-report'
 
   // Buyer Dashboard states
+  const [buyerDashboardTab, setBuyerDashboardTab] = useState("all"); // 'all' | 'enquiries' | 'orders'
   const [buyerEnquiries, setBuyerEnquiries] = useState([]);
   const [buyerLoading, setBuyerLoading] = useState(false);
   const [buyerError, setBuyerError] = useState("");
+  const [buyerNotifications, setBuyerNotifications] = useState([]);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
+  const [notifFilter, setNotifFilter] = useState("all"); // 'all' | 'unread'
+  const notifDropdownRef = useRef(null);
+
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const profileDropdownRef = useRef(null);
+
+  const filteredNotifications = useMemo(() => {
+    if (!Array.isArray(buyerNotifications)) return [];
+    if (notifFilter === "unread") {
+      return buyerNotifications.filter((n) => !n.read);
+    }
+    return buyerNotifications;
+  }, [buyerNotifications, notifFilter]);
+
+  // Order action confirmation modal states
+  const [orderConfirmModal, setOrderConfirmModal] = useState({
+    isOpen: false,
+    action: null,
+    enquiry: null
+  });
+  const [processingOrderAction, setProcessingOrderAction] = useState(false);
 
   // Splash Screen State (shown briefly on initial session load)
   const [showSplash, setShowSplash] = useState(() => {
@@ -330,6 +383,7 @@ function App() {
   const [productDetailsCrop, setProductDetailsCrop] = useState(null);
 
   const [userProfileModalOpen, setUserProfileModalOpen] = useState(false);
+  const [userProfileTab, setUserProfileTab] = useState("overview"); // 'overview' | 'settings'
 
   // Mobile Bottom Navigation active item
   const [mobileNavActive, setMobileNavActive] = useState(() => {
@@ -453,6 +507,163 @@ function App() {
     }
   }, []);
 
+  // Fetch buyer notifications from database
+  const fetchBuyerNotifications = useCallback(async () => {
+    const token = sessionStorage.getItem("agroconnectToken");
+    if (!token) return;
+
+    try {
+      setNotificationsLoading(true);
+      const res = await fetch(apiUrl("/api/notifications"), {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBuyerNotifications(Array.isArray(data.notifications) ? data.notifications : []);
+        setUnreadNotificationCount(typeof data.unreadCount === "number" ? data.unreadCount : 0);
+      }
+    } catch (err) {
+      console.warn("Failed to fetch notifications:", err);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, []);
+
+  const markNotificationAsRead = useCallback(async (notifId) => {
+    const token = sessionStorage.getItem("agroconnectToken");
+    if (!token || !notifId) return;
+
+    try {
+      const res = await fetch(apiUrl(`/api/notifications/${notifId}/read`), {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setBuyerNotifications((prev) =>
+          prev.map((n) => (n._id === notifId ? { ...n, read: true } : n))
+        );
+        setUnreadNotificationCount((prev) => Math.max(0, prev - 1));
+      }
+    } catch (err) {
+      console.warn("Failed to mark notification read:", err);
+    }
+  }, []);
+
+  const markAllNotificationsAsRead = useCallback(async () => {
+    const token = sessionStorage.getItem("agroconnectToken");
+    if (!token) return;
+
+    try {
+      const res = await fetch(apiUrl("/api/notifications/read-all"), {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setBuyerNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+        setUnreadNotificationCount(0);
+      }
+    } catch (err) {
+      console.warn("Failed to mark all notifications read:", err);
+    }
+  }, []);
+
+  // Close notification dropdown when clicking outside or pressing Escape
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (notifDropdownRef.current && !notifDropdownRef.current.contains(event.target)) {
+        setNotifDropdownOpen(false);
+      }
+    }
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setNotifDropdownOpen(false);
+      }
+    }
+    if (notifDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [notifDropdownOpen]);
+
+  // Close profile dropdown when clicking outside or pressing Escape
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setProfileDropdownOpen(false);
+      }
+    }
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setProfileDropdownOpen(false);
+      }
+    }
+    if (profileDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [profileDropdownOpen]);
+
+  const handlePromptOrderAction = (enquiry, action) => {
+    setOrderConfirmModal({
+      isOpen: true,
+      action,
+      enquiry
+    });
+  };
+
+  const executeOrderAction = async () => {
+    if (!orderConfirmModal.enquiry || !orderConfirmModal.action) return;
+    const { enquiry, action } = orderConfirmModal;
+    const token = sessionStorage.getItem("agroconnectToken");
+    if (!token) {
+      triggerNotice("Authentication required", "error");
+      return;
+    }
+
+    setProcessingOrderAction(true);
+    try {
+      const res = await fetch(apiUrl(`/api/enquiries/${enquiry._id}/${action}`), {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || `Failed to ${action} order.`);
+      }
+
+      const newStatus = action === "confirm" ? "confirmed" : "rejected";
+      setDashboardEnquiries((prev) =>
+        prev.map((item) => (item._id === enquiry._id ? { ...item, status: newStatus } : item))
+      );
+
+      triggerNotice(
+        action === "confirm"
+          ? (t("farmerDashboard.orderConfirmedSuccess") || "Order confirmed successfully! The buyer has been notified.")
+          : (t("farmerDashboard.orderRejectedSuccess") || "Order rejected. The buyer has been notified."),
+        "success"
+      );
+
+      setOrderConfirmModal({ isOpen: false, action: null, enquiry: null });
+    } catch (error) {
+      console.error("Order action error:", error);
+      triggerNotice(error.message || `Failed to process order action. Please try again.`, "error");
+    } finally {
+      setProcessingOrderAction(false);
+    }
+  };
+
   const goToMarketplace = useCallback(() => {
     setCurrentView("marketplace");
     setMobileNavActive("crops");
@@ -464,6 +675,7 @@ function App() {
 
   const goToFarmerDashboard = useCallback(() => {
     setCurrentView("farmer-dashboard");
+    setDashboardTab("all");
     setMobileNavActive("farmerDashboard");
     if (window.location.hash !== "#farmer-dashboard") {
       window.location.hash = "farmer-dashboard";
@@ -471,6 +683,8 @@ function App() {
     fetchFarmerDashboardData();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [fetchFarmerDashboardData]);
+
+
 
   const resolveActiveUser = useCallback((userOverride) => {
     // If userOverride is a DOM or React event (e.g. from an onClick handler), ignore it
@@ -555,6 +769,7 @@ function App() {
       return;
     }
     setCurrentView("buyer-dashboard");
+    setBuyerDashboardTab("all");
     setMobileNavActive("buyerDashboard");
     if (window.location.hash !== "#buyer-dashboard") {
       window.location.hash = "buyer-dashboard";
@@ -605,7 +820,97 @@ function App() {
     openRegisterModal(role);
   }, [openRegisterModal]);
 
-  const openListingModal = useCallback(() => {
+  const handleClearNotification = useCallback(async (notifId) => {
+    const token = sessionStorage.getItem("agroconnectToken");
+    setBuyerNotifications((prev) => prev.filter((n) => n._id !== notifId));
+    setUnreadNotificationCount((prev) => Math.max(0, prev - 1));
+    if (!token || !notifId) return;
+    try {
+      await fetch(apiUrl(`/api/notifications/${notifId}`), {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (err) {
+      console.warn("Failed to delete notification:", err);
+    }
+  }, []);
+
+  const handleSidebarNavigate = useCallback((id) => {
+    if (currentUser?.role === "Farmer") {
+      if (id === "dashboard") {
+        setCurrentView("farmer-dashboard");
+        setDashboardTab("all");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (id === "products") {
+        setCurrentView("farmer-dashboard");
+        setDashboardTab("listings");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (id === "enquiries") {
+        setCurrentView("farmer-dashboard");
+        setDashboardTab("enquiries");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (id === "orders") {
+        setCurrentView("farmer-dashboard");
+        setDashboardTab("orders");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (id === "sales-report") {
+        setCurrentView("farmer-dashboard");
+        setDashboardTab("sales-report");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (id === "messages") {
+        navigateToMessages();
+      } else if (id === "settings") {
+        setUserProfileTab("settings");
+        setUserProfileModalOpen(true);
+      }
+    } else {
+      // Buyer Navigation
+      if (id === "dashboard") {
+        setCurrentView("buyer-dashboard");
+        setBuyerDashboardTab("all");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (id === "enquiries") {
+        setCurrentView("buyer-dashboard");
+        setBuyerDashboardTab("enquiries");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (id === "orders") {
+        setCurrentView("buyer-dashboard");
+        setBuyerDashboardTab("orders");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (id === "purchases-report") {
+        setCurrentView("buyer-dashboard");
+        setBuyerDashboardTab("purchases-report");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (id === "marketplace") {
+        navigateToMarketplace();
+      } else if (id === "messages") {
+        navigateToMessages();
+      } else if (id === "settings") {
+        setUserProfileTab("settings");
+        setUserProfileModalOpen(true);
+      }
+    }
+  }, [currentUser, navigateToMarketplace, navigateToMessages]);
+
+  const handleNotificationClick = useCallback((notif) => {
+    if (!notif) return;
+    if (!notif.read && notif._id) {
+      markNotificationAsRead(notif._id);
+    }
+    setNotifDropdownOpen(false);
+    if (notif.type === "order_confirmed" || notif.type === "order_rejected" || notif.type === "enquiry") {
+      if (currentUser?.role === "Buyer") {
+        navigateToBuyerDashboard();
+      } else {
+        navigateToFarmerDashboard();
+      }
+    } else if (notif.conversationId) {
+      navigateToMessages(null, null, notif.conversationId);
+    }
+  }, [currentUser, markNotificationAsRead, navigateToBuyerDashboard, navigateToFarmerDashboard, navigateToMessages]);
+
+
+    const openListingModal = useCallback(() => {
     const token = sessionStorage.getItem("agroconnectToken");
     const activeUser = currentUserRef.current || currentUser;
     if (!token || !activeUser) {
@@ -626,10 +931,43 @@ function App() {
       unit: "kg",
       quantity: "",
       location: "",
-      description: ""
+      description: "",
+      image: ""
     });
     setModal("listing");
   }, [currentUser, t, openRegisterModal]);
+
+  const handleCropImageUpload = (e, target = "listing") => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      triggerNotice("Image file size should be less than 8MB", "error", "File Too Large");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 900;
+        const scale = img.width > MAX_WIDTH ? MAX_WIDTH / img.width : 1;
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+        if (target === "edit") {
+          setEditingCrop((prev) => (prev ? { ...prev, image: dataUrl } : prev));
+        } else {
+          setListing((prev) => ({ ...prev, image: dataUrl }));
+        }
+        triggerNotice("Crop photo attached successfully!", "success", "Photo Added");
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
 
   // Synchronize route and enforce role access on hash changes
   useEffect(() => {
@@ -646,7 +984,22 @@ function App() {
 
       if (!activeUser) {
         // GUEST RULES: only #home and #how-it-works permitted
-        if (hash === "#messages" || hash === "#marketplace" || hash === "#buyer-dashboard" || hash === "#farmer-dashboard" || hash === "#list-crop" || hash === "#farmers" || hash === "#profile") {
+        if (
+          hash === "#messages" ||
+          hash === "#marketplace" ||
+          hash === "#buyer-dashboard" ||
+          hash === "#farmer-dashboard" ||
+          hash === "#list-crop" ||
+          hash === "#farmers" ||
+          hash === "#profile" ||
+          hash === "#my-products" ||
+          hash === "#products" ||
+          hash === "#buyer-enquiries" ||
+          hash === "#enquiries" ||
+          hash === "#orders" ||
+          hash === "#sales-report" ||
+          hash === "#settings"
+        ) {
           triggerNotice(t("chat.loginRequired") || t("notices.loginToExploreMarketplace"), "info");
           openLoginModal("Buyer");
           setCurrentView("home");
@@ -667,13 +1020,33 @@ function App() {
           fetchUnreadChats();
         } else if (hash === "#buyer-dashboard") {
           setCurrentView("buyer-dashboard");
+          setBuyerDashboardTab("all");
           setMobileNavActive("buyerDashboard");
           fetchBuyerEnquiries();
-        } else if (hash === "#profile") {
+        } else if (hash === "#buyer-enquiries") {
+          setCurrentView("buyer-dashboard");
+          setBuyerDashboardTab("enquiries");
+          setMobileNavActive("buyerDashboard");
+          fetchBuyerEnquiries();
+        } else if (hash === "#order-updates") {
+          setCurrentView("buyer-dashboard");
+          setBuyerDashboardTab("orders");
+          setMobileNavActive("buyerDashboard");
+          fetchBuyerEnquiries();
+        } else if (hash === "#profile" || hash === "#settings") {
+          setUserProfileTab(hash === "#settings" ? "settings" : "overview");
           setUserProfileModalOpen(true);
           setCurrentView("marketplace");
           setMobileNavActive("profile");
-        } else if (hash === "#farmer-dashboard" || hash === "#list-crop" || hash === "#farmers") {
+        } else if (
+          hash === "#farmer-dashboard" ||
+          hash === "#list-crop" ||
+          hash === "#farmers" ||
+          hash === "#my-products" ||
+          hash === "#products" ||
+          hash === "#orders" ||
+          hash === "#sales-report"
+        ) {
           triggerNotice(t("notices.farmerOnlyArea"), "info");
           setCurrentView("marketplace");
           setMobileNavActive("crops");
@@ -689,7 +1062,7 @@ function App() {
       }
 
       if (activeUser.role === "Farmer") {
-        // FARMER RULES: #messages, #farmer-dashboard, #farmers, #list-crop, #profile permitted
+        // FARMER RULES: #messages, #farmer-dashboard, #farmers, #list-crop, #profile, #my-products, #buyer-enquiries, #orders, #sales-report, #settings permitted
         if (hash === "#messages") {
           setCurrentView("messages");
           setMobileNavActive("messages");
@@ -702,10 +1075,31 @@ function App() {
           setCurrentView("farmer-dashboard");
           setMobileNavActive("listCrop");
           openListingModal();
-        } else if (hash === "#profile") {
+        } else if (hash === "#profile" || hash === "#settings") {
+          setUserProfileTab(hash === "#settings" ? "settings" : "overview");
           setUserProfileModalOpen(true);
           setCurrentView("farmer-dashboard");
           setMobileNavActive("profile");
+        } else if (hash === "#my-products" || hash === "#products") {
+          setCurrentView("farmer-dashboard");
+          setDashboardTab("listings");
+          setMobileNavActive("farmerDashboard");
+          fetchFarmerDashboardData();
+        } else if (hash === "#buyer-enquiries" || hash === "#enquiries") {
+          setCurrentView("farmer-dashboard");
+          setDashboardTab("enquiries");
+          setMobileNavActive("farmerDashboard");
+          fetchFarmerDashboardData();
+        } else if (hash === "#orders") {
+          setCurrentView("farmer-dashboard");
+          setDashboardTab("orders");
+          setMobileNavActive("farmerDashboard");
+          fetchFarmerDashboardData();
+        } else if (hash === "#sales-report") {
+          setCurrentView("farmer-dashboard");
+          setDashboardTab("sales-report");
+          setMobileNavActive("farmerDashboard");
+          fetchFarmerDashboardData();
         } else if (hash === "#marketplace" || hash === "#buyer-dashboard") {
           triggerNotice(t("notices.buyerOnlyArea"), "info");
           setCurrentView("farmer-dashboard");
@@ -713,8 +1107,9 @@ function App() {
           window.history.replaceState(null, "", "#farmer-dashboard");
         } else {
           setCurrentView("farmer-dashboard");
+          setDashboardTab("all");
           setMobileNavActive("farmerDashboard");
-          if (hash !== "#farmer-dashboard") {
+          if (hash !== "#farmer-dashboard" && hash !== "#dashboard") {
             window.history.replaceState(null, "", "#farmer-dashboard");
           }
           fetchFarmerDashboardData();
@@ -816,9 +1211,12 @@ function App() {
 
     const socket = connectChatSocket(token);
 
+    const notifiedMsgIds = new Set();
     const handleMessageArrival = (msg) => {
       fetchUnreadChats();
-      if (!msg) return;
+      if (!msg || !msg._id) return;
+      if (notifiedMsgIds.has(msg._id)) return;
+      notifiedMsgIds.add(msg._id);
 
       const recipientId = (msg.recipient?._id || msg.recipient?.id || msg.recipient || "").toString();
       const senderId = (msg.sender?._id || msg.sender?.id || msg.sender || "").toString();
@@ -856,15 +1254,42 @@ function App() {
       fetchUnreadChats();
     };
 
+    const handleNotificationArrival = (notif) => {
+      fetchBuyerNotifications();
+      fetchBuyerEnquiries();
+      if (notif && notif.title) {
+        triggerNotice(
+          notif.message,
+          notif.type === "order_confirmed" ? "success" : notif.type === "order_rejected" ? "error" : "info",
+          notif.title
+        );
+      }
+    };
+
+    const handleOrderStatusUpdate = () => {
+      fetchBuyerEnquiries();
+      fetchFarmerDashboardData();
+      if (currentUser?.role === "Buyer") {
+        fetchBuyerNotifications();
+      }
+    };
+
     if (socket) {
       socket.on("new_message", handleMessageArrival);
       socket.on("message_notification", handleMessageArrival);
       socket.on("unread_count_updated", handleUpdate);
       socket.on("conversation_updated", handleUpdate);
       socket.on("messages_read", handleUpdate);
+      socket.on("notification", handleNotificationArrival);
+      socket.on("order_status_updated", handleOrderStatusUpdate);
     }
 
-    const pollInterval = setInterval(fetchUnreadChats, 10000);
+    const pollInterval = setInterval(() => {
+      fetchUnreadChats();
+      if (currentUser) {
+        fetchBuyerNotifications();
+      }
+    }, 10000);
 
     return () => {
       clearInterval(pollInterval);
@@ -874,9 +1299,22 @@ function App() {
         socket.off("unread_count_updated", handleUpdate);
         socket.off("conversation_updated", handleUpdate);
         socket.off("messages_read", handleUpdate);
+        socket.off("notification", handleNotificationArrival);
+        socket.off("order_status_updated", handleOrderStatusUpdate);
       }
     };
   }, [currentUser, fetchUnreadChats, t]);
+
+  const handleConversationChange = useCallback((convId) => {
+    setActiveChatConversationId(convId);
+    setChatNotification((prev) => {
+      if (prev && (prev.conversationId || "").toString() === (convId || "").toString()) {
+        return null;
+      }
+      return prev;
+    });
+    fetchUnreadChats();
+  }, [fetchUnreadChats]);
 
   const handleStartChat = useCallback((recipient, crop = null) => {
     if (!currentUser) {
@@ -884,6 +1322,9 @@ function App() {
       openLoginModal("Buyer");
       return;
     }
+    setProductDetailsModalOpen(false);
+    setFarmerProfileModalOpen(false);
+    setActiveFarmerId(null);
     navigateToMessages(recipient, crop);
   }, [currentUser, openLoginModal, t, navigateToMessages]);
 
@@ -949,14 +1390,16 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // When user is authenticated, load their role dashboard data
+  // When user is authenticated, load their role dashboard data & notifications
   useEffect(() => {
     if (currentUser?.role === "Farmer") {
       fetchFarmerDashboardData();
+      fetchBuyerNotifications();
     } else if (currentUser?.role === "Buyer") {
       fetchBuyerEnquiries();
+      fetchBuyerNotifications();
     }
-  }, [currentUser, fetchFarmerDashboardData, fetchBuyerEnquiries]);
+  }, [currentUser, fetchFarmerDashboardData, fetchBuyerEnquiries, fetchBuyerNotifications]);
 
   // Poll unread messages for logged in users
   useEffect(() => {
@@ -967,8 +1410,8 @@ function App() {
     }
   }, [currentUser, fetchUnreadChats]);
 
-  function triggerNotice(message, type = "info") {
-    setNotice({ message, type });
+  function triggerNotice(message, type = "info", title = null) {
+    setNotice({ message, type, title });
   }
 
   async function verifyAuthSession() {
@@ -1074,6 +1517,10 @@ function App() {
     setDashboardEnquiries([]);
     setBuyerEnquiries([]);
     setBuyerError("");
+    setBuyerNotifications([]);
+    setUnreadNotificationCount(0);
+    setOrderConfirmModal({ isOpen: false, action: null, enquiry: null });
+    setProcessingOrderAction(false);
     setChatRecipient(null);
     setChatCrop(null);
     setUnreadChatCount(0);
@@ -1146,7 +1593,8 @@ function App() {
         quantity: Number(listing.quantity),
         location: listing.location.trim(),
         farmerName: currentUser?.name || "Local Farmer",
-        description: listing.description ? listing.description.trim() : ""
+        description: listing.description ? listing.description.trim() : "",
+        image: listing.image || ""
       };
 
       const res = await fetch(apiUrl("/api/crops"), {
@@ -1172,7 +1620,8 @@ function App() {
         unit: "kg",
         quantity: "",
         location: "",
-        description: ""
+        description: "",
+        image: ""
       });
       setModal("");
       setSearch("");
@@ -1195,7 +1644,8 @@ function App() {
       unit: crop.unit || "kg",
       quantity: crop.quantity,
       location: crop.location,
-      description: crop.description || ""
+      description: crop.description || "",
+      image: crop.image || ""
     });
     setModal("editCrop");
   }
@@ -1213,7 +1663,8 @@ function App() {
         unit: editingCrop.unit,
         quantity: Number(editingCrop.quantity),
         location: editingCrop.location.trim(),
-        description: editingCrop.description ? editingCrop.description.trim() : ""
+        description: editingCrop.description ? editingCrop.description.trim() : "",
+        image: editingCrop.image || ""
       };
 
       const res = await fetch(apiUrl(`/api/crops/${editingCrop._id}`), {
@@ -1457,9 +1908,39 @@ Message: ${messageText}`;
   const farmerPendingCount = dashboardEnquiries.filter((e) => e.status === "Pending").length;
   const farmerRespondedCount = dashboardEnquiries.filter((e) => e.status === "Responded").length;
 
+  const confirmedOrders = useMemo(() => {
+    return dashboardEnquiries.filter((e) => (e.status || "").toLowerCase() === "confirmed");
+  }, [dashboardEnquiries]);
+
+  const totalConfirmedSalesValue = useMemo(() => {
+    return confirmedOrders.reduce((sum, ord) => {
+      const price = Number(ord.crop?.price) || 0;
+      const qty = Number(ord.quantity) || 1;
+      return sum + (price * qty);
+    }, 0);
+  }, [confirmedOrders]);
+
+  const hasDesktopSidebar =
+    ((currentView === "farmer-dashboard" || currentView === "messages") && currentUser?.role === "Farmer") ||
+    ((currentView === "buyer-dashboard" || currentView === "messages") && currentUser?.role === "Buyer");
+
   const buyerPendingCount = buyerEnquiries.filter((e) => e.status === "Pending").length;
   const buyerRespondedCount = buyerEnquiries.filter((e) => e.status === "Responded").length;
   const buyerClosedCount = buyerEnquiries.filter((e) => e.status === "Closed").length;
+
+  const buyerConfirmedOrders = useMemo(() => {
+    return buyerEnquiries.filter(
+      (e) => (e.status || "").toLowerCase() === "confirmed"
+    );
+  }, [buyerEnquiries]);
+
+  const buyerTotalSpent = useMemo(() => {
+    return buyerConfirmedOrders.reduce((acc, order) => {
+      const price = Number(order.crop?.price) || 0;
+      const qty = Number(order.crop?.quantity) || 1;
+      return acc + (price * qty);
+    }, 0);
+  }, [buyerConfirmedOrders]);
 
   // Live estimated batch value in crop creation
   const estimatedBatchValue =
@@ -1468,20 +1949,41 @@ Message: ${messageText}`;
       : null;
 
   return (
-    <div className="agro-app">
-      {/* GLOBAL TOAST NOTIFICATION */}
+    <div className={`agro-app ${hasDesktopSidebar ? "has-desktop-sidebar" : ""}`}>
+      {/* GLOBAL TOAST NOTIFICATION - AWESOME & STRUCTURED */}
       {notice && (
-        <div className={`toast-banner toast-${notice.type}`} role="alert">
+        <aside className={`toast-banner toast-${notice.type || "info"}`} role="alert" aria-live="assertive">
+          <div className="toast-accent-bar" />
           <div className="toast-body">
-            {notice.type === "success" && <CheckCircle2 className="toast-icon success" size={20} />}
-            {notice.type === "error" && <AlertCircle className="toast-icon error" size={20} />}
-            {notice.type === "info" && <Sparkles className="toast-icon info" size={20} />}
-            <span className="toast-text">{notice.message}</span>
+            <div className={`toast-icon-badge ${notice.type || "info"}`}>
+              {notice.type === "success" && <CheckCircle2 size={20} />}
+              {notice.type === "error" && <AlertCircle size={20} />}
+              {(notice.type === "info" || !notice.type) && <Sparkles size={20} />}
+            </div>
+            <div className="toast-text-wrap">
+              <div className="toast-title-line">
+                <span className={`toast-badge-pill ${notice.type || "info"}`}>
+                  {notice.type === "success" ? "SUCCESS" : notice.type === "error" ? "ATTENTION" : "NOTICE"}
+                </span>
+                <strong className="toast-title">
+                  {notice.title || (notice.type === "success" ? (t("common.success") || "Success") : notice.type === "error" ? (t("common.error") || "Attention") : (t("common.info") || "Update"))}
+                </strong>
+              </div>
+              <p className="toast-text">{notice.message}</p>
+            </div>
           </div>
-          <button className="toast-close" onClick={() => setNotice(null)} aria-label="Close alert">
-            <X size={16} />
+          <button
+            type="button"
+            className="toast-close"
+            onClick={() => setNotice(null)}
+            aria-label="Close notification"
+          >
+            <X size={15} />
           </button>
-        </div>
+          <div className="toast-timer-track">
+            <div className="toast-timer-progress" />
+          </div>
+        </aside>
       )}
 
       {/* REAL-TIME IN-APP CHAT MESSAGE NOTIFICATION TOAST */}
@@ -1527,9 +2029,35 @@ Message: ${messageText}`;
         </aside>
       )}
 
+            {/* DESKTOP LEFT SIDEBAR NAVIGATION FOR FARMER & BUYER PORTALS */}
+      {hasDesktopSidebar && (
+        <SidebarNav
+          currentUser={currentUser}
+          currentView={currentView}
+          dashboardTab={dashboardTab}
+          buyerDashboardTab={buyerDashboardTab}
+          farmerPendingCount={farmerPendingCount}
+          confirmedOrdersCount={confirmedOrders.length}
+          unreadNotificationCount={unreadNotificationCount}
+          buyerPendingCount={buyerPendingCount}
+          buyerConfirmedCount={buyerConfirmedOrders.length}
+          farmerCropCount={dashboardListings.length}
+          unreadChatCount={unreadChatCount}
+          onNavigate={handleSidebarNavigate}
+          onOpenSettings={() => {
+            setUserProfileTab("settings");
+            setUserProfileModalOpen(true);
+            window.location.hash = "#settings";
+          }}
+          onLogout={handleLogout}
+        />
+      )}
+
       {/* SINGLE CLEAN NAVBAR (White/Cream bar, logo left, nav center, user & lang right) */}
       <nav className="main-navbar">
         <div className="navbar-container">
+
+
           <a
             className="brand-logo"
             href={!currentUser ? "#home" : currentUser.role === "Farmer" ? "#farmer-dashboard" : "#marketplace"}
@@ -1541,7 +2069,7 @@ Message: ${messageText}`;
             }}
           >
             <div className="brand-icon-box">
-              <Sprout className="sprout-icon" size={24} />
+              <AgroConnectBrandLogoSvg size={28} />
             </div>
             <div className="brand-text">
               <span className="brand-title">{t("nav.brandTitle")}</span>
@@ -1556,12 +2084,13 @@ Message: ${messageText}`;
                 </div>
               </div>
             </div>
+
           </a>
 
           {/* Nav Center Links - STRICTLY ROLE-BASED */}
           <div className="nav-center-links">
             {!currentUser ? (
-              // GUEST NAVBAR: Home, How It Works
+              // GUEST NAVBAR: Fresh Harvests, Home, How It Works
               <>
                 <button
                   type="button"
@@ -1569,11 +2098,11 @@ Message: ${messageText}`;
                   onClick={goToMarketplace}
                 >
                   <Store size={16} />
-                  <span>{t("nav.freshHarvests") || "Marketplace"}</span>
+                  <span>{t("nav.freshHarvests") || "Fresh Harvests"}</span>
                 </button>
                 <button
                   type="button"
-                  className={`nav-link-btn ${currentView === "home" ? "active" : ""}`}
+                  className={`nav-link-btn ${currentView === "home" && window.location.hash !== "#how-it-works" ? "active" : ""}`}
                   onClick={() => navigateToHome()}
                 >
                   <Home size={16} />
@@ -1581,10 +2110,16 @@ Message: ${messageText}`;
                 </button>
                 <button
                   type="button"
-                  className="nav-link-btn"
+                  className={`nav-link-btn ${window.location.hash === "#how-it-works" ? "active" : ""}`}
                   onClick={() => {
-                    const el = document.getElementById("how-it-works");
-                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                    if (currentView !== "home") {
+                      setCurrentView("home");
+                      setMobileNavActive("home");
+                    }
+                    setTimeout(() => {
+                      const el = document.getElementById("how-it-works");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }, 50);
                     window.location.hash = "how-it-works";
                   }}
                 >
@@ -1592,8 +2127,8 @@ Message: ${messageText}`;
                   <span>{t("nav.howItWorks") || "How It Works"}</span>
                 </button>
               </>
-            ) : currentUser.role === "Buyer" ? (
-              // BUYER NAVBAR: Fresh Harvests, Buyer Dashboard, Messages
+            ) : currentUser.role === "Buyer" && currentView === "marketplace" ? (
+              // BUYER ON MARKETPLACE (clean on dashboard):
               <>
                 <button
                   type="button"
@@ -1605,16 +2140,18 @@ Message: ${messageText}`;
                 </button>
                 <button
                   type="button"
-                  className={`nav-link-btn ${currentView === "buyer-dashboard" ? "active" : ""}`}
+                  className="nav-link-btn"
                   onClick={() => navigateToBuyerDashboard()}
                 >
                   <ShoppingCart size={16} />
                   <span>{t("nav.buyerDashboard") || "Buyer Dashboard"}</span>
-                  {buyerRespondedCount > 0 && <span className="badge-count-pulse">{buyerRespondedCount}</span>}
+                  {(buyerRespondedCount > 0 || unreadNotificationCount > 0) && (
+                    <span className="badge-count-pulse">{buyerRespondedCount + unreadNotificationCount}</span>
+                  )}
                 </button>
                 <button
                   type="button"
-                  className={`nav-link-btn ${currentView === "messages" ? "active" : ""}`}
+                  className="nav-link-btn"
                   onClick={() => navigateToMessages()}
                 >
                   <MessageSquare size={16} />
@@ -1622,37 +2159,7 @@ Message: ${messageText}`;
                   {unreadChatCount > 0 && <span className="badge-count-pulse">{unreadChatCount}</span>}
                 </button>
               </>
-            ) : (
-              // FARMER NAVBAR: Messages, Farmer Discovery, Farmer Dashboard
-              <>
-                <button
-                  type="button"
-                  className={`nav-link-btn ${currentView === "messages" ? "active" : ""}`}
-                  onClick={() => navigateToMessages()}
-                >
-                  <MessageSquare size={16} />
-                  <span>{t("nav.messages") || "Messages"}</span>
-                  {unreadChatCount > 0 && <span className="badge-count-pulse">{unreadChatCount}</span>}
-                </button>
-                <button
-                  type="button"
-                  className={`nav-link-btn ${currentView === "farmers" ? "active" : ""}`}
-                  onClick={() => navigateToFarmerDiscovery()}
-                >
-                  <Tractor size={16} />
-                  <span>{t("nav.farmers") || "Farmer Discovery"}</span>
-                </button>
-                <button
-                  type="button"
-                  className={`nav-link-btn ${currentView === "farmer-dashboard" ? "active" : ""}`}
-                  onClick={() => navigateToFarmerDashboard()}
-                >
-                  <Layers size={16} />
-                  <span>{t("nav.farmerDashboard") || "Farmer Dashboard"}</span>
-                  {farmerPendingCount > 0 && <span className="badge-count-pulse">{farmerPendingCount}</span>}
-                </button>
-              </>
-            )}
+            ) : null}
           </div>
 
           <div className="nav-actions">
@@ -1660,95 +2167,301 @@ Message: ${messageText}`;
             <div className="nav-actions-desktop">
               {currentUser ? (
                 <div className="user-action-cluster">
-                  <button
-                    type="button"
-                    className="user-profile-badge clickable"
-                    onClick={() => setUserProfileModalOpen(true)}
-                    title={`${currentUser.name || "User"} (${t(`nav.role${currentUser.role}`) || currentUser.role}) - ${t("profile.title") || "My Profile"}`}
-                    aria-label={t("profile.title") || "My Profile"}
-                  >
-                    <div className="profile-avatar-circle">
-                      {currentUser.avatar ? (
-                        <img src={currentUser.avatar} alt="" className="avatar-img" />
-                      ) : (
-                        <span className="avatar-role-icon">
-                          {currentUser.role === "Farmer" ? "🧑‍🌾" : "🛒"}
+                  {/* NOTIFICATION BELL WITH FLYOUT MENU */}
+                  <div className="nav-notif-container" ref={notifDropdownRef}>
+                    <button
+                      type="button"
+                      className={`btn-nav-notif-bell ${notifDropdownOpen ? "active" : ""}`}
+                      onClick={() => {
+                        setNotifDropdownOpen((prev) => !prev);
+                        setProfileDropdownOpen(false);
+                      }}
+                      title="Notifications & Updates"
+                      aria-label="Open notifications"
+                      aria-expanded={notifDropdownOpen}
+                    >
+                      <Bell size={18} className="nav-notif-icon" />
+                      {unreadNotificationCount > 0 && (
+                        <span className="notif-badge-bubble">
+                          {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
+                          <span className="notif-badge-ping" />
                         </span>
                       )}
-                    </div>
-                    <span className="profile-name">
-                      {currentUser.name || currentUser.username || currentUser.email?.split("@")[0] || "User"}
-                    </span>
-                  </button>
+                    </button>
+
+                    {/* NOTIFICATION FLYOUT DROPDOWN */}
+                    {notifDropdownOpen && (
+                      <div className="notification-flyout-menu" role="menu">
+                        <div className="notif-flyout-header">
+                          <div className="notif-flyout-title-wrap">
+                            <Bell size={16} className="flyout-header-icon" />
+                            <h4 className="notif-flyout-title">Notifications</h4>
+                            {unreadNotificationCount > 0 && (
+                              <span className="notif-unread-pill">{unreadNotificationCount} new</span>
+                            )}
+                          </div>
+                          {unreadNotificationCount > 0 && (
+                            <button
+                              type="button"
+                              className="notif-mark-all-btn"
+                              onClick={markAllNotificationsAsRead}
+                            >
+                              <CheckCheck size={14} />
+                              <span>Mark all read</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Tabs for unread / all */}
+                        <div className="notif-tabs-bar">
+                          <button
+                            type="button"
+                            className={`notif-tab-item ${notifFilter === "all" ? "active" : ""}`}
+                            onClick={() => setNotifFilter("all")}
+                          >
+                            All ({buyerNotifications.length})
+                          </button>
+                          <button
+                            type="button"
+                            className={`notif-tab-item ${notifFilter === "unread" ? "active" : ""}`}
+                            onClick={() => setNotifFilter("unread")}
+                          >
+                            Unread ({unreadNotificationCount})
+                          </button>
+                        </div>
+
+                        {/* Notification Items List */}
+                        <div className="notif-flyout-list">
+                          {filteredNotifications.length === 0 ? (
+                            <div className="notif-empty-state">
+                              <Sparkles size={24} className="notif-empty-icon" />
+                              <p>No notifications yet</p>
+                              <span>You're all caught up with orders & enquiries.</span>
+                            </div>
+                          ) : (
+                            filteredNotifications.map((notif) => {
+                              const isUnread = !notif.read;
+                              return (
+                                <div
+                                  key={notif._id}
+                                  className={`notif-item-card ${isUnread ? "unread" : "read"}`}
+                                  onClick={() => handleNotificationClick(notif)}
+                                >
+                                  <div className="notif-card-icon-col">
+                                    <div className={`notif-type-bubble ${notif.type || "general"}`}>
+                                      {notif.type === "order_confirmed" ? (
+                                        <CheckCircle2 size={16} />
+                                      ) : notif.type === "order_rejected" ? (
+                                        <X size={16} />
+                                      ) : (
+                                        <Bell size={16} />
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="notif-card-content">
+                                    <div className="notif-card-top-row">
+                                      <h5 className="notif-item-title">{notif.title}</h5>
+                                      <span className="notif-item-time">
+                                        {formatRelativeTime(notif.createdAt, language)}
+                                      </span>
+                                    </div>
+                                    <p className="notif-item-message">{notif.message}</p>
+                                  </div>
+                                  <div className="notif-card-actions">
+                                    {isUnread && (
+                                      <button
+                                        type="button"
+                                        className="btn-mark-single-read"
+                                        title="Mark as read"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          markNotificationAsRead(notif._id);
+                                        }}
+                                      >
+                                        <Check size={14} />
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      className="btn-delete-notif"
+                                      title="Delete notification"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleClearNotification(notif._id);
+                                      }}
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* USER PROFILE BUTTON WITH AVATAR & DROPDOWN */}
+                  <div className="nav-profile-container" ref={profileDropdownRef}>
+                    <button
+                      type="button"
+                      className={`user-profile-badge clickable ${profileDropdownOpen ? "dropdown-open" : ""}`}
+                      onClick={() => {
+                        setProfileDropdownOpen((prev) => !prev);
+                        setNotifDropdownOpen(false);
+                      }}
+                      aria-label="User profile menu"
+                      aria-expanded={profileDropdownOpen}
+                    >
+                      <div className="profile-avatar-circle">
+                        <UserAvatar
+                          user={currentUser}
+                          size={32}
+                          className="profile-avatar-asset"
+                        />
+                      </div>
+                      <span className="profile-username">
+                        {currentUser.name || currentUser.username || currentUser.email?.split("@")[0] || "User"}
+                      </span>
+                      <ChevronDown size={14} className={`profile-dropdown-arrow ${profileDropdownOpen ? "rotated" : ""}`} />
+                    </button>
+
+                    {/* PROFILE DROPDOWN MENU */}
+                    {profileDropdownOpen && (
+                      <div className="profile-dropdown-menu" role="menu">
+                        <div className="profile-dropdown-header">
+                          <div className="dropdown-user-avatar">
+                            <UserAvatar
+                              user={currentUser}
+                              size={38}
+                              className="dropdown-avatar-img"
+                            />
+                          </div>
+                          <div className="dropdown-user-details">
+                            <span className="dropdown-user-name">
+                              {currentUser.name || currentUser.username || "User"}
+                            </span>
+                            <span className="dropdown-user-email">
+                              {currentUser.email || (currentUser.role === "Farmer" ? "Farmer Account" : "Buyer Account")}
+                            </span>
+                            <span className={`dropdown-role-chip ${currentUser.role === "Farmer" ? "farmer" : "buyer"}`}>
+                              {currentUser.role === "Farmer" ? "🌾 Farmer" : "🛒 Buyer"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="dropdown-divider" />
+
+                        <div className="dropdown-menu-list">
+                          {/* View Profile */}
+                          <button
+                            type="button"
+                            className="profile-dropdown-item"
+                            onClick={() => {
+                              setProfileDropdownOpen(false);
+                              setUserProfileTab("overview");
+                              setUserProfileModalOpen(true);
+                            }}
+                          >
+                            <User size={16} className="dropdown-item-icon" />
+                            <span>View Profile</span>
+                          </button>
+
+                          {/* Settings */}
+                          <button
+                            type="button"
+                            className="profile-dropdown-item"
+                            onClick={() => {
+                              setProfileDropdownOpen(false);
+                              setUserProfileTab("settings");
+                              setUserProfileModalOpen(true);
+                            }}
+                          >
+                            <Settings size={16} className="dropdown-item-icon" />
+                            <span>Settings</span>
+                          </button>
+
+                          <div className="dropdown-divider" />
+
+                          {/* Logout */}
+                          <button
+                            type="button"
+                            className="profile-dropdown-item logout-item"
+                            onClick={() => {
+                              setProfileDropdownOpen(false);
+                              handleLogout();
+                            }}
+                          >
+                            <LogOut size={16} className="dropdown-item-icon" />
+                            <span>Logout</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : (
-                <div className="guest-action-cluster">
+                <div className="auth-buttons-group">
                   <button
-                    className="btn-text-login"
+                    type="button"
+                    className="btn-nav-outline"
                     onClick={() => openLoginModal("Buyer")}
                   >
-                    <User size={16} />
-                    <span>{t("nav.logIn")}</span>
+                    <span>{t("nav.signIn")}</span>
                   </button>
                   <button
-                    className="btn-register-highlight"
-                    onClick={() => openRegisterModal("Farmer")}
+                    type="button"
+                    className="btn-nav-filled"
+                    onClick={() => openRegisterModal("Buyer")}
                   >
-                    <Sparkles size={16} />
-                    <span>{t("nav.joinAgroConnect")}</span>
+                    <span>{t("nav.joinUs")}</span>
                   </button>
                 </div>
               )}
 
-              {/* DARK MODE THEME TOGGLE (Desktop) */}
+              {/* Theme Toggle Button */}
               <button
                 type="button"
-                className="btn-theme-toggle"
+                className="theme-toggle-btn btn-theme-toggle"
                 onClick={() => toggleTheme(!darkMode)}
-                title={darkMode ? "Switch to Warm Cream Light Mode" : "Switch to Dark Earth Mode"}
-                aria-label="Toggle theme"
+                title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+                aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
               >
-                {darkMode ? <Sun size={17} className="theme-icon-sun" /> : <Moon size={17} className="theme-icon-moon" />}
+                {darkMode ? <Sun size={17} /> : <Moon size={17} />}
               </button>
             </div>
 
-            {/* TOP-RIGHT MOBILE HAMBURGER BUTTON (Mobile only) */}
+            {/* Mobile Header Hamburger Button (Mobile only) */}
             <button
               type="button"
-              className={`mobile-hamburger-btn ${mobileMenuOpen ? "active" : ""}`}
-              onClick={() => setMobileMenuOpen((prev) => !prev)}
-              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+              className="mobile-hamburger-btn mobile-header-hamburger"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open mobile menu"
               aria-expanded={mobileMenuOpen}
-              id="mobile-nav-hamburger"
             >
-              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+              <Menu size={22} />
+              {(unreadNotificationCount > 0 || unreadChatCount > 0) && (
+                <span className="hamburger-dot-badge" />
+              )}
             </button>
           </div>
         </div>
 
-        {/* MOBILE SLIDE-OVER DRAWER MENU */}
+        {/* Mobile Header Slide-Out Menu Drawer */}
         <MobileHeaderMenu
           isOpen={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}
           currentUser={currentUser}
           onOpenProfile={() => {
-            setMobileMenuOpen(false);
+            setUserProfileTab("overview");
             setUserProfileModalOpen(true);
           }}
-          onLogout={() => {
-            setMobileMenuOpen(false);
-            handleLogout();
-          }}
+          onLogout={handleLogout}
           darkMode={darkMode}
-          onToggleDarkMode={(target) => toggleTheme(target)}
-          onOpenLogin={(role) => {
-            setMobileMenuOpen(false);
-            openLoginModal(role);
-          }}
-          onOpenRegister={(role) => {
-            setMobileMenuOpen(false);
-            openRegisterModal(role);
-          }}
+          onToggleDarkMode={toggleTheme}
+          onOpenLogin={openLoginModal}
+          onOpenRegister={openRegisterModal}
           currentView={currentView}
           onNavigateHome={() => {
             setMobileMenuOpen(false);
@@ -1840,25 +2553,50 @@ Message: ${messageText}`;
           </header>
 
           {/* SECTION 2: HOW AGROCONNECT WORKS FOR EVERYONE */}
-          <section className="how-it-works-section" id="how-it-works">
-            <div className="section-container">
-              <div className="section-title-center">
-                <h2>{t("howItWorks.title")}</h2>
+          <section className="how-it-works-section" id="how-it-works" aria-labelledby="how-it-works-title">
+            <div className="how-it-works-container">
+              <div className="how-it-works-header-center">
+                <div className="how-it-works-badge">
+                  <Sparkles size={14} className="how-badge-icon" />
+                  <span>
+                    {language === "te"
+                      ? "సరళమైన విధానం"
+                      : language === "hi"
+                        ? "सरल 4-चरणीय प्रक्रिया"
+                        : "Direct & Transparent Process"}
+                  </span>
+                </div>
+                <h2 id="how-it-works-title" className="how-it-works-title">
+                  {t("howItWorks.title")}
+                </h2>
+                <p className="how-it-works-subtitle">
+                  {language === "te"
+                    ? "రైతులు మరియు కొనుగోలుదారులను నేరుగా అనుసంధానించే 0% కమీషన్ వ్యవసాయ వేదిక"
+                    : language === "hi"
+                      ? "किसानों और खरीदारों को बिना किसी बिचौलिये के सीधे जोड़ने वाला 0% कमीशन कृषि मंच"
+                      : "Zero-commission direct agricultural marketplace connecting verified growers directly with commercial and household buyers."}
+                </p>
               </div>
 
               <div className="how-it-works-columns">
                 {/* COLUMN 1: FOR FARMERS */}
                 <div className="how-column farmer-how-col">
+                  <div className="how-col-accent-bar farmer-accent-bar" aria-hidden="true" />
                   <div className="how-column-header">
                     <div className="how-header-icon farmer-icon-box">
-                      <Tractor size={24} />
+                      <Tractor size={26} strokeWidth={2.2} />
                     </div>
-                    <h3>{t("howItWorks.farmersTitle")}</h3>
+                    <div className="how-header-titles">
+                      <span className="how-role-pill farmer-role-pill">
+                        {language === "te" ? "రైతుల కోసం" : language === "hi" ? "उत्पादक" : "PRODUCERS"}
+                      </span>
+                      <h3 className="how-column-title">{t("howItWorks.farmersTitle")}</h3>
+                    </div>
                   </div>
 
                   <div className="how-steps-list">
                     {(Array.isArray(t("howItWorks.farmerSteps")) ? t("howItWorks.farmerSteps") : []).map((item) => (
-                      <div className="how-step-card" key={item.num}>
+                      <div className="how-step-card farmer-step-card" key={item.num}>
                         <div className="step-num-badge farmer-badge">{item.num}</div>
                         <div className="step-body">
                           <h4 className="step-title">{item.title}</h4>
@@ -1867,20 +2605,38 @@ Message: ${messageText}`;
                       </div>
                     ))}
                   </div>
+
+                  <div className="how-column-footer">
+                    <button
+                      type="button"
+                      className="btn-how-cta farmer-how-cta"
+                      onClick={() => handleJoinRole("Farmer")}
+                    >
+                      <Tractor size={18} />
+                      <span>{t("hero.joinAsFarmer") || "Join as Farmer"}</span>
+                      <ArrowRight size={16} className="cta-arrow" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* COLUMN 2: FOR BUYERS */}
                 <div className="how-column buyer-how-col">
+                  <div className="how-col-accent-bar buyer-accent-bar" aria-hidden="true" />
                   <div className="how-column-header">
                     <div className="how-header-icon buyer-icon-box">
-                      <ShoppingCart size={24} />
+                      <ShoppingCart size={26} strokeWidth={2.2} />
                     </div>
-                    <h3>{t("howItWorks.buyersTitle")}</h3>
+                    <div className="how-header-titles">
+                      <span className="how-role-pill buyer-role-pill">
+                        {language === "te" ? "కొనుగోలుదారుల కోసం" : language === "hi" ? "खरीदार" : "BUYERS & TRADERS"}
+                      </span>
+                      <h3 className="how-column-title">{t("howItWorks.buyersTitle")}</h3>
+                    </div>
                   </div>
 
                   <div className="how-steps-list">
                     {(Array.isArray(t("howItWorks.buyerSteps")) ? t("howItWorks.buyerSteps") : []).map((item) => (
-                      <div className="how-step-card" key={item.num}>
+                      <div className="how-step-card buyer-step-card" key={item.num}>
                         <div className="step-num-badge buyer-badge">{item.num}</div>
                         <div className="step-body">
                           <h4 className="step-title">{item.title}</h4>
@@ -1888,6 +2644,18 @@ Message: ${messageText}`;
                         </div>
                       </div>
                     ))}
+                  </div>
+
+                  <div className="how-column-footer">
+                    <button
+                      type="button"
+                      className="btn-how-cta buyer-how-cta"
+                      onClick={() => handleJoinRole("Buyer")}
+                    >
+                      <ShoppingCart size={18} />
+                      <span>{t("hero.joinAsBuyer") || "Join as Buyer"}</span>
+                      <ArrowRight size={16} className="cta-arrow" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1908,13 +2676,7 @@ Message: ${messageText}`;
             setActiveFarmerId(farmerId);
             setFarmerProfileModalOpen(true);
           }}
-          onConversationChange={(convId) => {
-            setActiveChatConversationId(convId);
-            if (chatNotification && (chatNotification.conversationId || "").toString() === (convId || "").toString()) {
-              setChatNotification(null);
-            }
-            fetchUnreadChats();
-          }}
+          onConversationChange={handleConversationChange}
         />
       ) : (!currentUser || currentUser.role === "Buyer") ? (
         currentView === "buyer-dashboard" && currentUser ? (
@@ -1993,12 +2755,145 @@ Message: ${messageText}`;
                         <span className="metric-lbl">{t("buyerDashboard.statClosedDeals")}</span>
                       </div>
                     </div>
+
+                    <div className={`stat-metric-card ${unreadNotificationCount > 0 ? "alert" : ""}`}>
+                      <div className="metric-icon-box green">
+                        <Bell size={20} />
+                      </div>
+                      <div>
+                        <span className="metric-val">{unreadNotificationCount}</span>
+                        <span className="metric-lbl">{t("buyerDashboard.statUnreadNotifications") || "Order Updates"}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="dashboard-content-block">
-                    <div className="block-title-row">
-                      <h3>{t("buyerDashboard.myEnquiryHistory", { count: buyerEnquiries.length })}</h3>
-                    </div>
+                  <div className="dashboard-tabs-bar">
+                    <button
+                      className={`d-tab-btn ${buyerDashboardTab === "all" ? "active" : ""}`}
+                      onClick={() => handleSidebarNavigate("dashboard")}
+                    >
+                      {t("farmerDashboard.tabAll") || "Overview"}
+                    </button>
+                    <button
+                      className={`d-tab-btn ${buyerDashboardTab === "enquiries" ? "active" : ""}`}
+                      onClick={() => handleSidebarNavigate("enquiries")}
+                    >
+                      {`My Enquiries (${buyerEnquiries.length})`}
+                      {buyerPendingCount > 0 && <span className="tab-bubble-count">{buyerPendingCount}</span>}
+                    </button>
+                    <button
+                      className={`d-tab-btn ${buyerDashboardTab === "orders" ? "active" : ""}`}
+                      onClick={() => handleSidebarNavigate("orders")}
+                    >
+                      {`Orders (${buyerConfirmedOrders.length || buyerNotifications.length})`}
+                      {buyerConfirmedOrders.length > 0 && (
+                        <span className="tab-bubble-count success">{buyerConfirmedOrders.length}</span>
+                      )}
+                    </button>
+                    <button
+                      className={`d-tab-btn ${buyerDashboardTab === "purchases-report" ? "active" : ""}`}
+                      onClick={() => handleSidebarNavigate("purchases-report")}
+                    >
+                      Purchase Report
+                    </button>
+                  </div>
+
+                  {(buyerDashboardTab === "all" || buyerDashboardTab === "orders") && (
+                    buyerNotifications && buyerNotifications.length > 0 ? (
+                      <div className="dashboard-content-block buyer-notifications-block">
+                        <div className="block-title-row">
+                          <div className="block-title-with-badge">
+                            <Bell size={18} className="block-header-icon" />
+                            <h3>{t("buyerDashboard.notificationsTitle") || "Order Notifications & Status Alerts"}</h3>
+                            {unreadNotificationCount > 0 && (
+                              <span className="badge-count-pulse">{unreadNotificationCount} new</span>
+                            )}
+                          </div>
+                          {unreadNotificationCount > 0 && (
+                            <button
+                              type="button"
+                              className="btn-mark-all-read"
+                              onClick={markAllNotificationsAsRead}
+                            >
+                              <Check size={14} />
+                              <span>{t("buyerDashboard.markAllRead") || "Mark all as read"}</span>
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="notifications-list-stack">
+                          {buyerNotifications.map((notif) => (
+                            <div
+                              key={notif._id}
+                              className={`notification-item-card ${notif.read ? "read" : "unread"} ${notif.status || ""}`}
+                              onClick={() => !notif.read && markNotificationAsRead(notif._id)}
+                            >
+                              <div className="notification-icon-box">
+                                {notif.status === "confirmed" ? (
+                                  <CheckCircle2 size={20} className="notif-icon-success" />
+                                ) : notif.status === "rejected" ? (
+                                  <XCircle size={20} className="notif-icon-danger" />
+                                ) : (
+                                  <Bell size={20} className="notif-icon-info" />
+                                )}
+                              </div>
+                              <div className="notification-content-area">
+                                <div className="notif-header-line">
+                                  <strong className="notif-title">{notif.title}</strong>
+                                  <span className="notif-timestamp">
+                                    {formatEnquiryDate(notif.createdAt, language)}
+                                  </span>
+                                </div>
+                                <p className="notif-message-text">{notif.message}</p>
+                                <div className="notif-meta-tags">
+                                  {notif.cropName && (
+                                    <span className="notif-tag-crop">🌾 {notif.cropName}</span>
+                                  )}
+                                  <span className={`notif-status-tag ${notif.status}`}>
+                                    {notif.status === "confirmed" ? "✓ Confirmed" : notif.status === "rejected" ? "✕ Rejected" : notif.status}
+                                  </span>
+                                  {!notif.read && (
+                                    <span className="notif-new-dot">● Unread</span>
+                                  )}
+                                </div>
+                              </div>
+                              {!notif.read && (
+                                <button
+                                  type="button"
+                                  className="btn-mark-read"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    markNotificationAsRead(notif._id);
+                                  }}
+                                  title="Mark as read"
+                                >
+                                  <Check size={14} />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : buyerDashboardTab === "orders" ? (
+                      <div className="dashboard-content-block">
+                        <div className="dashboard-empty-state">
+                          <Bell size={36} className="empty-state-icon" />
+                          <h4>No Order Updates Yet</h4>
+                          <p>You have no recent order updates or status notifications from farmers.</p>
+                          <button className="btn-modal-submit green" onClick={() => navigateToMarketplace()}>
+                            <Store size={16} />
+                            <span>Browse Fresh Produce</span>
+                          </button>
+                        </div>
+                      </div>
+                    ) : null
+                  )}
+
+                  {(buyerDashboardTab === "all" || buyerDashboardTab === "enquiries") && (
+                    <div className="dashboard-content-block">
+                      <div className="block-title-row">
+                        <h3>{t("buyerDashboard.myEnquiryHistory", { count: buyerEnquiries.length })}</h3>
+                      </div>
 
                     {buyerEnquiries.length === 0 ? (
                       <div className="dashboard-empty-state">
@@ -2033,10 +2928,12 @@ Message: ${messageText}`;
                                 </span>
                               </div>
 
-                              <span className={`status-pill-badge status-${enquiry.status.toLowerCase()}`}>
+                              <span className={`status-pill-badge status-${(enquiry.status || "").toLowerCase()}`}>
                                 {enquiry.status === "Pending" && t("statuses.buyerPendingBadge")}
                                 {enquiry.status === "Responded" && t("statuses.buyerRespondedBadge")}
                                 {enquiry.status === "Closed" && t("statuses.buyerClosedBadge")}
+                                {(enquiry.status === "confirmed" || enquiry.status === "Confirmed") && `✓ ${t("farmerDashboard.orderConfirmed") || "Order Confirmed"}`}
+                                {(enquiry.status === "rejected" || enquiry.status === "Rejected") && `✕ ${t("farmerDashboard.orderRejected") || "Order Rejected"}`}
                               </span>
                             </div>
 
@@ -2052,7 +2949,11 @@ Message: ${messageText}`;
                                   ? t("buyerDashboard.notePending")
                                   : enquiry.status === "Responded"
                                     ? t("buyerDashboard.noteResponded")
-                                    : t("buyerDashboard.noteClosed")}
+                                    : (enquiry.status === "confirmed" || enquiry.status === "Confirmed")
+                                      ? (t("buyerDashboard.noteConfirmed") || "Good news! Your order has been confirmed by the farmer.")
+                                      : (enquiry.status === "rejected" || enquiry.status === "Rejected")
+                                        ? (t("buyerDashboard.noteRejected") || "Your order could not be accepted by the farmer at this time.")
+                                        : t("buyerDashboard.noteClosed")}
                               </span>
                             </div>
 
@@ -2076,6 +2977,186 @@ Message: ${messageText}`;
                       </div>
                     )}
                   </div>
+                  )}
+
+                  {/* BUYER CONFIRMED ORDERS SECTION */}
+                  {buyerDashboardTab === "orders" && buyerConfirmedOrders.length > 0 && (
+                    <div className="dashboard-content-block">
+                      <div className="block-title-row">
+                        <div className="block-title-with-badge">
+                          <CheckCircle2 size={18} className="block-header-icon notif-icon-success" />
+                          <h3>Confirmed Purchases ({buyerConfirmedOrders.length})</h3>
+                        </div>
+                      </div>
+
+                      <div className="orders-cards-list">
+                        {buyerConfirmedOrders.map((order) => (
+                          <div className="order-manage-card" key={order._id}>
+                            <div className="order-card-header">
+                              <div className="order-card-id-block">
+                                <span className="order-ref-badge">ORDER #{order._id?.slice(-6).toUpperCase()}</span>
+                                <span className="order-date-text">{formatEnquiryDate(order.createdAt, language)}</span>
+                              </div>
+                              <span className="order-status-pill confirmed">
+                                <CheckCircle2 size={14} /> Confirmed by Farmer
+                              </span>
+                            </div>
+
+                            <div className="order-card-body">
+                              <div className="order-crop-summary">
+                                <div className="order-crop-icon">🌾</div>
+                                <div>
+                                  <h4 className="order-crop-name">{order.crop?.name || "Harvest Produce"}</h4>
+                                  <span className="order-crop-rate">₹{order.crop?.price || "--"} / {t(`units.${order.crop?.unit}`) || order.crop?.unit || "kg"}</span>
+                                </div>
+                              </div>
+
+                              <div className="order-buyer-details">
+                                <div className="order-detail-field">
+                                  <MapPin size={14} />
+                                  <span>Farm Location: <strong>{order.crop?.location || "Andhra Pradesh"}</strong></span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {order.message && (
+                              <div className="order-note-box">
+                                <small>Your Order Requirement:</small>
+                                <p>"{order.message}"</p>
+                              </div>
+                            )}
+
+                            <div className="order-card-footer">
+                              <div className="order-total-value">
+                                <span>Estimated Batch Price: </span>
+                                <strong>₹{Number(order.crop?.price || 0).toLocaleString("en-IN")}</strong>
+                              </div>
+                              <button
+                                type="button"
+                                className="btn-chat-with-user"
+                                onClick={() => {
+                                  const farmerObj = typeof order.crop?.farmer === "object"
+                                    ? order.crop.farmer
+                                    : { _id: order.crop?.farmer, role: "Farmer" };
+                                  handleStartChat(farmerObj, order.crop);
+                                }}
+                              >
+                                <MessageSquare size={14} />
+                                <span>Chat with Farmer</span>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* BUYER PURCHASE & PROCUREMENT REPORT TAB */}
+                  {buyerDashboardTab === "purchases-report" && (
+                    <div className="dashboard-content-block sales-report-view">
+                      <div className="block-title-row">
+                        <div>
+                          <h3>Procurement & Purchase Report</h3>
+                          <p className="block-subtitle">Procurement analytics, order spend, and sourcing summary.</p>
+                        </div>
+                        <button className="btn-dashboard-refresh" onClick={fetchBuyerEnquiries} title="Refresh Report">
+                          <RefreshCw size={14} />
+                          <span>Refresh Report</span>
+                        </button>
+                      </div>
+
+                      <div className="sales-kpi-grid">
+                        <div className="sales-kpi-card highlight">
+                          <div className="sales-kpi-top">
+                            <span className="sales-kpi-label">Total Procurement Value</span>
+                            <div className="sales-kpi-icon-pill green"><TrendingUp size={18} /></div>
+                          </div>
+                          <div className="sales-kpi-val">₹{buyerTotalSpent.toLocaleString("en-IN")}</div>
+                          <div className="sales-kpi-subtext">From {buyerConfirmedOrders.length} confirmed purchases</div>
+                        </div>
+
+                        <div className="sales-kpi-card">
+                          <div className="sales-kpi-top">
+                            <span className="sales-kpi-label">Active Requirements Sent</span>
+                            <div className="sales-kpi-icon-pill blue"><MessageSquare size={18} /></div>
+                          </div>
+                          <div className="sales-kpi-val">{buyerEnquiries.length}</div>
+                          <div className="sales-kpi-subtext">{buyerPendingCount} awaiting response</div>
+                        </div>
+
+                        <div className="sales-kpi-card">
+                          <div className="sales-kpi-top">
+                            <span className="sales-kpi-label">Confirmed Orders</span>
+                            <div className="sales-kpi-icon-pill green"><CheckCircle2 size={18} /></div>
+                          </div>
+                          <div className="sales-kpi-val">{buyerConfirmedOrders.length}</div>
+                          <div className="sales-kpi-subtext">{buyerRespondedCount} farmer responses received</div>
+                        </div>
+
+                        <div className="sales-kpi-card">
+                          <div className="sales-kpi-top">
+                            <span className="sales-kpi-label">Order Alerts & Updates</span>
+                            <div className="sales-kpi-icon-pill amber"><Bell size={18} /></div>
+                          </div>
+                          <div className="sales-kpi-val">{buyerNotifications.length}</div>
+                          <div className="sales-kpi-subtext">{unreadNotificationCount} unread status alerts</div>
+                        </div>
+                      </div>
+
+                      <div className="sales-breakdown-card">
+                        <h4>Sourcing Breakdown</h4>
+                        {buyerEnquiries.length === 0 ? (
+                          <p className="empty-subtext">No crop orders placed yet. Browse the marketplace to connect with verified farmers.</p>
+                        ) : (
+                          <div className="sales-table-wrapper">
+                            <table className="sales-breakdown-table">
+                              <thead>
+                                <tr>
+                                  <th>Crop Name</th>
+                                  <th>Farm Location</th>
+                                  <th>Unit Price</th>
+                                  <th>Requirement Status</th>
+                                  <th>Action</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {buyerEnquiries.map((enq) => (
+                                  <tr key={enq._id}>
+                                    <td className="crop-cell">
+                                      <span className="crop-dot" />
+                                      <strong>{enq.crop?.name || "Crop"}</strong>
+                                    </td>
+                                    <td>{enq.crop?.location || "Andhra Pradesh"}</td>
+                                    <td className="metric-cell">₹{enq.crop?.price || "--"} / {enq.crop?.unit || "kg"}</td>
+                                    <td>
+                                      <span className={`status-pill-badge status-${(enq.status || "").toLowerCase()}`}>
+                                        {enq.status === "Pending" ? "Awaiting Reply" : enq.status === "confirmed" ? "Confirmed" : enq.status}
+                                      </span>
+                                    </td>
+                                    <td>
+                                      <button
+                                        type="button"
+                                        className="btn-chat-with-user small"
+                                        onClick={() => {
+                                          const farmerObj = typeof enq.crop?.farmer === "object"
+                                            ? enq.crop.farmer
+                                            : { _id: enq.crop?.farmer, role: "Farmer" };
+                                          handleStartChat(farmerObj, enq.crop);
+                                        }}
+                                      >
+                                        <MessageSquare size={13} />
+                                        <span>Chat</span>
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -2084,7 +3165,7 @@ Message: ${messageText}`;
           /* MARKETPLACE SECTION */
           <main className="marketplace-section" id="marketplace">
             <div className="section-container">
-              {/* HERO AREA (Large friendly heading & prominent search bar) */}
+                            {/* HERO AREA (Large friendly heading & prominent search bar) */}
               <div className="marketplace-hero-area">
                 <h1 className="marketplace-main-title">
                   Fresh from the farm to your business
@@ -2523,22 +3604,35 @@ Message: ${messageText}`;
                   <div className="dashboard-tabs-bar">
                     <button
                       className={`d-tab-btn ${dashboardTab === "all" ? "active" : ""}`}
-                      onClick={() => setDashboardTab("all")}
+                      onClick={() => handleSidebarNavigate("dashboard")}
                     >
-                      {t("farmerDashboard.tabAll")}
+                      {t("farmerDashboard.tabAll") || "Overview"}
                     </button>
                     <button
                       className={`d-tab-btn ${dashboardTab === "listings" ? "active" : ""}`}
-                      onClick={() => setDashboardTab("listings")}
+                      onClick={() => handleSidebarNavigate("products")}
                     >
-                      {t("farmerDashboard.tabListings", { count: dashboardListings.length })}
+                      {t("farmerDashboard.tabListings", { count: dashboardListings.length }) || `My Products (${dashboardListings.length})`}
                     </button>
                     <button
-                      className={`d-tab-btn ${dashboardTab === "enquiries" ? "active" : ""}`}
-                      onClick={() => setDashboardTab("enquiries")}
+                      className={`d-tab-btn d-tab-enquiries ${dashboardTab === "enquiries" ? "active" : ""}`}
+                      onClick={() => handleSidebarNavigate("enquiries")}
                     >
-                      {t("farmerDashboard.tabEnquiries", { count: dashboardEnquiries.length })}
+                      {t("farmerDashboard.tabEnquiries", { count: dashboardEnquiries.length }) || `Buyer Enquiries (${dashboardEnquiries.length})`}
                       {farmerPendingCount > 0 && <span className="tab-bubble-count">{farmerPendingCount}</span>}
+                    </button>
+                    <button
+                      className={`d-tab-btn ${dashboardTab === "orders" ? "active" : ""}`}
+                      onClick={() => handleSidebarNavigate("orders")}
+                    >
+                      Orders ({confirmedOrders.length})
+                      {confirmedOrders.length > 0 && <span className="tab-bubble-count success">{confirmedOrders.length}</span>}
+                    </button>
+                    <button
+                      className={`d-tab-btn ${dashboardTab === "sales-report" ? "active" : ""}`}
+                      onClick={() => handleSidebarNavigate("sales-report")}
+                    >
+                      Sales Report
                     </button>
                   </div>
 
@@ -2631,10 +3725,12 @@ Message: ${messageText}`;
                                   </span>
                                 </div>
 
-                                <span className={`status-pill-badge status-${enquiry.status.toLowerCase()}`}>
+                                <span className={`status-pill-badge status-${(enquiry.status || "").toLowerCase()}`}>
                                   {enquiry.status === "Pending" && `🕒 ${t("statuses.Pending")}`}
                                   {enquiry.status === "Responded" && `✅ ${t("statuses.Responded")}`}
                                   {enquiry.status === "Closed" && `📁 ${t("statuses.Closed")}`}
+                                  {(enquiry.status === "confirmed" || enquiry.status === "Confirmed") && `✓ ${t("farmerDashboard.orderConfirmed") || "Order Confirmed"}`}
+                                  {(enquiry.status === "rejected" || enquiry.status === "Rejected") && `✕ ${t("farmerDashboard.orderRejected") || "Order Rejected"}`}
                                 </span>
                               </div>
 
@@ -2654,18 +3750,41 @@ Message: ${messageText}`;
                                 <p>{enquiry.message}</p>
                               </div>
 
-                              <div className="enquiry-status-row">
-                                <label htmlFor={`enq-status-${enquiry._id}`}>{t("farmerDashboard.updateStatusLabel")}</label>
-                                <select
-                                  id={`enq-status-${enquiry._id}`}
-                                  className="status-select-control"
-                                  value={enquiry.status}
-                                  onChange={(e) => updateEnquiryStatus(enquiry._id, e.target.value)}
-                                >
-                                  <option value="Pending">{t("statuses.PendingDetailed")}</option>
-                                  <option value="Responded">{t("statuses.RespondedDetailed")}</option>
-                                  <option value="Closed">{t("statuses.ClosedDetailed")}</option>
-                                </select>
+                              <div className="enquiry-status-row enquiry-action-toolbar">
+                                {(enquiry.status === "confirmed" || enquiry.status === "Confirmed") ? (
+                                  <div className="order-final-status confirmed" role="status">
+                                    <CheckCircle2 size={16} />
+                                    <span>{t("farmerDashboard.orderConfirmed") || "Order Confirmed"}</span>
+                                  </div>
+                                ) : (enquiry.status === "rejected" || enquiry.status === "Rejected") ? (
+                                  <div className="order-final-status rejected" role="status">
+                                    <XCircle size={16} />
+                                    <span>{t("farmerDashboard.orderRejected") || "Order Rejected"}</span>
+                                  </div>
+                                ) : (
+                                  <div className="order-action-buttons-group">
+                                    <button
+                                      type="button"
+                                      className="btn-order-action confirm"
+                                      onClick={() => handlePromptOrderAction(enquiry, "confirm")}
+                                      disabled={processingOrderAction}
+                                      title={t("farmerDashboard.confirmOrderTooltip") || "Confirm this order"}
+                                    >
+                                      <Check size={16} />
+                                      <span>{t("farmerDashboard.confirmOrder") || "Confirm Order"}</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn-order-action reject"
+                                      onClick={() => handlePromptOrderAction(enquiry, "reject")}
+                                      disabled={processingOrderAction}
+                                      title={t("farmerDashboard.rejectOrderTooltip") || "Reject this order"}
+                                    >
+                                      <X size={16} />
+                                      <span>{t("farmerDashboard.rejectOrder") || "Reject Order"}</span>
+                                    </button>
+                                  </div>
+                                )}
 
                                 <button
                                   type="button"
@@ -2687,6 +3806,213 @@ Message: ${messageText}`;
                       )}
                     </div>
                   )}
+
+                  {/* 4. ORDERS VIEW TAB */}
+                  {dashboardTab === "orders" && (
+                    <div className="dashboard-content-block">
+                      <div className="block-title-row">
+                        <div>
+                          <h3>Confirmed Orders ({confirmedOrders.length})</h3>
+                          <p className="block-subtitle">Buyer orders confirmed by you, ready for packing and fulfillment.</p>
+                        </div>
+                        <button className="btn-dashboard-refresh" onClick={fetchFarmerDashboardData} title="Refresh Orders">
+                          <RefreshCw size={14} />
+                          <span>Refresh Orders</span>
+                        </button>
+                      </div>
+
+                      <div className="orders-summary-strip">
+                        <div className="orders-summary-item">
+                          <span className="summary-lbl">Total Confirmed Orders</span>
+                          <strong className="summary-val green">{confirmedOrders.length}</strong>
+                        </div>
+                        <div className="orders-summary-item">
+                          <span className="summary-lbl">Gross Value</span>
+                          <strong className="summary-val">₹{totalConfirmedSalesValue.toLocaleString("en-IN")}</strong>
+                        </div>
+                        <div className="orders-summary-item">
+                          <span className="summary-lbl">Active Deliveries</span>
+                          <strong className="summary-val">{confirmedOrders.length} In Progress</strong>
+                        </div>
+                      </div>
+
+                      {confirmedOrders.length === 0 ? (
+                        <div className="dashboard-empty-state">
+                          <ShoppingCart size={38} className="empty-state-icon" />
+                          <h4>No confirmed orders yet</h4>
+                          <p>When buyers submit enquiries and you confirm them, they will appear here as confirmed orders.</p>
+                          <button className="btn-modal-submit green" onClick={() => handleSidebarNavigate("enquiries")}>
+                            <MessageSquare size={16} />
+                            <span>View Buyer Enquiries</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="orders-cards-list">
+                          {confirmedOrders.map((order) => (
+                            <div className="order-manage-card" key={order._id}>
+                              <div className="order-card-header">
+                                <div className="order-card-id-block">
+                                  <span className="order-ref-badge">ORDER #{order._id?.slice(-6).toUpperCase()}</span>
+                                  <span className="order-date-text">{formatEnquiryDate(order.createdAt, language)}</span>
+                                </div>
+                                <span className="order-status-pill confirmed">
+                                  <CheckCircle2 size={14} /> Confirmed Order
+                                </span>
+                              </div>
+
+                              <div className="order-card-body">
+                                <div className="order-crop-summary">
+                                  <div className="order-crop-icon">🌾</div>
+                                  <div>
+                                    <h4 className="order-crop-name">{order.crop?.name || "Harvest Produce"}</h4>
+                                    <span className="order-crop-rate">₹{order.crop?.price || "--"} / {t(`units.${order.crop?.unit}`) || order.crop?.unit || "kg"}</span>
+                                  </div>
+                                </div>
+
+                                <div className="order-buyer-details">
+                                  <div className="order-detail-field">
+                                    <User size={14} />
+                                    <span>Buyer: <strong>{order.buyerName}</strong></span>
+                                  </div>
+                                  <div className="order-detail-field">
+                                    <Mail size={14} />
+                                    <span>Email: <a href={`mailto:${order.buyerEmail}`}>{order.buyerEmail}</a></span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {order.message && (
+                                <div className="order-note-box">
+                                  <small>Buyer Request Note:</small>
+                                  <p>"{order.message}"</p>
+                                </div>
+                              )}
+
+                              <div className="order-card-footer">
+                                <div className="order-total-value">
+                                  <span>Estimated Batch Price: </span>
+                                  <strong>₹{Number(order.crop?.price || 0).toLocaleString("en-IN")}</strong>
+                                </div>
+                                <button
+                                  type="button"
+                                  className="btn-chat-with-user"
+                                  onClick={() => {
+                                    const buyerObj = typeof order.buyer === "object"
+                                      ? order.buyer
+                                      : { _id: order.buyer, name: order.buyerName, email: order.buyerEmail, role: "Buyer" };
+                                    handleStartChat(buyerObj, order.crop);
+                                  }}
+                                >
+                                  <MessageSquare size={14} />
+                                  <span>Chat with Buyer</span>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 5. SALES REPORT VIEW TAB */}
+                  {dashboardTab === "sales-report" && (
+                    <div className="dashboard-content-block sales-report-view">
+                      <div className="block-title-row">
+                        <div>
+                          <h3>Sales & Revenue Report</h3>
+                          <p className="block-subtitle">Performance metrics, revenue analytics, and crop breakdown.</p>
+                        </div>
+                        <button className="btn-dashboard-refresh" onClick={fetchFarmerDashboardData} title="Refresh Report">
+                          <RefreshCw size={14} />
+                          <span>Refresh Report</span>
+                        </button>
+                      </div>
+
+                      <div className="sales-kpi-grid">
+                        <div className="sales-kpi-card highlight">
+                          <div className="sales-kpi-top">
+                            <span className="sales-kpi-label">Total Realized Revenue</span>
+                            <div className="sales-kpi-icon-pill green"><TrendingUp size={18} /></div>
+                          </div>
+                          <div className="sales-kpi-val">₹{totalConfirmedSalesValue.toLocaleString("en-IN")}</div>
+                          <div className="sales-kpi-subtext">From {confirmedOrders.length} confirmed orders</div>
+                        </div>
+
+                        <div className="sales-kpi-card">
+                          <div className="sales-kpi-top">
+                            <span className="sales-kpi-label">Active Crop Inventory</span>
+                            <div className="sales-kpi-icon-pill blue"><Package size={18} /></div>
+                          </div>
+                          <div className="sales-kpi-val">{dashboardListings.length} Products</div>
+                          <div className="sales-kpi-subtext">Listed on Andhra marketplace</div>
+                        </div>
+
+                        <div className="sales-kpi-card">
+                          <div className="sales-kpi-top">
+                            <span className="sales-kpi-label">Order Conversion Rate</span>
+                            <div className="sales-kpi-icon-pill amber"><Scale size={18} /></div>
+                          </div>
+                          <div className="sales-kpi-val">
+                            {dashboardEnquiries.length > 0
+                              ? `${Math.round((confirmedOrders.length / dashboardEnquiries.length) * 100)}%`
+                              : "0%"}
+                          </div>
+                          <div className="sales-kpi-subtext">{confirmedOrders.length} of {dashboardEnquiries.length} enquiries confirmed</div>
+                        </div>
+
+                        <div className="sales-kpi-card">
+                          <div className="sales-kpi-top">
+                            <span className="sales-kpi-label">Buyer Inquiries</span>
+                            <div className="sales-kpi-icon-pill purple"><MessageSquare size={18} /></div>
+                          </div>
+                          <div className="sales-kpi-val">{dashboardEnquiries.length} Total</div>
+                          <div className="sales-kpi-subtext">{farmerPendingCount} pending response</div>
+                        </div>
+                      </div>
+
+                      <div className="sales-analytics-section">
+                        <h4 className="sales-section-title">Crop-Wise Performance Breakdown</h4>
+                        <div className="sales-table-wrapper">
+                          <table className="sales-performance-table">
+                            <thead>
+                              <tr>
+                                <th>Crop Name</th>
+                                <th>Category</th>
+                                <th>Unit Price</th>
+                                <th>Listed Stock</th>
+                                <th>Inquiries</th>
+                                <th>Confirmed Orders</th>
+                                <th>Est. Realized Revenue</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {dashboardListings.map((crop) => {
+                                const cropEnquiries = dashboardEnquiries.filter((e) => e.crop?._id === crop._id || e.crop === crop._id);
+                                const cropOrders = cropEnquiries.filter((e) => (e.status || "").toLowerCase() === "confirmed");
+                                const cropRev = cropOrders.length * Number(crop.price || 0);
+                                return (
+                                  <tr key={crop._id}>
+                                    <td><strong>🌾 {crop.name}</strong></td>
+                                    <td><span className="category-pill-sm">{crop.category}</span></td>
+                                    <td>₹{crop.price} / {crop.unit || "kg"}</td>
+                                    <td>{crop.quantity} {crop.unit || "kg"}</td>
+                                    <td><span className="badge-cell count">{cropEnquiries.length}</span></td>
+                                    <td><span className="badge-cell success">{cropOrders.length} orders</span></td>
+                                    <td><strong className="rev-bold">₹{cropRev.toLocaleString("en-IN")}</strong></td>
+                                  </tr>
+                                );
+                              })}
+                              {dashboardListings.length === 0 && (
+                                <tr>
+                                  <td colSpan={7} className="table-empty-cell">No crops listed yet to analyze.</td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -2697,36 +4023,38 @@ Message: ${messageText}`;
       {/* MODERN FOOTER (Hidden on messages page) */}
       {currentView !== "messages" && (
         <footer className="agro-footer">
-        <div className="footer-container">
-          <div className="footer-main-row">
-            <div className="footer-brand-col">
-              <a
-                className="brand-logo footer-logo"
-                href={!currentUser ? "#home" : currentUser.role === "Farmer" ? "#farmer-dashboard" : "#marketplace"}
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (!currentUser) navigateToHome();
-                  else if (currentUser.role === "Farmer") navigateToFarmerDashboard();
-                  else navigateToMarketplace();
-                }}
-              >
-                <div className="brand-icon-box">
-                  <Sprout size={22} />
-                </div>
-                <div className="brand-text">
-                  <span className="brand-title">{t("nav.brandTitle")}</span>
-                  <span className="brand-telugu">{t("nav.brandSubtitle")}</span>
-                </div>
-              </a>
+          <div className="footer-container">
+            <div className="footer-main-row">
+              <div className="footer-brand-col">
+                <a
+                  className="brand-logo footer-logo"
+                  href={!currentUser ? "#home" : currentUser.role === "Farmer" ? "#farmer-dashboard" : "#marketplace"}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (!currentUser) navigateToHome();
+                    else if (currentUser.role === "Farmer") navigateToFarmerDashboard();
+                    else navigateToMarketplace();
+                  }}
+                >
+                  <div className="brand-icon-box">
+                    <Sprout size={22} />
+                  </div>
+                  <div className="brand-text">
+                    <span className="brand-title">{t("nav.brandTitle")}</span>
+                    <span className="brand-telugu">{t("nav.brandSubtitle")}</span>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            <div className="footer-bottom-bar">
+              <span>{t("footer.copyright", { year: new Date().getFullYear() })}</span>
             </div>
           </div>
-
-          <div className="footer-bottom-bar">
-            <span>{t("footer.copyright", { year: new Date().getFullYear() })}</span>
-          </div>
-        </div>
-      </footer>
+        </footer>
       )}
+
+
 
       {/* ========================================================= */}
       {/* MODALS */}
@@ -2892,6 +4220,95 @@ Message: ${messageText}`;
                     />
                   </div>
 
+                  {/* CROP PHOTO ATTACHMENT SECTION (Upload + Direct Camera) */}
+                  <div className="form-group crop-photo-upload-group">
+                    <div className="crop-photo-header">
+                      <div className="crop-photo-label-clean">
+                        <span className="photo-label-title">
+                          🌾 {t("listingModal.cropPhoto") ? t("listingModal.cropPhoto").replace(/\s*\(.*\)/, "") : "Crop Photo"}
+                        </span>
+                        <span className="photo-tag-optional">{t("listingModal.optional") || t("common.optional") || "Optional"}</span>
+                      </div>
+                      <span className="crop-photo-subnote">JPG, PNG, WebP · Max 8MB</span>
+                    </div>
+
+                    {!listing.image ? (
+                      <div className="photo-dropzone-box">
+                        <div className="dropzone-guide">
+                          <div className="dropzone-icon-bubble">
+                            <Camera size={20} />
+                          </div>
+                          <div className="dropzone-text-group">
+                            <span className="dropzone-main-text">Attach Real Harvest Photo</span>
+                            <span className="dropzone-sub-text">Helps buyers verify quality and buy your produce faster</span>
+                          </div>
+                        </div>
+
+                        <div className="dropzone-action-buttons">
+                          <label className="btn-dropzone-action" title="Upload from Device / Gallery">
+                            <Upload size={15} />
+                            <span>{t("listingModal.uploadPhoto") || "Upload Photo"}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={handleCropImageUpload}
+                            />
+                          </label>
+
+                          <label className="btn-dropzone-action" title="Take a photo with your Camera">
+                            <Camera size={15} />
+                            <span>{t("listingModal.takePhoto") || "Take Photo"}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              capture="environment"
+                              style={{ display: "none" }}
+                              onChange={handleCropImageUpload}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="crop-photo-card-preview">
+                        <div className="preview-image-holder">
+                          <img src={listing.image} alt="Crop preview" className="crop-preview-thumb" />
+                          <div className="preview-status-pill">
+                            <CheckCircle2 size={13} />
+                            <span>Photo Attached</span>
+                          </div>
+                        </div>
+                        <div className="preview-actions-col">
+                          <div className="preview-info-text">
+                            <strong>Harvest Photo Ready</strong>
+                            <small>Displayed on crop card in marketplace</small>
+                          </div>
+                          <div className="preview-button-row">
+                            <label className="btn-preview-action change" title="Change photo">
+                              <RefreshCw size={13} />
+                              <span>Change</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                style={{ display: "none" }}
+                                onChange={handleCropImageUpload}
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              className="btn-preview-action delete"
+                              onClick={() => setListing((prev) => ({ ...prev, image: "" }))}
+                              title="Remove photo"
+                            >
+                              <Trash2 size={13} />
+                              <span>Remove</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="form-actions-row">
                     <button type="submit" className="btn-modal-submit green">
                       <Check size={18} />
@@ -3002,6 +4419,95 @@ Message: ${messageText}`;
                       value={editingCrop.description || ""}
                       onChange={(e) => setEditingCrop({ ...editingCrop, description: e.target.value })}
                     />
+                  </div>
+
+                  {/* CROP PHOTO ATTACHMENT SECTION FOR EDIT */}
+                  <div className="form-group crop-photo-upload-group">
+                    <div className="crop-photo-header">
+                      <div className="crop-photo-label-clean">
+                        <span className="photo-label-title">
+                          🌾 {t("listingModal.cropPhoto") ? t("listingModal.cropPhoto").replace(/\s*\(.*\)/, "") : "Crop Photo"}
+                        </span>
+                        <span className="photo-tag-optional">{t("listingModal.optional") || t("common.optional") || "Optional"}</span>
+                      </div>
+                      <span className="crop-photo-subnote">JPG, PNG, WebP · Max 8MB</span>
+                    </div>
+
+                    {!editingCrop.image ? (
+                      <div className="photo-dropzone-box">
+                        <div className="dropzone-guide">
+                          <div className="dropzone-icon-bubble">
+                            <Camera size={20} />
+                          </div>
+                          <div className="dropzone-text-group">
+                            <span className="dropzone-main-text">Attach Real Harvest Photo</span>
+                            <span className="dropzone-sub-text">Helps buyers verify quality and buy your produce faster</span>
+                          </div>
+                        </div>
+
+                        <div className="dropzone-action-buttons">
+                          <label className="btn-dropzone-action" title="Upload from Device / Gallery">
+                            <Upload size={15} />
+                            <span>{t("listingModal.uploadPhoto") || "Upload Photo"}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={(e) => handleCropImageUpload(e, "edit")}
+                            />
+                          </label>
+
+                          <label className="btn-dropzone-action" title="Take a photo with your Camera">
+                            <Camera size={15} />
+                            <span>{t("listingModal.takePhoto") || "Take Photo"}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              capture="environment"
+                              style={{ display: "none" }}
+                              onChange={(e) => handleCropImageUpload(e, "edit")}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="crop-photo-card-preview">
+                        <div className="preview-image-holder">
+                          <img src={editingCrop.image} alt="Crop preview" className="crop-preview-thumb" />
+                          <div className="preview-status-pill">
+                            <CheckCircle2 size={13} />
+                            <span>Photo Attached</span>
+                          </div>
+                        </div>
+                        <div className="preview-actions-col">
+                          <div className="preview-info-text">
+                            <strong>Harvest Photo Ready</strong>
+                            <small>Displayed on crop card in marketplace</small>
+                          </div>
+                          <div className="preview-button-row">
+                            <label className="btn-preview-action change" title="Change photo">
+                              <RefreshCw size={13} />
+                              <span>Change</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                style={{ display: "none" }}
+                                onChange={(e) => handleCropImageUpload(e, "edit")}
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              className="btn-preview-action delete"
+                              onClick={() => setEditingCrop((prev) => (prev ? { ...prev, image: "" } : prev))}
+                              title="Remove photo"
+                            >
+                              <Trash2 size={13} />
+                              <span>Remove</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="form-actions-row">
@@ -3408,7 +4914,7 @@ Message: ${messageText}`;
                         {t("farmerDashboard.tabListings", { count: dashboardListings.length })}
                       </button>
                       <button
-                        className={`d-tab-btn ${dashboardTab === "enquiries" ? "active" : ""}`}
+                        className={`d-tab-btn d-tab-enquiries desktop-hide ${dashboardTab === "enquiries" ? "active" : ""}`}
                         onClick={() => setDashboardTab("enquiries")}
                       >
                         {t("farmerDashboard.tabEnquiries", { count: dashboardEnquiries.length })}
@@ -3507,10 +5013,12 @@ Message: ${messageText}`;
                                     </span>
                                   </div>
 
-                                  <span className={`status-pill-badge status-${enquiry.status.toLowerCase()}`}>
+                                  <span className={`status-pill-badge status-${(enquiry.status || "").toLowerCase()}`}>
                                     {enquiry.status === "Pending" && `🕒 ${t("statuses.Pending")}`}
                                     {enquiry.status === "Responded" && `✅ ${t("statuses.Responded")}`}
                                     {enquiry.status === "Closed" && `📁 ${t("statuses.Closed")}`}
+                                    {(enquiry.status === "confirmed" || enquiry.status === "Confirmed") && `✓ ${t("farmerDashboard.orderConfirmed") || "Order Confirmed"}`}
+                                    {(enquiry.status === "rejected" || enquiry.status === "Rejected") && `✕ ${t("farmerDashboard.orderRejected") || "Order Rejected"}`}
                                   </span>
                                 </div>
 
@@ -3530,18 +5038,55 @@ Message: ${messageText}`;
                                   <p>{enquiry.message}</p>
                                 </div>
 
-                                <div className="enquiry-status-row">
-                                  <label htmlFor={`enq-status-${enquiry._id}`}>{t("farmerDashboard.updateStatusLabel")}</label>
-                                  <select
-                                    id={`enq-status-${enquiry._id}`}
-                                    className="status-select-control"
-                                    value={enquiry.status}
-                                    onChange={(e) => updateEnquiryStatus(enquiry._id, e.target.value)}
+                                <div className="enquiry-status-row enquiry-action-toolbar">
+                                  {(enquiry.status === "confirmed" || enquiry.status === "Confirmed") ? (
+                                    <div className="order-final-status confirmed" role="status">
+                                      <CheckCircle2 size={16} />
+                                      <span>{t("farmerDashboard.orderConfirmed") || "Order Confirmed"}</span>
+                                    </div>
+                                  ) : (enquiry.status === "rejected" || enquiry.status === "Rejected") ? (
+                                    <div className="order-final-status rejected" role="status">
+                                      <XCircle size={16} />
+                                      <span>{t("farmerDashboard.orderRejected") || "Order Rejected"}</span>
+                                    </div>
+                                  ) : (
+                                    <div className="order-action-buttons-group">
+                                      <button
+                                        type="button"
+                                        className="btn-order-action confirm"
+                                        onClick={() => handlePromptOrderAction(enquiry, "confirm")}
+                                        disabled={processingOrderAction}
+                                        title={t("farmerDashboard.confirmOrderTooltip") || "Confirm this order"}
+                                      >
+                                        <Check size={16} />
+                                        <span>{t("farmerDashboard.confirmOrder") || "Confirm Order"}</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="btn-order-action reject"
+                                        onClick={() => handlePromptOrderAction(enquiry, "reject")}
+                                        disabled={processingOrderAction}
+                                        title={t("farmerDashboard.rejectOrderTooltip") || "Reject this order"}
+                                      >
+                                        <X size={16} />
+                                        <span>{t("farmerDashboard.rejectOrder") || "Reject Order"}</span>
+                                      </button>
+                                    </div>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    className="btn-chat-with-user"
+                                    onClick={() => {
+                                      const buyerObj = typeof enquiry.buyer === "object"
+                                        ? enquiry.buyer
+                                        : { _id: enquiry.buyer, name: enquiry.buyerName, email: enquiry.buyerEmail, role: "Buyer" };
+                                      handleStartChat(buyerObj, enquiry.crop);
+                                    }}
                                   >
-                                    <option value="Pending">{t("statuses.PendingDetailed")}</option>
-                                    <option value="Responded">{t("statuses.RespondedDetailed")}</option>
-                                    <option value="Closed">{t("statuses.ClosedDetailed")}</option>
-                                  </select>
+                                    <MessageSquare size={14} />
+                                    <span>{t("chat.chatWithBuyer") || "Chat with Buyer"}</span>
+                                  </button>
                                 </div>
                               </div>
                             ))}
@@ -3817,6 +5362,7 @@ Message: ${messageText}`;
       {userProfileModalOpen && currentUser && (
         <UserProfileModal
           isOpen={userProfileModalOpen}
+          initialTab={userProfileTab}
           currentUser={currentUser}
           onClose={() => setUserProfileModalOpen(false)}
           onUserUpdate={(updatedUser) => {
@@ -3839,6 +5385,117 @@ Message: ${messageText}`;
             navigateToMessages();
           }}
         />
+      )}
+
+      {/* ORDER CONFIRMATION / REJECTION MODAL */}
+      {orderConfirmModal.isOpen && orderConfirmModal.enquiry && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true">
+          <div className="modal-container modal-order-confirm">
+            <div className="modal-header">
+              <div className="modal-title-group">
+                <span className="modal-eyebrow">
+                  {orderConfirmModal.action === "confirm" ? "Order Action" : "Order Action"}
+                </span>
+                <h3 className="modal-title">
+                  {orderConfirmModal.action === "confirm"
+                    ? (t("farmerDashboard.confirmOrderModalTitle") || "Confirm Buyer Order?")
+                    : (t("farmerDashboard.rejectOrderModalTitle") || "Reject Buyer Order?")}
+                </h3>
+              </div>
+              <button
+                className="btn-modal-close"
+                onClick={() => !processingOrderAction && setOrderConfirmModal({ isOpen: false, action: null, enquiry: null })}
+                disabled={processingOrderAction}
+                aria-label="Close dialog"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className={`order-confirm-warning-box ${orderConfirmModal.action}`}>
+                {orderConfirmModal.action === "confirm" ? (
+                  <CheckCircle2 size={30} className="warning-icon green" />
+                ) : (
+                  <XCircle size={30} className="warning-icon red" />
+                )}
+                <div className="warning-copy">
+                  <p className="warning-main-text">
+                    {orderConfirmModal.action === "confirm"
+                      ? (t("farmerDashboard.confirmOrderPrompt") || "Are you sure you want to confirm this order?")
+                      : (t("farmerDashboard.rejectOrderPrompt") || "Are you sure you want to reject this order?")}
+                  </p>
+                  <p className="warning-sub-text">
+                    {orderConfirmModal.action === "confirm"
+                      ? (t("farmerDashboard.confirmOrderBuyerNote", {
+                          buyer: orderConfirmModal.enquiry.buyerName,
+                          crop: orderConfirmModal.enquiry.crop?.name || "crop"
+                        }) || "The buyer will be instantly notified that their order has been confirmed.")
+                      : (t("farmerDashboard.rejectOrderBuyerNote", {
+                          buyer: orderConfirmModal.enquiry.buyerName,
+                          crop: orderConfirmModal.enquiry.crop?.name || "crop"
+                        }) || "The buyer will be notified that this order could not be accepted.")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="order-summary-cardlet">
+                <div className="summary-row">
+                  <span className="summary-label">{t("farmerDashboard.cropLabel") || "Crop"}:</span>
+                  <span className="summary-val">🌾 {orderConfirmModal.enquiry.crop?.name || "Crop"}</span>
+                </div>
+                <div className="summary-row">
+                  <span className="summary-label">{t("farmerDashboard.buyerLabel")}:</span>
+                  <span className="summary-val">{orderConfirmModal.enquiry.buyerName}</span>
+                </div>
+                <div className="summary-row">
+                  <span className="summary-label">{t("farmerDashboard.contactLabel")}:</span>
+                  <span className="summary-val">{orderConfirmModal.enquiry.buyerEmail}</span>
+                </div>
+                {orderConfirmModal.enquiry.message && (
+                  <div className="summary-requirement">
+                    <span className="summary-label">{t("farmerDashboard.buyerMessageLabel")}:</span>
+                    <p className="summary-msg">{orderConfirmModal.enquiry.message}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn-modal-cancel"
+                onClick={() => setOrderConfirmModal({ isOpen: false, action: null, enquiry: null })}
+                disabled={processingOrderAction}
+              >
+                {t("buttons.cancel") || "Cancel"}
+              </button>
+              <button
+                type="button"
+                className={`btn-modal-submit ${orderConfirmModal.action === "confirm" ? "green" : "red"}`}
+                onClick={executeOrderAction}
+                disabled={processingOrderAction}
+              >
+                {processingOrderAction ? (
+                  <>
+                    <RefreshCw size={16} className="spinner-icon" />
+                    <span>Processing...</span>
+                  </>
+                ) : orderConfirmModal.action === "confirm" ? (
+                  <>
+                    <Check size={16} />
+                    <span>{t("farmerDashboard.confirmOrder") || "Confirm Order"}</span>
+                  </>
+                ) : (
+                  <>
+                    <X size={16} />
+                    <span>{t("farmerDashboard.rejectOrder") || "Reject Order"}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* 8. MOBILE BOTTOM NAVIGATION */}

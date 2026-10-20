@@ -41,11 +41,29 @@ router.get('/conversations', protect, async (req, res) => {
       .populate('participants', 'name email role avatar location businessType phone')
       .populate('crop', 'name price unit location category image')
       .populate('lastSender', 'name role')
-      .sort({ updatedAt: -1, lastMessageAt: -1 });
+      .sort({ lastMessageAt: -1, updatedAt: -1 });
+
+    // Deduplicate by other participant: if multiple exist, pick the one with lastMessage / latest
+    const participantMap = new Map();
+    for (const conv of conversations) {
+      const other = (conv.participants || []).find((p) => p && p._id.toString() !== userId.toString());
+      const otherId = other?._id ? other._id.toString() : conv._id.toString();
+
+      if (!participantMap.has(otherId)) {
+        participantMap.set(otherId, conv);
+      } else {
+        const existing = participantMap.get(otherId);
+        if (!existing.lastMessage && conv.lastMessage) {
+          participantMap.set(otherId, conv);
+        }
+      }
+    }
+
+    const uniqueConvs = Array.from(participantMap.values());
 
     // Calculate unread count per conversation for the requesting user
     const conversationsWithUnread = await Promise.all(
-      conversations.map(async (conv) => {
+      uniqueConvs.map(async (conv) => {
         const unreadCount = await Message.countDocuments({
           conversation: conv._id,
           recipient: userId,
@@ -108,33 +126,40 @@ router.post('/conversations', protect, async (req, res) => {
       }
     }
 
-    // Check for existing conversation
-    const query = {
+    // Find any existing conversations between these two participants
+    const existingConvs = await Conversation.find({
       participants: { $all: [userId, recipientId], $size: 2 }
-    };
-    if (validCropId) {
-      query.crop = validCropId;
-    }
+    }).sort({ lastMessageAt: -1, updatedAt: -1 });
 
-    let conversation = await Conversation.findOne(query)
-      .populate('participants', 'name email role avatar location businessType phone')
-      .populate('crop', 'name price unit location category image')
-      .populate('lastSender', 'name role');
-
-    if (!conversation) {
-      // If no crop-specific conversation, check if general conversation exists without crop
-      if (!validCropId) {
-        conversation = await Conversation.findOne({
-          participants: { $all: [userId, recipientId], $size: 2 }
-        })
-          .populate('participants', 'name email role avatar location businessType phone')
-          .populate('crop', 'name price unit location category image')
-          .populate('lastSender', 'name role');
-      }
-    }
-
+    let conversation = null;
     let isNew = false;
-    if (!conversation) {
+
+    if (existingConvs.length > 0) {
+      conversation = existingConvs[0];
+
+      // Merge and clean up any duplicate conversations
+      if (existingConvs.length > 1) {
+        for (let i = 1; i < existingConvs.length; i++) {
+          const dup = existingConvs[i];
+          await Message.updateMany(
+            { conversation: dup._id },
+            { conversation: conversation._id }
+          );
+          await Conversation.findByIdAndDelete(dup._id);
+        }
+      }
+
+      // Update crop if a new validCropId is passed
+      if (validCropId && (!conversation.crop || conversation.crop.toString() !== validCropId.toString())) {
+        conversation.crop = validCropId;
+        await conversation.save();
+      }
+
+      conversation = await Conversation.findById(conversation._id)
+        .populate('participants', 'name email role avatar location businessType phone')
+        .populate('crop', 'name price unit location category image')
+        .populate('lastSender', 'name role');
+    } else {
       const created = await Conversation.create({
         participants: [userId, recipientId],
         crop: validCropId,
@@ -390,11 +415,15 @@ async function processSendMessage(userId, { conversationId, recipientId, cropId,
   // Find or create conversation if not yet loaded
   if (!conversation) {
     conversation = await Conversation.findOne({
-      participants: { $all: [userId, targetRecipientId], $size: 2 },
-      ...(targetCropId ? { crop: targetCropId } : {})
+      participants: { $all: [userId, targetRecipientId], $size: 2 }
     });
 
-    if (!conversation) {
+    if (conversation) {
+      if (targetCropId && (!conversation.crop || conversation.crop.toString() !== targetCropId.toString())) {
+        conversation.crop = targetCropId;
+        await conversation.save();
+      }
+    } else {
       conversation = await Conversation.create({
         participants: [userId, targetRecipientId],
         crop: targetCropId || null,
@@ -433,11 +462,10 @@ async function processSendMessage(userId, { conversationId, recipientId, cropId,
     .populate('recipient', 'name role avatar')
     .populate('crop', 'name price unit');
 
-  // Emit real-time Socket.IO events to rooms
+  // Emit real-time Socket.IO events to rooms without duplicating to multi-room sockets
   const io = getIO();
   if (io) {
-    io.to(`conversation:${conversation._id}`).emit('new_message', populatedMessage);
-    io.to(`user:${targetRecipientId}`).emit('new_message', populatedMessage);
+    io.to(`conversation:${conversation._id}`).to(`user:${targetRecipientId}`).emit('new_message', populatedMessage);
     io.to(`user:${targetRecipientId}`).emit('unread_count_updated');
     io.to(`user:${targetRecipientId}`).emit('message_notification', populatedMessage);
     io.to(`user:${targetRecipientId}`).emit('conversation_updated', {

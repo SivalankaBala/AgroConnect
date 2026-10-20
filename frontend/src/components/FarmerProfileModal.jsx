@@ -176,7 +176,10 @@ export function FarmerProfileModal({
                     className="btn-chat-farmer"
                     onClick={() => {
                       onClose();
-                      onStartChatWithFarmer(profileData.farmer);
+                      onStartChatWithFarmer({
+                        ...profileData.farmer,
+                        role: profileData.farmer.role || "Farmer"
+                      });
                     }}
                   >
                     <MessageSquare size={15} />

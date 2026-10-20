@@ -1,11 +1,53 @@
 // Comprehensive Chat & Socket.IO Test Suite for AgroConnect
 const { io: ioClient } = require('socket.io-client');
+const { spawn } = require('child_process');
 
 const BASE_URL = 'http://localhost:5000/api';
 const SOCKET_URL = 'http://localhost:5000';
 
+async function isServerAlive() {
+  try {
+    const res = await fetch(`${BASE_URL}/health`, { signal: AbortSignal.timeout(1500) });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function ensureServer() {
+  if (await isServerAlive()) {
+    console.log('[INFO] Backend server is already running on port 5000.\n');
+    return null;
+  }
+
+  console.log('[INFO] Backend server is not running on port 5000. Launching instance for tests...');
+  const child = spawn(process.execPath, ['server.js'], {
+    cwd: __dirname,
+    stdio: 'ignore'
+  });
+
+  const start = Date.now();
+  while (Date.now() - start < 15000) {
+    await new Promise((r) => setTimeout(r, 600));
+    if (await isServerAlive()) {
+      console.log('[INFO] Backend server launched successfully!\n');
+      return child;
+    }
+  }
+
+  console.warn('[WARN] Server did not become ready within 15s. Proceeding with tests...\n');
+  return child;
+}
+
 async function runChatTests() {
   console.log('=== Starting AgroConnect Chat & Real-Time Test Suite ===\n');
+  let spawnedServer = null;
+  try {
+    spawnedServer = await ensureServer();
+  } catch (err) {
+    console.warn('[WARN] Could not auto-start server:', err.message);
+  }
+
   const timestamp = Date.now();
   let passedCount = 0;
   let failedCount = 0;
@@ -340,8 +382,21 @@ async function runChatTests() {
       process.exit(0);
     }
   } catch (err) {
-    console.error('Chat test suite failed with error:', err);
+    if (err.cause?.code === 'ECONNREFUSED' || err.message?.includes('fetch failed')) {
+      console.error('\n[ERROR] Connection refused! The AgroConnect backend server is not running on http://localhost:5000.');
+      console.error('Please start the backend server before running tests:');
+      console.error('   cd C:\\Projects\\AgroConnect\\backend');
+      console.error('   npm start\n');
+    } else {
+      console.error('Chat test suite failed with error:', err);
+    }
     process.exit(1);
+  } finally {
+    if (spawnedServer) {
+      try {
+        spawnedServer.kill();
+      } catch {}
+    }
   }
 }
 

@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
 // POST: create a crop listing
 router.post('/', protect, farmerOnly, async (req, res) => {
   try {
-    const { name, category, quantity, unit, price, location, description } = req.body;
+    const { name, category, quantity, unit, price, location, description, image } = req.body;
 
     const user = await User.findById(req.user.id);
 
@@ -35,6 +35,7 @@ router.post('/', protect, farmerOnly, async (req, res) => {
       price,
       location,
       description,
+      image: image || '',
       farmerName: user.name,
       farmer: user._id
     });
@@ -70,7 +71,7 @@ router.get('/my-listings', protect, farmerOnly, async (req, res) => {
 // PUT: Update a crop listing (farmer who owns the crop only)
 router.put('/:id', protect, farmerOnly, async (req, res) => {
   try {
-    const { name, category, quantity, unit, price, location, description } = req.body;
+    const { name, category, quantity, unit, price, location, description, image } = req.body;
 
     const crop = await Crop.findById(req.params.id);
     if (!crop) {
@@ -88,6 +89,7 @@ router.put('/:id', protect, farmerOnly, async (req, res) => {
     if (price !== undefined) crop.price = Number(price);
     if (location !== undefined) crop.location = location.trim();
     if (description !== undefined) crop.description = description.trim();
+    if (image !== undefined) crop.image = image;
 
     await crop.save();
 

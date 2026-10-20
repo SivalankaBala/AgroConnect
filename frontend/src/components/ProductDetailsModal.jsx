@@ -7,9 +7,12 @@ import {
   ShieldCheck,
   Scale,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Package,
+  Layers
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
+import { getCropPhotoUrl } from "../utils/cropImage";
 
 export function ProductDetailsModal({
   crop,
@@ -37,6 +40,7 @@ export function ProductDetailsModal({
   const translatedTag = getCropDisplayTag(crop.name, crop.category);
   const localizedUnit = t(`units.${crop.unit}`) || crop.unit || "kg";
   const localizedCategory = t(`categories.${crop.category}`) || crop.category;
+  const photoUrl = getCropPhotoUrl(crop);
 
   return (
     <div className="modal-backdrop-modern" onClick={onClose}>
@@ -44,46 +48,77 @@ export function ProductDetailsModal({
         className="modal-window product-details-modal-window"
         role="dialog"
         aria-modal="true"
+        aria-labelledby="product-modal-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="modal-close-round" onClick={onClose} aria-label="Close product details">
-          <X size={18} />
-        </button>
-
-        <div className="modal-inner-scroll">
-          {/* PRODUCT BANNER */}
-          <div className="product-details-banner">
-            <div className="product-banner-badges">
-              <span className="pill-category">{localizedCategory}</span>
-              {isOwner && (
-                <span className="pill-owner">{t("marketplace.card.yourListing")}</span>
-              )}
-            </div>
-
-            <div className="product-banner-subtag">
-              <span>{translatedTag}</span>
-            </div>
+        {/* TOP HEADER BAR: Badges & Close Button aligned cleanly without overlaps */}
+        <div className="product-modal-topbar">
+          <div className="product-modal-badges">
+            <span className="pill-category">{localizedCategory}</span>
+            {translatedTag && (
+              <span className="pill-subtag">{translatedTag}</span>
+            )}
+            {isOwner && (
+              <span className="pill-owner">
+                <Sparkles size={12} />
+                <span>{t("marketplace.card.yourListing")}</span>
+              </span>
+            )}
           </div>
 
+          <button
+            type="button"
+            className="modal-close-round product-modal-close-btn"
+            onClick={onClose}
+            aria-label="Close product details"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="modal-inner-scroll product-modal-scroll">
           <div className="product-details-body">
-            {/* TITLE & LOCATION */}
-            <div className="product-header-block">
-              <h2>{crop.name}</h2>
-              <div className="product-location-pill">
-                <MapPin size={15} />
-                <span>{crop.location}</span>
+            {/* PRODUCT TITLE & VISUAL SHOWCASE */}
+            <div className="product-identity-showcase">
+              <div className="product-visual-wrapper">
+                <img
+                  src={photoUrl}
+                  alt={crop.name}
+                  className="product-crop-visual"
+                  onError={(e) => {
+                    e.currentTarget.src = "/crops/default.svg";
+                  }}
+                />
+              </div>
+
+              <div className="product-title-col">
+                <h2 id="product-modal-title" className="product-headline-title">
+                  {crop.name}
+                </h2>
+                <div className="product-location-pill">
+                  <MapPin size={14} className="location-pin-icon" />
+                  <span>{crop.location}</span>
+                </div>
               </div>
             </div>
 
             {/* FARMER ATTRIBUTION BOX */}
             <div className="product-farmer-box">
               <div className="farmer-left">
-                <div className="farmer-avatar-circle">🧑‍🌾</div>
-                <div>
-                  <h4>{crop.farmerName || t("marketplace.card.verifiedLocalFarmer")}</h4>
-                  <span className="verified-status">
-                    <CheckCircle2 size={13} /> {t("marketplace.card.verifiedGrower")}
+                <div className="farmer-avatar-circle">
+                  <span className="farmer-avatar-emoji">🧑‍🌾</span>
+                  <span className="farmer-verified-tick" title="Verified Producer">
+                    <CheckCircle2 size={11} />
                   </span>
+                </div>
+                <div className="farmer-meta-text">
+                  <h4 className="farmer-name-heading">
+                    {crop.farmerName || t("marketplace.card.verifiedLocalFarmer")}
+                  </h4>
+                  <div className="verified-status">
+                    <CheckCircle2 size={13} className="check-verified-icon" />
+                    <span>{t("marketplace.card.verifiedGrower")}</span>
+                  </div>
                 </div>
               </div>
 
@@ -92,7 +127,9 @@ export function ProductDetailsModal({
                   type="button"
                   className="btn-view-farmer-link"
                   onClick={() => {
-                    const farmerId = typeof crop.farmer === "object" ? crop.farmer._id : crop.farmer;
+                    const farmerId =
+                      typeof crop.farmer === "object" ? crop.farmer._id : crop.farmer;
+                    onClose();
                     onOpenFarmerProfile(farmerId);
                   }}
                 >
@@ -103,32 +140,49 @@ export function ProductDetailsModal({
               )}
             </div>
 
-            {/* SPECIFICATIONS GRID */}
+            {/* HIGH-VISIBILITY SPECIFICATIONS GRID */}
             <div className="product-specs-grid">
-              <div className="product-spec-card">
-                <span className="spec-lbl">{t("productDetails.ratePerUnit")}</span>
+              {/* RATE CARD */}
+              <div className="product-spec-card spec-card-rate">
+                <div className="spec-card-header">
+                  <span className="spec-lbl">{t("productDetails.ratePerUnit")}</span>
+                  <span className="spec-badge-chip">Direct Rate</span>
+                </div>
                 <div className="spec-price-huge">
                   <span className="currency">₹</span>
-                  <strong>{crop.price}</strong>
+                  <strong className="rate-value">{crop.price}</strong>
                   <span className="unit">/{localizedUnit}</span>
                 </div>
               </div>
 
-              <div className="product-spec-card">
-                <span className="spec-lbl">{t("productDetails.availableStock")}</span>
+              {/* AVAILABLE STOCK CARD */}
+              <div className="product-spec-card spec-card-stock">
+                <div className="spec-card-header">
+                  <span className="spec-lbl">{t("productDetails.availableStock")}</span>
+                  <Package size={14} className="stock-icon-subtle" />
+                </div>
                 <div className="spec-val-highlight">
-                  <strong>{crop.quantity}</strong>
-                  <span>{localizedUnit}</span>
+                  <strong className="stock-value">{crop.quantity}</strong>
+                  <span className="stock-unit">{localizedUnit}</span>
                 </div>
               </div>
 
+              {/* ESTIMATED BATCH TOTAL */}
               {totalVal && (
-                <div className="product-spec-card span-2">
-                  <Scale size={18} className="scale-icon" />
-                  <div>
-                    <span className="spec-lbl">{t("productDetails.estimatedTotal")}</span>
-                    <strong className="spec-total-val">~₹{totalVal}</strong>
-                    <small>({crop.quantity} {localizedUnit} × ₹{crop.price})</small>
+                <div className="product-spec-card estimated-total-card span-2">
+                  <div className="estimated-icon-bubble">
+                    <Scale size={20} />
+                  </div>
+                  <div className="estimated-content-col">
+                    <div className="estimated-header-row">
+                      <span className="spec-lbl estimated-lbl">
+                        {t("productDetails.estimatedTotal")}
+                      </span>
+                      <span className="estimated-formula-tag">
+                        {crop.quantity} {localizedUnit} × ₹{crop.price}
+                      </span>
+                    </div>
+                    <div className="spec-total-val">~₹{totalVal}</div>
                   </div>
                 </div>
               )}
@@ -137,15 +191,22 @@ export function ProductDetailsModal({
             {/* HARVEST & QUALITY NOTES */}
             {crop.description && (
               <div className="product-notes-box">
-                <h4>{t("productDetails.harvestNotes")}</h4>
-                <p>"{crop.description}"</p>
+                <div className="notes-header-row">
+                  <Sparkles size={14} className="notes-icon-sparkle" />
+                  <h4>{t("productDetails.harvestNotes")}</h4>
+                </div>
+                <p className="notes-body-text">“{crop.description}”</p>
               </div>
             )}
 
             {/* TRUST & ZERO COMMISSION GUARANTEE */}
             <div className="product-trust-strip">
-              <ShieldCheck size={18} />
-              <span>{t("productDetails.guaranteed")}</span>
+              <div className="trust-icon-badge">
+                <ShieldCheck size={18} />
+              </div>
+              <div className="trust-text-block">
+                <strong>{t("productDetails.guaranteed")}</strong>
+              </div>
             </div>
 
             {/* ACTION BUTTONS */}
@@ -156,6 +217,25 @@ export function ProductDetailsModal({
               </div>
             ) : (
               <div className="product-actions-cluster">
+                {/* Instant direct messaging CTA */}
+                <button
+                  type="button"
+                  className="btn-product-chat"
+                  onClick={() => {
+                    onClose();
+                    const farmerObj =
+                      typeof crop.farmer === "object"
+                        ? crop.farmer
+                        : { _id: crop.farmer, name: crop.farmerName, role: "Farmer" };
+                    onStartChatWithFarmer(farmerObj, crop);
+                  }}
+                >
+                  <MessageSquare size={17} />
+                  <span>{t("productDetails.startChat")}</span>
+                  <ArrowRight size={15} />
+                </button>
+
+                {/* Formal enquiry CTA */}
                 <button
                   type="button"
                   className="btn-product-enquire"
@@ -164,23 +244,7 @@ export function ProductDetailsModal({
                     onOpenEnquiry(crop);
                   }}
                 >
-                  <MessageSquare size={17} />
                   <span>{t("productDetails.sendEnquiry")}</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="btn-product-chat"
-                  onClick={() => {
-                    onClose();
-                    const farmerObj = typeof crop.farmer === "object"
-                      ? crop.farmer
-                      : { _id: crop.farmer, name: crop.farmerName, role: "Farmer" };
-                    onStartChatWithFarmer(farmerObj, crop);
-                  }}
-                >
-                  <span>{t("productDetails.startChat")}</span>
-                  <ArrowRight size={16} />
                 </button>
               </div>
             )}

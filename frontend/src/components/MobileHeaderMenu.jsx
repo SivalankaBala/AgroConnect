@@ -15,8 +15,10 @@ import {
   ChevronRight,
   Globe,
   Sparkles,
-  MessageSquare
+  MessageSquare,
+  CheckCircle2
 } from "lucide-react";
+import { UserAvatar } from "./UserAvatarLogo";
 import { useLanguage } from "../context/LanguageContext";
 import { SUPPORTED_LANGUAGES } from "../i18n/translations";
 
@@ -112,15 +114,22 @@ export default function MobileHeaderMenu({
             <div className="mobile-menu-profile-card">
               <div className="profile-card-top">
                 <div className="profile-avatar-large">
-                  {currentUser.role === "Farmer" ? "🧑‍🌾" : "🛒"}
+                  <UserAvatar user={currentUser} size={48} />
+                  <span className="profile-status-beacon online" aria-hidden="true">
+                    <span className="beacon-core" />
+                  </span>
                 </div>
                 <div className="profile-details-text">
                   <div className="profile-user-name">
-                    {currentUser.name || currentUser.username || currentUser.email?.split("@")[0] || "User"}
+                    <span>{currentUser.name || currentUser.username || currentUser.email?.split("@")[0] || "User"}</span>
+                    <span className={`profile-verified-badge ${currentUser.role?.toLowerCase() || ""}`}>
+                      <CheckCircle2 size={13} strokeWidth={2.8} />
+                    </span>
                   </div>
-                  <div className="profile-role-badge">
-                    {currentUser.role === "Farmer" ? "🌾 " : "🛒 "}
-                    {t(`nav.role${currentUser.role}`) || currentUser.role}
+                  <div className="profile-role-subline">
+                    <span className={`role-label ${currentUser.role?.toLowerCase() || ""}`}>
+                      {currentUser.role === "Farmer" ? "Pro Farmer" : "Verified Buyer"}
+                    </span>
                   </div>
                   {currentUser.email && (
                     <div className="profile-user-email">{currentUser.email}</div>
@@ -138,7 +147,7 @@ export default function MobileHeaderMenu({
                 }}
               >
                 <div className="action-btn-left">
-                  <User size={17} className="action-icon" />
+                  <User size={15} className="action-icon" />
                   <span>{t("nav.viewProfile") || t("nav.profile") || "My Profile"}</span>
                 </div>
                 <ChevronRight size={16} className="action-chevron" />
@@ -236,32 +245,37 @@ export default function MobileHeaderMenu({
                       onNavigateMarketplace();
                     }}
                   >
-                    <Store size={18} />
-                    <span>{t("nav.freshHarvests") || "Marketplace"}</span>
+                    <Store size={18} className="mobile-nav-icon" />
+                    <span className="mobile-nav-label">{t("nav.freshHarvests") || "Fresh Harvests"}</span>
                   </button>
                   <button
                     type="button"
-                    className={`mobile-menu-nav-link ${currentView === "home" ? "active" : ""}`}
+                    className={`mobile-menu-nav-link ${currentView === "home" && window.location.hash !== "#how-it-works" ? "active" : ""}`}
                     onClick={() => {
                       onClose();
                       onNavigateHome();
                     }}
                   >
-                    <Home size={18} />
-                    <span>{t("nav.home") || "Home"}</span>
+                    <Home size={18} className="mobile-nav-icon" />
+                    <span className="mobile-nav-label">{t("nav.home") || "Home"}</span>
                   </button>
                   <button
                     type="button"
-                    className="mobile-menu-nav-link"
+                    className={`mobile-menu-nav-link ${window.location.hash === "#how-it-works" ? "active" : ""}`}
                     onClick={() => {
                       onClose();
-                      const el = document.getElementById("how-it-works");
-                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                      if (currentView !== "home") {
+                        onNavigateHome();
+                      }
+                      setTimeout(() => {
+                        const el = document.getElementById("how-it-works");
+                        if (el) el.scrollIntoView({ behavior: "smooth" });
+                      }, 100);
                       window.location.hash = "how-it-works";
                     }}
                   >
-                    <Layers size={18} />
-                    <span>{t("nav.howItWorks") || "How It Works"}</span>
+                    <Layers size={18} className="mobile-nav-icon" />
+                    <span className="mobile-nav-label">{t("nav.howItWorks") || "How It Works"}</span>
                   </button>
                 </>
               ) : currentUser.role === "Buyer" ? (
@@ -275,8 +289,8 @@ export default function MobileHeaderMenu({
                       onNavigateMarketplace();
                     }}
                   >
-                    <Store size={18} />
-                    <span>{t("nav.freshHarvests") || "Fresh Harvests"}</span>
+                    <Store size={18} className="mobile-nav-icon" />
+                    <span className="mobile-nav-label">{t("nav.freshHarvests") || "Fresh Harvests"}</span>
                   </button>
                   <button
                     type="button"
@@ -286,8 +300,8 @@ export default function MobileHeaderMenu({
                       onNavigateBuyerDashboard();
                     }}
                   >
-                    <ShoppingCart size={18} />
-                    <span>{t("nav.buyerDashboard") || "Buyer Dashboard"}</span>
+                    <ShoppingCart size={18} className="mobile-nav-icon" />
+                    <span className="mobile-nav-label">{t("nav.buyerDashboard") || "Buyer Dashboard"}</span>
                     {buyerRespondedCount > 0 && (
                       <span className="badge-count-pulse">{buyerRespondedCount}</span>
                     )}
@@ -300,8 +314,8 @@ export default function MobileHeaderMenu({
                       onNavigateMessages && onNavigateMessages();
                     }}
                   >
-                    <MessageSquare size={18} />
-                    <span>{t("nav.messages") || "Messages"}</span>
+                    <MessageSquare size={18} className="mobile-nav-icon" />
+                    <span className="mobile-nav-label">{t("nav.messages") || "Messages"}</span>
                     {unreadChatCount > 0 && (
                       <span className="badge-count-pulse">{unreadChatCount}</span>
                     )}
@@ -318,8 +332,8 @@ export default function MobileHeaderMenu({
                       onNavigateFarmerDiscovery();
                     }}
                   >
-                    <Tractor size={18} />
-                    <span>{t("nav.farmers") || "Farmer Discovery"}</span>
+                    <Tractor size={18} className="mobile-nav-icon" />
+                    <span className="mobile-nav-label">{t("nav.farmers") || "Farmer Discovery"}</span>
                   </button>
                   <button
                     type="button"
@@ -329,8 +343,8 @@ export default function MobileHeaderMenu({
                       onNavigateFarmerDashboard();
                     }}
                   >
-                    <Layers size={18} />
-                    <span>{t("nav.farmerDashboard") || "Farmer Dashboard"}</span>
+                    <Layers size={18} className="mobile-nav-icon" />
+                    <span className="mobile-nav-label">{t("nav.farmerDashboard") || "Farmer Dashboard"}</span>
                     {farmerPendingCount > 0 && (
                       <span className="badge-count-pulse">{farmerPendingCount}</span>
                     )}
@@ -343,8 +357,8 @@ export default function MobileHeaderMenu({
                       onNavigateMessages && onNavigateMessages();
                     }}
                   >
-                    <MessageSquare size={18} />
-                    <span>{t("nav.messages") || "Messages"}</span>
+                    <MessageSquare size={18} className="mobile-nav-icon" />
+                    <span className="mobile-nav-label">{t("nav.messages") || "Messages"}</span>
                     {unreadChatCount > 0 && (
                       <span className="badge-count-pulse">{unreadChatCount}</span>
                     )}
@@ -374,9 +388,7 @@ export default function MobileHeaderMenu({
                     onClick={() => setLanguage(lang.code)}
                   >
                     <span className="lang-native">{lang.nativeName}</span>
-                    {lang.code !== "en" && (
-                      <span className="lang-short">({lang.label})</span>
-                    )}
+                    <span className="lang-short">({lang.label})</span>
                   </button>
                 );
               })}

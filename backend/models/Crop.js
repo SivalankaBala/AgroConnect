@@ -44,6 +44,10 @@ const cropSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true
+    },
+    image: {
+      type: String,
+      default: ''
     }
   },
   { timestamps: true }

@@ -80,7 +80,7 @@ router.get('/:id', async (req, res) => {
     }
 
     const farmer = await User.findOne({ _id: id, role: 'Farmer' })
-      .select('name location bio avatar createdAt')
+      .select('name location bio avatar createdAt role')
       .lean();
 
     if (!farmer) {

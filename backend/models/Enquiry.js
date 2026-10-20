@@ -29,7 +29,7 @@ const enquirySchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Responded', 'Closed'],
+    enum: ['Pending', 'Responded', 'Closed', 'confirmed', 'rejected', 'Confirmed', 'Rejected'],
     default: 'Pending'
   }
 }, { timestamps: true });

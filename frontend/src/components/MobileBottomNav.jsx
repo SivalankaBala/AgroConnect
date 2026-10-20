@@ -55,7 +55,7 @@ export default function MobileBottomNav({
           className={`bottom-nav-item ${activeNav === "profile" ? "active" : ""}`}
           onClick={() => onNavClick("profile")}
         >
-          <User size={20} className="bottom-nav-icon" />
+          <User size={17} className="bottom-nav-icon" />
           <span className="bottom-nav-label">{t("nav.profile") || "Profile"}</span>
         </button>
       </nav>
@@ -111,7 +111,7 @@ export default function MobileBottomNav({
         className={`bottom-nav-item ${activeNav === "profile" ? "active" : ""}`}
         onClick={() => onNavClick("profile")}
       >
-        <User size={20} className="bottom-nav-icon" />
+        <User size={17} className="bottom-nav-icon" />
         <span className="bottom-nav-label">{t("nav.profile") || "Profile"}</span>
       </button>
     </nav>
