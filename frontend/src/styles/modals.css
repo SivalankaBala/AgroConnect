@@ -472,6 +472,8 @@
    ========================================================================== */
 .product-details-modal-window {
   max-width: 640px;
+  width: 92%;
+  max-height: 90vh;
   background: #FFFFFF;
   border-radius: 20px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
@@ -562,9 +564,10 @@
 }
 
 .product-modal-scroll {
-  padding: 22px 24px;
-  max-height: calc(88vh - 70px);
+  padding: 20px 24px 16px 24px;
+  flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .product-details-body {
@@ -757,41 +760,52 @@
   flex-direction: column;
   justify-content: center;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
+}
+
+.product-spec-card:hover {
+  border-color: #CBD5E1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
 }
 
 .spec-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .spec-badge-chip {
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  color: #059669;
-  background: #ECFDF5;
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid #A7F3D0;
+  padding: 3px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.stock-icon-subtle {
-  color: #64748B;
+.spec-badge-chip.rate {
+  color: #15803D;
+  background: #DCFCE7;
+  border: 1px solid #86EFAC;
+}
+
+.spec-badge-chip.stock {
+  color: #0369A1;
+  background: #E0F2FE;
+  border: 1px solid #BAE6FD;
 }
 
 .spec-lbl {
-  font-size: 11.5px;
+  font-size: 11px;
   text-transform: uppercase;
-  color: #475569;
+  color: #64748B;
   font-weight: 800;
   letter-spacing: 0.5px;
-}
-
-.spec-card-rate {
-  border-left: 4px solid #00A63E;
 }
 
 .spec-price-huge {
@@ -816,7 +830,7 @@
 .spec-price-huge .unit {
   font-size: 14px;
   font-weight: 600;
-  color: #475569;
+  color: #64748B;
   margin-left: 2px;
 }
 
@@ -836,7 +850,7 @@
 .spec-val-highlight .stock-unit {
   font-size: 14px;
   font-weight: 600;
-  color: #475569;
+  color: #64748B;
 }
 
 /* ESTIMATED BATCH TOTAL: High impact summary card */
@@ -904,10 +918,11 @@
 }
 
 /* HARVEST NOTES */
+/* HARVEST NOTES */
 .product-notes-box {
   background: #F8FAFC;
   border: 1.5px solid #E2E8F0;
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 12px 16px;
 }
 
@@ -919,7 +934,7 @@
 }
 
 .notes-header-row h4 {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 700;
   color: #334155;
   margin: 0;
@@ -947,8 +962,8 @@
   color: #1E293B;
   background: #F8FAFC;
   border: 1.5px solid #E2E8F0;
-  padding: 10px 14px;
-  border-radius: 10px;
+  padding: 11px 16px;
+  border-radius: 14px;
 }
 
 .trust-icon-badge {
@@ -969,7 +984,7 @@
   border: 1.5px solid #FCD34D;
   color: #92400E;
   padding: 11px 16px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 13px;
   font-weight: 600;
   display: flex;
@@ -977,11 +992,20 @@
   gap: 8px;
 }
 
+/* DEDICATED STICKY ACTION FOOTER (Always reliable & visible) */
+.product-modal-footer {
+  padding: 16px 24px 18px 24px;
+  background: #FFFFFF;
+  border-top: 1px solid #E2E8F0;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+}
+
 /* ACTION BUTTONS CLUSTER */
 .product-actions-cluster {
   display: flex;
   gap: 12px;
-  margin-top: 4px;
+  align-items: center;
 }
 
 .btn-product-chat,
@@ -991,14 +1015,15 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 13px 18px;
+  padding: 12px 18px;
   border-radius: 12px;
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 700;
   min-height: 48px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
+  white-space: nowrap;
 }
 
 /* Primary CTA: Direct Chat */
@@ -1006,13 +1031,13 @@
   background: linear-gradient(135deg, #00A63E 0%, #008738 100%);
   color: #FFFFFF !important;
   border: none;
-  box-shadow: 0 4px 14px rgba(0, 166, 62, 0.32);
+  box-shadow: 0 4px 14px rgba(0, 166, 62, 0.28);
 }
 
 .btn-product-chat:hover {
   background: linear-gradient(135deg, #009337 0%, #00732E 100%);
   transform: translateY(-1.5px);
-  box-shadow: 0 6px 20px rgba(0, 166, 62, 0.42);
+  box-shadow: 0 6px 18px rgba(0, 166, 62, 0.38);
 }
 
 .btn-product-chat:active {
@@ -1215,6 +1240,27 @@ body.dark-theme .btn-product-enquire {
 body.dark-theme .btn-product-enquire:hover {
   background: #1F382A !important;
   color: #86EFAC !important;
+}
+
+[data-theme="dark"] .product-modal-footer,
+body.dark-theme .product-modal-footer {
+  background: #141C17 !important;
+  border-top-color: #26342C !important;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-theme="dark"] .spec-badge-chip.rate,
+body.dark-theme .spec-badge-chip.rate {
+  background: #0E2919 !important;
+  border-color: #166534 !important;
+  color: #4ADE80 !important;
+}
+
+[data-theme="dark"] .spec-badge-chip.stock,
+body.dark-theme .spec-badge-chip.stock {
+  background: #0C364D !important;
+  border-color: #0369A1 !important;
+  color: #38BDF8 !important;
 }
 
 

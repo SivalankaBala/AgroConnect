@@ -32,6 +32,7 @@ export default function Navbar({
   onMarkAllNotificationsRead,
   onMarkNotificationRead,
   onClearNotification,
+  onClearAllNotifications,
   onNavigateHome,
   onNavigateMarketplace,
   onNavigateBuyerDashboard,
@@ -221,34 +222,59 @@ export default function Navbar({
                       <span className="notif-unread-pill">{unreadNotificationCount} new</span>
                     )}
                   </div>
-                  {unreadNotificationCount > 0 && onMarkAllNotificationsRead && (
+                  <div className="notif-header-actions">
+                    {unreadNotificationCount > 0 && onMarkAllNotificationsRead && (
+                      <button
+                        type="button"
+                        className="notif-mark-all-btn"
+                        onClick={onMarkAllNotificationsRead}
+                        title="Mark all notifications as read"
+                      >
+                        <CheckCheck size={14} />
+                        <span>Mark all read</span>
+                      </button>
+                    )}
                     <button
                       type="button"
-                      className="notif-mark-all-btn"
-                      onClick={onMarkAllNotificationsRead}
+                      className="btn-notif-close"
+                      onClick={() => setNotifDropdownOpen(false)}
+                      title="Close"
+                      aria-label="Close notifications"
                     >
-                      <CheckCheck size={14} />
-                      <span>Mark all read</span>
+                      <X size={16} />
                     </button>
-                  )}
+                  </div>
                 </div>
 
-                {/* Tabs for unread / all */}
+                {/* Tabs for unread / all & Clear all button */}
                 <div className="notif-tabs-bar">
-                  <button
-                    type="button"
-                    className={`notif-tab-item ${notifFilter === "all" ? "active" : ""}`}
-                    onClick={() => setNotifFilter("all")}
-                  >
-                    All ({notifications.length})
-                  </button>
-                  <button
-                    type="button"
-                    className={`notif-tab-item ${notifFilter === "unread" ? "active" : ""}`}
-                    onClick={() => setNotifFilter("unread")}
-                  >
-                    Unread ({unreadNotificationCount})
-                  </button>
+                  <div className="notif-tabs-group">
+                    <button
+                      type="button"
+                      className={`notif-tab-item ${notifFilter === "all" ? "active" : ""}`}
+                      onClick={() => setNotifFilter("all")}
+                    >
+                      All ({notifications.length})
+                    </button>
+                    <button
+                      type="button"
+                      className={`notif-tab-item ${notifFilter === "unread" ? "active" : ""}`}
+                      onClick={() => setNotifFilter("unread")}
+                    >
+                      Unread ({unreadNotificationCount})
+                    </button>
+                  </div>
+                  {notifications.length > 0 && onClearAllNotifications && (
+                    <button
+                      type="button"
+                      className="notif-clear-all-btn"
+                      onClick={onClearAllNotifications}
+                      title="Clear all notifications"
+                    >
+                      <Trash2 size={13} />
+                      <span>Clear all</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Notification Items List */}
@@ -301,13 +327,14 @@ export default function Navbar({
                             </div>
                             <p className="notif-item-message">{notif.message}</p>
                             <div className="notif-card-bottom-row">
-                              {notif.cropName ? (
-                                <span className="notif-crop-pill">🌾 {notif.cropName}</span>
-                              ) : (
+                              <div className="notif-tags-wrap">
+                                {notif.cropName && (
+                                  <span className="notif-crop-pill">🌾 {notif.cropName}</span>
+                                )}
                                 <span className={`notif-status-badge ${isConfirmed ? "confirmed" : isRejected ? "rejected" : "update"}`}>
                                   {isConfirmed ? "Confirmed" : isRejected ? "Declined" : "Update"}
                                 </span>
-                              )}
+                              </div>
                               <div className="notif-card-actions">
                                 {isUnread && onMarkNotificationRead && (
                                   <button

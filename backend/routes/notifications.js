@@ -87,4 +87,50 @@ router.put('/read-all', protect, async (req, res) => {
   }
 });
 
+// Clear all notifications for the authenticated user
+router.delete('/clear-all', protect, async (req, res) => {
+  try {
+    const result = await Notification.deleteMany({ recipient: req.user.id });
+    res.json({
+      success: true,
+      message: 'All notifications cleared successfully.',
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('Failed to clear all notifications:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to clear all notifications.'
+    });
+  }
+});
+
+// Delete a single notification for the authenticated user
+router.delete('/:id', protect, async (req, res) => {
+  try {
+    const deleted = await Notification.findOneAndDelete({
+      _id: req.params.id,
+      recipient: req.user.id
+    });
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: 'Notification not found.'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Notification deleted successfully.'
+    });
+  } catch (error) {
+    console.error('Failed to delete notification:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete notification.'
+    });
+  }
+});
+
 module.exports = router;

@@ -157,46 +157,61 @@
   color: var(--text-secondary);
 }
 
-/* Dashboard Tabs */
+/* Dashboard Tabs & Vibrant Active Indicator Line */
 .dashboard-tabs-bar {
   display: flex;
   gap: 8px;
-  border-bottom: 1px solid var(--border-default);
-  margin-bottom: 22px;
+  border-bottom: 2px solid var(--border-default);
+  margin-bottom: 24px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  position: relative;
 }
 
 .d-tab-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  font-size: 13.5px;
-  font-weight: 700;
+  gap: 8px;
+  padding: 11px 18px;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-secondary);
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
   min-height: var(--touch-target);
   white-space: nowrap;
   cursor: pointer;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
 .d-tab-btn:hover {
   color: var(--primary-green);
+  border-bottom-color: rgba(0, 166, 62, 0.4);
 }
 
 .d-tab-btn.active {
   color: var(--primary-green);
+  font-weight: 700;
   border-bottom-color: var(--primary-green);
 }
 
 .tab-bubble-count {
   background: var(--error);
   color: #FFFFFF;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
-  padding: 1px 6px;
+  padding: 2px 7px;
   border-radius: var(--radius-full);
+  line-height: 1.2;
+}
+
+.tab-bubble-count.success {
+  background: var(--primary-green);
 }
 
 .dashboard-content-block {
@@ -356,78 +371,293 @@
 }
 
 .enquiry-detail-card {
-  background: #FFFFFF;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  box-shadow: var(--shadow-subtle);
+  background: var(--card-bg, #FFFFFF);
+  border: 1px solid var(--border-default, #E5E7EB);
+  border-left: 4px solid var(--primary-green, #00A63E);
+  border-radius: 14px;
+  padding: 20px 22px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+  position: relative;
 }
 
+.enquiry-detail-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+}
+
+/* Status-Tinted Left Accent Borders */
+.enquiry-detail-card.status-border-rejected {
+  border-left-color: #EF4444;
+}
+
+.enquiry-detail-card.status-border-confirmed {
+  border-left-color: #10B981;
+}
+
+.enquiry-detail-card.status-border-pending {
+  border-left-color: #F59E0B;
+}
+
+.enquiry-detail-card.status-border-responded {
+  border-left-color: #2563EB;
+}
+
+.enquiry-detail-card.status-border-closed {
+  border-left-color: #64748B;
+}
+
+/* Card Header: Crop Avatar + Info + Status Pill */
 .enquiry-top-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 14px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
+}
+
+.enquiry-crop-hero {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 240px;
+}
+
+.crop-avatar-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(0, 166, 62, 0.12) 0%, rgba(16, 185, 129, 0.08) 100%);
+  border: 1px solid rgba(0, 166, 62, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 166, 62, 0.08);
+}
+
+.enquiry-crop-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.crop-title-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.crop-name-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  text-transform: capitalize;
+  color: var(--text-primary, #111827);
+  letter-spacing: -0.01em;
+}
+
+.crop-price-pill {
+  background: rgba(0, 166, 62, 0.08);
+  color: #008732;
+  border: 1px solid rgba(0, 166, 62, 0.22);
+  font-weight: 800;
+  font-size: 13px;
+  padding: 2px 10px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.crop-price-pill .unit-text {
+  font-weight: 500;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.crop-sub-metadata {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary, #6B7280);
+  flex-wrap: wrap;
+}
+
+.crop-sub-metadata .meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.crop-sub-metadata .meta-sep {
+  opacity: 0.4;
 }
 
 .crop-tag-title {
   display: block;
   font-size: 15px;
   font-weight: 800;
-  color: var(--text-dark);
+  color: var(--text-dark, #111827);
 }
 
 .enquiry-crop-identifier {
   display: block;
   font-size: 14px;
   font-weight: 700;
-  color: var(--text-dark);
+  color: var(--text-dark, #111827);
 }
 
 .enquiry-location-sub {
   display: block;
   font-size: 12px;
-  color: var(--text-secondary);
+  color: var(--text-secondary, #6B7280);
   margin-top: 2px;
 }
 
 .enquiry-timestamp {
   display: block;
   font-size: 11px;
-  color: var(--text-light);
+  color: var(--text-light, #9CA3AF);
   margin-top: 2px;
 }
 
-/* Status Pill Badges - Uses Text + Background, Not Color Alone */
+/* Status Pill Badges - High-Contrast Pill Badges with Icons */
 .status-pill-badge {
-  font-size: 11px;
-  font-weight: 800;
-  padding: 3px 9px;
-  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 20px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  letter-spacing: 0.2px;
+  gap: 6px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .status-pill-badge.status-pending {
-  background: var(--amber-100);
-  color: var(--amber-700);
-  border: 1px solid var(--amber-300);
+  background: rgba(245, 158, 11, 0.09);
+  color: #D97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  box-shadow: 0 1px 3px rgba(217, 119, 6, 0.08);
 }
 
 .status-pill-badge.status-responded {
-  background: var(--light-green);
-  color: var(--dark-green);
-  border: 1px solid var(--emerald-300);
+  background: rgba(37, 99, 235, 0.09);
+  color: #2563EB;
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08);
+}
+
+.status-pill-badge.status-confirmed {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.08);
+}
+
+.status-pill-badge.status-rejected {
+  background: rgba(239, 68, 68, 0.09);
+  color: #DC2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.08);
 }
 
 .status-pill-badge.status-closed {
   background: #F1F5F9;
   color: #475569;
   border: 1px solid #CBD5E1;
+}
+
+/* Structured Procurement Requirement Box */
+.enquiry-requirement-box {
+  background: var(--bg-page, #F8FAFC);
+  border: 1px solid var(--border-default, #E2E8F0);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+
+.requirement-box-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-secondary, #64748B);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+.requirement-box-header svg {
+  color: var(--primary-green, #00A63E);
+}
+
+.requirement-meta-chips {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.req-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-default, #E2E8F0);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 12.5px;
+  color: var(--text-primary, #1E293B);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.req-meta-chip strong {
+  color: var(--text-secondary, #64748B);
+  font-weight: 700;
+  font-size: 11.5px;
+  text-transform: uppercase;
+}
+
+.req-meta-chip.qty {
+  border-left: 3px solid var(--primary-green, #00A63E);
+}
+
+.req-meta-chip.contact {
+  border-left: 3px solid #2563EB;
+}
+
+.requirement-note-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.85);
+  border-left: 3px solid var(--border-default, #CBD5E1);
+  padding: 8px 12px;
+  border-radius: 0 8px 8px 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-primary, #1E293B);
+}
+
+.requirement-note-body .quote-icon {
+  color: #94A3B8;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.requirement-note-body p {
+  margin: 0;
+  white-space: pre-line;
+  font-style: italic;
 }
 
 .buyer-contact-cardlet {
@@ -501,20 +731,129 @@
   border-color: var(--primary-green);
 }
 
+/* Status-Aware Guidance Banner */
 .buyer-enquiry-footer-note {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  color: var(--text-secondary);
-  background: var(--bg-page);
-  padding: 6px 10px;
-  border-radius: var(--radius-xs);
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 14px;
 }
 
 .buyer-enquiry-footer-note svg {
-  color: var(--primary-green);
   flex-shrink: 0;
+}
+
+.buyer-enquiry-footer-note.status-rejected {
+  background: rgba(239, 68, 68, 0.07);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #991B1B;
+}
+
+.buyer-enquiry-footer-note.status-rejected svg {
+  color: #DC2626;
+}
+
+.buyer-enquiry-footer-note.status-confirmed {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #065F46;
+}
+
+.buyer-enquiry-footer-note.status-confirmed svg {
+  color: #059669;
+}
+
+.buyer-enquiry-footer-note.status-pending {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: #92400E;
+}
+
+.buyer-enquiry-footer-note.status-pending svg {
+  color: #D97706;
+}
+
+.buyer-enquiry-footer-note.status-responded {
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  color: #1E40AF;
+}
+
+.buyer-enquiry-footer-note.status-responded svg {
+  color: #2563EB;
+}
+
+.buyer-enquiry-footer-note.status-closed {
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  color: #475569;
+}
+
+.buyer-enquiry-footer-note.status-closed svg {
+  color: #64748B;
+}
+
+/* Balanced Card Bottom Action Bar */
+.enquiry-bottom-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-default, #F1F5F9);
+}
+
+.enquiry-producer-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.producer-role-badge {
+  background: rgba(0, 166, 62, 0.08);
+  color: #008732;
+  border: 1px solid rgba(0, 166, 62, 0.2);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.producer-name {
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+}
+
+.btn-chat-with-user.modern {
+  background: linear-gradient(135deg, #00A63E 0%, #008732 100%);
+  color: #FFFFFF;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 166, 62, 0.25);
+  margin-left: 0;
+}
+
+.btn-chat-with-user.modern:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 166, 62, 0.35);
+  filter: brightness(1.05);
+  background: linear-gradient(135deg, #00B945 0%, #009638 100%);
 }
 
 
@@ -1088,6 +1427,11 @@
   color: #16A34A;
 }
 
+.sales-kpi-icon-pill.emerald {
+  background: #D1FAE5;
+  color: #059669;
+}
+
 .sales-kpi-icon-pill.blue {
   background: #DBEAFE;
   color: #2563EB;
@@ -1114,6 +1458,40 @@
 .sales-kpi-subtext {
   font-size: 12px;
   color: var(--text-muted, #6B7280);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.kpi-micro-tag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 12px;
+}
+
+.kpi-micro-tag.success {
+  background: #DCFCE7;
+  color: #16A34A;
+}
+
+.kpi-micro-tag.blue {
+  background: #DBEAFE;
+  color: #2563EB;
+}
+
+.kpi-micro-tag.emerald {
+  background: #D1FAE5;
+  color: #059669;
+}
+
+.kpi-micro-tag.amber {
+  background: #FEF3C7;
+  color: #D97706;
 }
 
 .sales-analytics-section {
@@ -1188,4 +1566,892 @@
   text-align: center;
   padding: 30px !important;
   color: var(--text-muted, #9CA3AF);
+}
+
+/* ==========================================================================
+   DEDICATED BUYER & FARMER MODULE STYLES (Breadcrumbs, KPI Chips, Search & Print)
+   ========================================================================== */
+
+/* Breadcrumb Navigation Trail */
+.dashboard-breadcrumb-trail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.dashboard-breadcrumb-trail .breadcrumb-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.dashboard-breadcrumb-trail .breadcrumb-link:hover {
+  color: var(--primary-green);
+  text-decoration: underline;
+}
+
+.dashboard-breadcrumb-trail .breadcrumb-sep {
+  opacity: 0.5;
+  font-size: 13px;
+}
+
+.dashboard-breadcrumb-trail .breadcrumb-current {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+/* Focused Module KPI Strip */
+.focused-module-kpi-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.focused-kpi-chip {
+  background: var(--card-bg, #FFFFFF);
+  border: 1px solid var(--border-default, #E5E7EB);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.focused-kpi-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+.focused-kpi-chip .metric-icon-box.small {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.focused-kpi-chip .chip-val {
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary, #111827);
+  line-height: 1.2;
+}
+
+.focused-kpi-chip .chip-lbl {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #6B7280);
+  margin-top: 2px;
+}
+
+/* Enquiry Filter Chips Bar */
+.enquiry-filter-chips-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 20px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-chip {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--card-bg, #FFFFFF);
+  border: 1px solid var(--border-default, #E5E7EB);
+  color: var(--text-secondary, #6B7280);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.filter-chip:hover {
+  border-color: var(--primary-green);
+  color: var(--primary-green);
+}
+
+.filter-chip.active {
+  background: var(--primary-green);
+  border-color: var(--primary-green);
+  color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(0, 166, 62, 0.25);
+}
+
+/* Overview Quick Links Grid */
+.overview-quick-links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.overview-quick-card {
+  background: var(--card-bg, #FFFFFF);
+  border: 1px solid var(--border-default, #E5E7EB);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.overview-quick-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary-green);
+  box-shadow: 0 6px 16px rgba(0, 166, 62, 0.12);
+}
+
+.quick-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.quick-card-icon.blue {
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563EB;
+}
+
+.quick-card-icon.green {
+  background: rgba(0, 166, 62, 0.12);
+  color: #00A63E;
+}
+
+.quick-card-icon.amber {
+  background: rgba(217, 119, 6, 0.12);
+  color: #D97706;
+}
+
+.quick-card-content h4 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  color: var(--text-primary);
+}
+
+.quick-card-content p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 0 0 16px 0;
+  flex: 1;
+}
+
+.quick-card-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary-green);
+}
+
+/* ==========================================================================
+   PURCHASE & PROCUREMENT REPORT (Modern Sourcing Analytics & High Visibility)
+   ========================================================================== */
+
+.purchase-report-container {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hidden by default; rendered only when printing/saving PDF */
+.print-report-header {
+  display: none;
+}
+
+/* 1. Procurement Summary Banner */
+.procurement-summary-banner {
+  background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%);
+  border: 1px solid #BBF7D0;
+  border-radius: 16px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 16px rgba(22, 163, 74, 0.05);
+}
+
+.summary-banner-info {
+  flex: 1;
+  min-width: 280px;
+}
+
+.summary-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.summary-role-tag {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #16A34A;
+  background: #DCFCE7;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.summary-status-tag.verified {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0284C7;
+  background: #E0F2FE;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.summary-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary, #111827);
+  margin: 0 0 6px 0;
+  letter-spacing: -0.01em;
+}
+
+.summary-desc {
+  font-size: 13.5px;
+  color: var(--text-secondary, #4B5563);
+  margin: 0;
+  line-height: 1.5;
+  max-width: 640px;
+}
+
+.summary-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-report-action {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-report-action.csv {
+  background: #059669;
+  color: #FFFFFF;
+  border: none;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+}
+
+.btn-report-action.csv:hover {
+  background: #047857;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
+}
+
+.btn-report-action.print {
+  background: var(--bg-card-white, #FFFFFF);
+  color: var(--text-primary, #111827);
+  border: 1px solid var(--border-default, #D1D5DB);
+}
+
+.btn-report-action.print:hover {
+  border-color: #16A34A;
+  color: #16A34A;
+  transform: translateY(-1px);
+}
+
+/* 2. Sourcing Breakdown Card */
+.sales-breakdown-card {
+  background: var(--bg-card-white, #FFFFFF);
+  border: 1px solid var(--border-default, #E5E7EB);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.breakdown-card-top-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.breakdown-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.breakdown-title-group h4 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-primary, #111827);
+}
+
+.breakdown-records-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #15803D;
+  background: #DCFCE7;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.breakdown-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+/* Status Filter Pills */
+.report-filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.report-pill-btn {
+  background: var(--bg-input, #F3F4F6);
+  border: 1px solid transparent;
+  color: var(--text-secondary, #4B5563);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.report-pill-btn:hover {
+  background: #E5E7EB;
+  color: #111827;
+}
+
+.report-pill-btn.active {
+  background: #15803D;
+  color: #FFFFFF;
+  border-color: #15803D;
+  box-shadow: 0 2px 8px rgba(21, 128, 61, 0.25);
+  font-weight: 700;
+}
+
+.breakdown-inputs-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.table-search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-input, #F9FAFB);
+  border: 1px solid var(--border-default, #D1D5DB);
+  border-radius: 10px;
+  padding: 7px 12px;
+  width: 250px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.table-search-input-wrap:focus-within {
+  border-color: #16A34A;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+}
+
+.table-search-input-wrap svg {
+  color: var(--text-secondary, #6B7280);
+  flex-shrink: 0;
+}
+
+.table-search-input {
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--text-primary, #111827);
+  width: 100%;
+  outline: none;
+}
+
+.btn-clear-search {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary, #6B7280);
+  font-size: 12px;
+  padding: 0 4px;
+}
+
+.btn-clear-search:hover {
+  color: #111827;
+}
+
+.table-sort-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-input, #F9FAFB);
+  border: 1px solid var(--border-default, #D1D5DB);
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+
+.sort-icon {
+  color: var(--text-secondary, #6B7280);
+  flex-shrink: 0;
+}
+
+.table-sort-select {
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  outline: none;
+  cursor: pointer;
+}
+
+/* 3. High-Contrast Sourcing Breakdown Table */
+.sales-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border-default, #E2E8F0);
+}
+
+.sales-breakdown-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  text-align: left;
+}
+
+.sales-breakdown-table th {
+  background: var(--bg-table-header, #F8FAFC);
+  color: var(--text-secondary, #475569);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 16px;
+  border-bottom: 2px solid var(--border-default, #E2E8F0);
+  white-space: nowrap;
+}
+
+.sales-breakdown-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-warm, #F1F5F9);
+  vertical-align: middle;
+  color: var(--text-primary, #1E293B);
+  transition: background 0.15s ease;
+}
+
+.sales-breakdown-table tr.report-row:hover td {
+  background: rgba(22, 163, 74, 0.035);
+}
+
+.sales-breakdown-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Crop Meta Cell */
+.crop-meta-flex {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.crop-avatar-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.crop-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.crop-thumb-placeholder {
+  font-size: 20px;
+}
+
+.crop-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.crop-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary, #0F172A);
+}
+
+.crop-sub-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ref-id-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  background: #F1F5F9;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.category-tag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #0284C7;
+  background: #E0F2FE;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* Farmer & Location Cell */
+.farmer-meta-flex {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.farmer-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-primary, #1E293B);
+}
+
+.location-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-secondary, #64748B);
+}
+
+/* Quantity / Requirement Cell */
+.requirement-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #166534;
+  background: #DCFCE7;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.note-snippet {
+  font-size: 11px;
+  color: var(--text-muted, #64748B);
+  font-style: italic;
+  margin-top: 3px;
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-dim {
+  font-size: 12px;
+  color: var(--text-muted, #94A3B8);
+}
+
+/* Unit Rate Cell */
+.rate-flex {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.rate-amount {
+  font-size: 15px;
+  font-weight: 800;
+  color: #15803D;
+}
+
+.rate-unit {
+  font-size: 12px;
+  color: var(--text-secondary, #64748B);
+}
+
+/* Date Cell */
+.date-text {
+  font-size: 12px;
+  color: var(--text-secondary, #64748B);
+  white-space: nowrap;
+}
+
+/* Table Summary Footer Strip */
+.table-summary-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--bg-table-header, #F8FAFC);
+  border-top: 1px solid var(--border-default, #E2E8F0);
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  font-size: 12.5px;
+  color: var(--text-secondary, #475569);
+  margin-top: 6px;
+}
+
+.summary-strip-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-strip-reset {
+  background: none;
+  border: none;
+  color: #15803D;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 12px;
+  padding: 0;
+}
+
+.summary-strip-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.summary-tag-confirmed {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #15803D;
+  font-weight: 600;
+}
+
+.summary-tag-spend {
+  color: var(--text-primary, #0F172A);
+  font-size: 13px;
+}
+
+.summary-tag-spend strong {
+  color: #15803D;
+  font-weight: 800;
+}
+
+/* 4. Empty State */
+.report-empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.report-empty-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #F1F5F9;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.report-empty-state h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary, #0F172A);
+  margin: 0;
+}
+
+.report-empty-state p {
+  font-size: 13px;
+  color: var(--text-secondary, #64748B);
+  margin: 0;
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+.btn-reset-filters {
+  background: #15803D;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-reset-filters:hover {
+  background: #166534;
+}
+
+.btn-browse-produce {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #15803D;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-browse-produce:hover {
+  background: #166534;
+}
+
+/* 5. Print Optimization for Reports */
+@media print {
+  .app-sidebar,
+  .main-navbar,
+  .mobile-bottom-nav,
+  .dashboard-action-buttons,
+  .dashboard-tabs-bar,
+  .dashboard-breadcrumb-trail,
+  .dashboard-top-header,
+  .procurement-summary-banner .summary-banner-actions,
+  .breakdown-toolbar,
+  .btn-strip-reset,
+  .cell-action,
+  .th-action,
+  .site-footer {
+    display: none !important;
+  }
+
+  body, .dashboard-page-view, .section-container {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .print-report-header {
+    display: block !important;
+    margin-bottom: 24px;
+    border-bottom: 2px solid #000000;
+    padding-bottom: 14px;
+  }
+
+  .print-header-brand h2 {
+    font-size: 20px;
+    margin: 0 0 4px 0;
+    color: #000000;
+  }
+
+  .print-header-brand p {
+    font-size: 12px;
+    margin: 0;
+    color: #4B5563;
+  }
+
+  .print-header-meta {
+    display: flex;
+    gap: 20px;
+    font-size: 11px;
+    margin-top: 10px;
+    color: #111827;
+  }
+
+  .sales-kpi-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .sales-kpi-card, .sales-breakdown-card {
+    box-shadow: none !important;
+    border: 1px solid #CBD5E1 !important;
+    background: #FFFFFF !important;
+  }
+
+  .sales-breakdown-table th {
+    background: #F1F5F9 !important;
+    color: #000000 !important;
+    border-bottom: 2px solid #000000 !important;
+  }
+
+  .sales-breakdown-table td {
+    color: #000000 !important;
+    border-bottom: 1px solid #E2E8F0 !important;
+  }
+
+  .crop-name, .farmer-title, .rate-amount {
+    color: #000000 !important;
+  }
 }

@@ -33,54 +33,7 @@
   gap: 12px;
 }
 
-/* Footer Round Arrow Sign to pull screen back to top */
-.footer-pull-top-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
 
-.footer-scroll-top-round-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--bg-card-white, #FFFFFF);
-  border: 1.5px solid rgba(0, 166, 62, 0.35);
-  color: #00A63E;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 166, 62, 0.16), 0 2px 6px rgba(0, 0, 0, 0.06);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  animation: pullArrowBounceUp 2.2s infinite ease-in-out;
-}
-
-.footer-scroll-top-round-btn:hover {
-  background: #00A63E;
-  color: #FFFFFF;
-  border-color: #00A63E;
-  transform: translateY(-4px) scale(1.08);
-  box-shadow: 0 8px 20px rgba(0, 166, 62, 0.35);
-}
-
-@keyframes pullArrowBounceUp {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
-.footer-pull-top-text {
-  font-size: 11px;
-  font-weight: 700;
-  color: #4B5563;
-  letter-spacing: 0.02em;
-}
 
 /* Global Floating Round Arrow Button */
 .global-scroll-top-fab {
@@ -143,9 +96,7 @@
   }
 }
 
-/* Dark mode for footer pull top and global fab */
-[data-theme="dark"] .footer-scroll-top-round-btn,
-body.dark-theme .footer-scroll-top-round-btn,
+/* Dark mode for global fab */
 [data-theme="dark"] .global-scroll-top-fab,
 body.dark-theme .global-scroll-top-fab {
   background: #17241C !important;
@@ -154,18 +105,11 @@ body.dark-theme .global-scroll-top-fab {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6) !important;
 }
 
-[data-theme="dark"] .footer-scroll-top-round-btn:hover,
-body.dark-theme .footer-scroll-top-round-btn:hover,
 [data-theme="dark"] .global-scroll-top-fab:hover,
 body.dark-theme .global-scroll-top-fab:hover {
   background: #16A34A !important;
   color: #FFFFFF !important;
   border-color: #16A34A !important;
-}
-
-[data-theme="dark"] .footer-pull-top-text,
-body.dark-theme .footer-pull-top-text {
-  color: #8D9E93 !important;
 }
 
 .footer-bottom-row,

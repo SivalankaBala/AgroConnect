@@ -146,7 +146,7 @@ export function ProductDetailsModal({
               <div className="product-spec-card spec-card-rate">
                 <div className="spec-card-header">
                   <span className="spec-lbl">{t("productDetails.ratePerUnit")}</span>
-                  <span className="spec-badge-chip">Direct Rate</span>
+                  <span className="spec-badge-chip rate">Direct Rate</span>
                 </div>
                 <div className="spec-price-huge">
                   <span className="currency">₹</span>
@@ -159,7 +159,10 @@ export function ProductDetailsModal({
               <div className="product-spec-card spec-card-stock">
                 <div className="spec-card-header">
                   <span className="spec-lbl">{t("productDetails.availableStock")}</span>
-                  <Package size={14} className="stock-icon-subtle" />
+                  <span className="spec-badge-chip stock">
+                    <Package size={11} />
+                    <span>In Stock</span>
+                  </span>
                 </div>
                 <div className="spec-val-highlight">
                   <strong className="stock-value">{crop.quantity}</strong>
@@ -208,47 +211,49 @@ export function ProductDetailsModal({
                 <strong>{t("productDetails.guaranteed")}</strong>
               </div>
             </div>
-
-            {/* ACTION BUTTONS */}
-            {isOwner ? (
-              <div className="owner-warning-box">
-                <Sparkles size={16} />
-                <span>{t("productDetails.ownCropWarning")}</span>
-              </div>
-            ) : (
-              <div className="product-actions-cluster">
-                {/* Instant direct messaging CTA */}
-                <button
-                  type="button"
-                  className="btn-product-chat"
-                  onClick={() => {
-                    onClose();
-                    const farmerObj =
-                      typeof crop.farmer === "object"
-                        ? crop.farmer
-                        : { _id: crop.farmer, name: crop.farmerName, role: "Farmer" };
-                    onStartChatWithFarmer(farmerObj, crop);
-                  }}
-                >
-                  <MessageSquare size={17} />
-                  <span>{t("productDetails.startChat")}</span>
-                  <ArrowRight size={15} />
-                </button>
-
-                {/* Formal enquiry CTA */}
-                <button
-                  type="button"
-                  className="btn-product-enquire"
-                  onClick={() => {
-                    onClose();
-                    onOpenEnquiry(crop);
-                  }}
-                >
-                  <span>{t("productDetails.sendEnquiry")}</span>
-                </button>
-              </div>
-            )}
           </div>
+        </div>
+
+        {/* DEDICATED STICKY ACTION FOOTER (Always visible, reliable, never clipped) */}
+        <div className="product-modal-footer">
+          {isOwner ? (
+            <div className="owner-warning-box">
+              <Sparkles size={16} />
+              <span>{t("productDetails.ownCropWarning")}</span>
+            </div>
+          ) : (
+            <div className="product-actions-cluster">
+              {/* Instant direct messaging CTA */}
+              <button
+                type="button"
+                className="btn-product-chat"
+                onClick={() => {
+                  onClose();
+                  const farmerObj =
+                    typeof crop.farmer === "object"
+                      ? crop.farmer
+                      : { _id: crop.farmer, name: crop.farmerName, role: "Farmer" };
+                  onStartChatWithFarmer(farmerObj, crop);
+                }}
+              >
+                <MessageSquare size={17} />
+                <span>{t("productDetails.startChat")}</span>
+                <ArrowRight size={15} />
+              </button>
+
+              {/* Formal enquiry CTA */}
+              <button
+                type="button"
+                className="btn-product-enquire"
+                onClick={() => {
+                  onClose();
+                  onOpenEnquiry(crop);
+                }}
+              >
+                <span>{t("productDetails.sendEnquiry")}</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -28,6 +28,8 @@ export default function SidebarNav({
   unreadNotificationCount = 0,
   buyerPendingCount = 0,
   buyerConfirmedCount = 0,
+  buyerEnquiriesCount = 0,
+  buyerOrdersCount = 0,
   farmerCropCount = 0,
   unreadChatCount = 0,
   onNavigate,
@@ -112,6 +114,11 @@ export default function SidebarNav({
     ];
   } else {
     // Buyer Dashboard items - mirroring Farmer Dashboard with Buyer features
+    const enquiriesCount = buyerEnquiriesCount || 0;
+    const enquiriesLabel = enquiriesCount > 0 ? `My Enquiries (${enquiriesCount})` : "My Enquiries";
+    const ordersTotal = buyerConfirmedCount || buyerOrdersCount || 0;
+    const ordersLabel = ordersTotal > 0 ? `Orders (${ordersTotal})` : "Orders & Deals";
+
     navItems = [
       {
         id: "dashboard",
@@ -122,7 +129,7 @@ export default function SidebarNav({
       },
       {
         id: "enquiries",
-        label: "My Enquiries",
+        label: enquiriesLabel,
         icon: MessageSquare,
         active: currentView === "buyer-dashboard" && buyerDashboardTab === "enquiries",
         badge: buyerPendingCount > 0 ? buyerPendingCount : null,
@@ -130,10 +137,10 @@ export default function SidebarNav({
       },
       {
         id: "orders",
-        label: "Orders & Deals",
+        label: ordersLabel,
         icon: ShoppingCart,
         active: currentView === "buyer-dashboard" && buyerDashboardTab === "orders",
-        badge: buyerConfirmedCount > 0 ? buyerConfirmedCount : unreadNotificationCount > 0 ? unreadNotificationCount : null,
+        badge: ordersTotal > 0 ? ordersTotal : null,
         badgeType: buyerConfirmedCount > 0 ? "success" : "alert"
       },
       {

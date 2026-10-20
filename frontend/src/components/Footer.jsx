@@ -1,5 +1,4 @@
 import React from "react";
-import { ChevronUp } from "lucide-react";
 import { AgroConnectBrandLogoSvg } from "./UserAvatarLogo";
 import { useLanguage } from "../context/LanguageContext";
 
@@ -9,7 +8,7 @@ export default function Footer({
   onNavigateMarketplace,
   onNavigateFarmerDashboard
 }) {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
 
   return (
     <footer className="agro-footer">
@@ -34,22 +33,6 @@ export default function Footer({
                 <span className="brand-telugu">{t("nav.brandSubtitle")}</span>
               </div>
             </a>
-          </div>
-
-          {/* ROUND ARROW SIGN IN FOOTER SECTION TO PULL SCREEN BACK TO TOP */}
-          <div className="footer-pull-top-col">
-            <button
-              type="button"
-              className="footer-scroll-top-round-btn"
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              title="Pull screen back to top"
-              aria-label="Back to top"
-            >
-              <ChevronUp size={22} className="footer-pull-arrow-icon" />
-            </button>
-            <span className="footer-pull-top-text">
-              {language === "te" ? "పైకి వెళ్ళండి" : language === "hi" ? "ऊपर जाएं" : "Back to top"}
-            </span>
           </div>
         </div>
 

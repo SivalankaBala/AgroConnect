@@ -184,7 +184,7 @@ function App() {
       if (hash === "#sales-report") return "sales-report";
       const saved = sessionStorage.getItem("agroconnectDashboardTab");
       if (saved) return saved;
-    } catch {}
+    } catch { }
     return "all";
   }); // 'all' | 'listings' | 'enquiries' | 'orders' | 'sales-report'
 
@@ -197,7 +197,7 @@ function App() {
       if (hash === "#purchases-report") return "purchases-report";
       const saved = sessionStorage.getItem("agroconnectBuyerTab");
       if (saved) return saved;
-    } catch {}
+    } catch { }
     return "all";
   }); // 'all' | 'enquiries' | 'orders' | 'purchases-report'
   const [buyerEnquiries, setBuyerEnquiries] = useState([]);
@@ -810,8 +810,13 @@ function App() {
 
   const handleClearNotification = useCallback(async (notifId) => {
     const token = sessionStorage.getItem("agroconnectToken");
-    setBuyerNotifications((prev) => prev.filter((n) => n._id !== notifId));
-    setUnreadNotificationCount((prev) => Math.max(0, prev - 1));
+    setBuyerNotifications((prev) => {
+      const target = prev.find((n) => n._id === notifId);
+      if (target && !target.read) {
+        setUnreadNotificationCount((c) => Math.max(0, c - 1));
+      }
+      return prev.filter((n) => n._id !== notifId);
+    });
     if (!token || !notifId) return;
     try {
       await fetch(apiUrl(`/api/notifications/${notifId}`), {
@@ -823,7 +828,30 @@ function App() {
     }
   }, []);
 
+  const handleClearAllNotifications = useCallback(async () => {
+    if (!buyerNotifications || buyerNotifications.length === 0) return;
+    if (!window.confirm("Are you sure you want to clear all notifications?")) return;
+
+    const token = sessionStorage.getItem("agroconnectToken");
+    setBuyerNotifications([]);
+    setUnreadNotificationCount(0);
+    if (!token) return;
+    try {
+      await fetch(apiUrl("/api/notifications/clear-all"), {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (err) {
+      console.warn("Failed to clear all notifications:", err);
+    }
+  }, [buyerNotifications]);
+
   const handleSidebarNavigate = useCallback((id) => {
+    try {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      window.scrollTo(0, 0);
+    }
     if (currentUser?.role === "Farmer") {
       if (id === "dashboard") {
         setCurrentView("farmer-dashboard");
@@ -917,13 +945,13 @@ function App() {
           window.location.hash = "buyer-orders";
         }
         fetchBuyerEnquiries();
-      } else if (id === "purchases-report") {
+      } else if (id === "purchases-report" || id === "purchase-report") {
         setCurrentView("buyer-dashboard");
         setBuyerDashboardTab("purchases-report");
         sessionStorage.setItem("agroconnectCurrentView", "buyer-dashboard");
         sessionStorage.setItem("agroconnectBuyerTab", "purchases-report");
         setMobileNavActive("buyerDashboard");
-        if (window.location.hash !== "#purchases-report") {
+        if (window.location.hash !== "#purchases-report" && window.location.hash !== "#purchase-report") {
           window.location.hash = "purchases-report";
         }
         fetchBuyerEnquiries();
@@ -965,7 +993,7 @@ function App() {
   }, [currentUser, markNotificationAsRead, navigateToBuyerDashboard, navigateToFarmerDashboard, navigateToMessages]);
 
 
-    const openListingModal = useCallback(() => {
+  const openListingModal = useCallback(() => {
     const token = sessionStorage.getItem("agroconnectToken");
     const activeUser = currentUserRef.current || currentUser;
     if (!token || !activeUser) {
@@ -1160,7 +1188,7 @@ function App() {
           fetchBuyerEnquiries();
           return;
         }
-        if (hash === "#purchases-report") {
+        if (hash === "#purchases-report" || hash === "#purchase-report") {
           setCurrentView("buyer-dashboard");
           setBuyerDashboardTab("purchases-report");
           sessionStorage.setItem("agroconnectCurrentView", "buyer-dashboard");
@@ -1199,10 +1227,10 @@ function App() {
             savedTab === "enquiries"
               ? "#buyer-enquiries"
               : savedTab === "orders"
-              ? "#buyer-orders"
-              : savedTab === "purchases-report"
-              ? "#purchases-report"
-              : "#buyer-dashboard";
+                ? "#buyer-orders"
+                : savedTab === "purchases-report"
+                  ? "#purchases-report"
+                  : "#buyer-dashboard";
           window.history.replaceState(null, "", targetHash);
           fetchBuyerEnquiries();
           return;
@@ -1315,12 +1343,12 @@ function App() {
             savedTab === "listings"
               ? "#my-products"
               : savedTab === "enquiries"
-              ? "#farmer-enquiries"
-              : savedTab === "orders"
-              ? "#farmer-orders"
-              : savedTab === "sales-report"
-              ? "#sales-report"
-              : "#farmer-dashboard";
+                ? "#farmer-enquiries"
+                : savedTab === "orders"
+                  ? "#farmer-orders"
+                  : savedTab === "sales-report"
+                    ? "#sales-report"
+                    : "#farmer-dashboard";
           window.history.replaceState(null, "", targetHash);
           fetchFarmerDashboardData();
           return;
@@ -2272,7 +2300,7 @@ Message: ${messageText}`;
         </aside>
       )}
 
-            {/* DESKTOP LEFT SIDEBAR NAVIGATION FOR FARMER & BUYER PORTALS */}
+      {/* DESKTOP LEFT SIDEBAR NAVIGATION FOR FARMER & BUYER PORTALS */}
       {hasDesktopSidebar && (
         <SidebarNav
           currentUser={currentUser}
@@ -2284,6 +2312,8 @@ Message: ${messageText}`;
           unreadNotificationCount={unreadNotificationCount}
           buyerPendingCount={buyerPendingCount}
           buyerConfirmedCount={buyerConfirmedOrders.length}
+          buyerEnquiriesCount={buyerEnquiries.length}
+          buyerOrdersCount={buyerConfirmedOrders.length || buyerNotifications.length}
           farmerCropCount={dashboardListings.length}
           unreadChatCount={unreadChatCount}
           onNavigate={handleSidebarNavigate}
@@ -2308,6 +2338,7 @@ Message: ${messageText}`;
         onMarkAllNotificationsRead={markAllNotificationsAsRead}
         onMarkNotificationRead={markNotificationAsRead}
         onClearNotification={handleClearNotification}
+        onClearAllNotifications={handleClearAllNotifications}
         onNavigateHome={navigateToHome}
         onNavigateMarketplace={navigateToMarketplace}
         onNavigateBuyerDashboard={navigateToBuyerDashboard}

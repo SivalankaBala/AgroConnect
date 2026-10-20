@@ -1508,6 +1508,34 @@ body.dark-theme .notif-mark-all-btn:hover {
   color: #FFFFFF !important;
 }
 
+[data-theme="dark"] .btn-notif-close,
+body.dark-theme .btn-notif-close {
+  background: #17221B !important;
+  border: 1px solid #273A2E !important;
+  color: #A3B3A9 !important;
+}
+
+[data-theme="dark"] .btn-notif-close:hover,
+body.dark-theme .btn-notif-close:hover {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border-color: rgba(248, 113, 113, 0.35) !important;
+  color: #F87171 !important;
+}
+
+[data-theme="dark"] .notif-clear-all-btn,
+body.dark-theme .notif-clear-all-btn {
+  background: rgba(239, 68, 68, 0.14) !important;
+  color: #FCA5A5 !important;
+  border: 1px solid rgba(248, 113, 113, 0.3) !important;
+}
+
+[data-theme="dark"] .notif-clear-all-btn:hover,
+body.dark-theme .notif-clear-all-btn:hover {
+  background: #DC2626 !important;
+  color: #FFFFFF !important;
+  border-color: #DC2626 !important;
+}
+
 [data-theme="dark"] .notif-tabs-bar,
 body.dark-theme .notif-tabs-bar {
   background: #121A15 !important;
@@ -2218,6 +2246,232 @@ body.dark-theme .rev-bold {
   color: #16A765 !important;
 }
 
+/* Purchase & Procurement Report Dark Mode Enhancements */
+[data-theme="dark"] .procurement-summary-banner,
+body.dark-theme .procurement-summary-banner {
+  background: linear-gradient(135deg, #13241B 0%, #0E1612 100%) !important;
+  border: 1px solid #1F3627 !important;
+}
+
+[data-theme="dark"] .summary-title,
+body.dark-theme .summary-title {
+  color: #F3F7F4 !important;
+}
+
+[data-theme="dark"] .summary-desc,
+body.dark-theme .summary-desc {
+  color: #9EAE9F !important;
+}
+
+[data-theme="dark"] .summary-role-tag,
+body.dark-theme .summary-role-tag {
+  background: #123924 !important;
+  color: #4ADE80 !important;
+}
+
+[data-theme="dark"] .summary-status-tag.verified,
+body.dark-theme .summary-status-tag.verified {
+  background: #0C364D !important;
+  color: #38BDF8 !important;
+}
+
+[data-theme="dark"] .btn-report-action.print,
+body.dark-theme .btn-report-action.print {
+  background: #17201B !important;
+  border-color: #2D3D33 !important;
+  color: #E2ECE4 !important;
+}
+
+[data-theme="dark"] .sales-breakdown-card,
+body.dark-theme .sales-breakdown-card {
+  background: #111815 !important;
+  border: 1px solid #26342C !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .breakdown-title-group h4,
+body.dark-theme .breakdown-title-group h4 {
+  color: #F3F7F4 !important;
+}
+
+[data-theme="dark"] .breakdown-records-badge,
+body.dark-theme .breakdown-records-badge {
+  background: #123924 !important;
+  color: #4ADE80 !important;
+}
+
+[data-theme="dark"] .report-pill-btn,
+body.dark-theme .report-pill-btn {
+  background: #17201B !important;
+  border-color: #26342C !important;
+  color: #A4B4A6 !important;
+}
+
+[data-theme="dark"] .report-pill-btn:hover,
+body.dark-theme .report-pill-btn:hover {
+  background: #1F2C25 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .report-pill-btn.active,
+body.dark-theme .report-pill-btn.active {
+  background: #15803D !important;
+  border-color: #22C55E !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .table-search-input-wrap,
+body.dark-theme .table-search-input-wrap {
+  background: #17201B !important;
+  border-color: #2A3A30 !important;
+}
+
+[data-theme="dark"] .table-search-input,
+body.dark-theme .table-search-input {
+  color: #F3F7F4 !important;
+}
+
+[data-theme="dark"] .btn-clear-search,
+body.dark-theme .btn-clear-search {
+  color: #8FA092 !important;
+}
+
+[data-theme="dark"] .table-sort-wrap,
+body.dark-theme .table-sort-wrap {
+  background: #17201B !important;
+  border-color: #2A3A30 !important;
+}
+
+[data-theme="dark"] .table-sort-select,
+body.dark-theme .table-sort-select {
+  color: #E2ECE4 !important;
+}
+
+[data-theme="dark"] .sort-icon,
+body.dark-theme .sort-icon {
+  color: #8FA092 !important;
+}
+
+[data-theme="dark"] .sales-table-wrapper,
+body.dark-theme .sales-table-wrapper {
+  border-color: #26342C !important;
+}
+
+[data-theme="dark"] .sales-breakdown-table th,
+body.dark-theme .sales-breakdown-table th {
+  background: #16201B !important;
+  color: #8FA092 !important;
+  border-bottom: 2px solid #26342C !important;
+}
+
+[data-theme="dark"] .sales-breakdown-table td,
+body.dark-theme .sales-breakdown-table td {
+  border-bottom: 1px solid #1E2922 !important;
+  color: #E2ECE4 !important;
+}
+
+[data-theme="dark"] .sales-breakdown-table tr.report-row:hover td,
+body.dark-theme .sales-breakdown-table tr.report-row:hover td {
+  background: #17231C !important;
+}
+
+[data-theme="dark"] .crop-avatar-wrap,
+body.dark-theme .crop-avatar-wrap {
+  background: #17201B !important;
+  border-color: #2A3A30 !important;
+}
+
+[data-theme="dark"] .crop-name,
+body.dark-theme .crop-name {
+  color: #F3F7F4 !important;
+}
+
+[data-theme="dark"] .ref-id-tag,
+body.dark-theme .ref-id-tag {
+  background: #1B2620 !important;
+  color: #9EAE9F !important;
+}
+
+[data-theme="dark"] .category-tag,
+body.dark-theme .category-tag {
+  background: #0C364D !important;
+  color: #38BDF8 !important;
+}
+
+[data-theme="dark"] .farmer-title,
+body.dark-theme .farmer-title {
+  color: #E2ECE4 !important;
+}
+
+[data-theme="dark"] .location-sub,
+body.dark-theme .location-sub {
+  color: #8FA092 !important;
+}
+
+[data-theme="dark"] .requirement-pill,
+body.dark-theme .requirement-pill {
+  background: #123924 !important;
+  color: #4ADE80 !important;
+}
+
+[data-theme="dark"] .note-snippet,
+body.dark-theme .note-snippet {
+  color: #78877D !important;
+}
+
+[data-theme="dark"] .rate-amount,
+body.dark-theme .rate-amount {
+  color: #4ADE80 !important;
+}
+
+[data-theme="dark"] .rate-unit,
+body.dark-theme .rate-unit {
+  color: #8FA092 !important;
+}
+
+[data-theme="dark"] .date-text,
+body.dark-theme .date-text {
+  color: #8FA092 !important;
+}
+
+[data-theme="dark"] .table-summary-strip,
+body.dark-theme .table-summary-strip {
+  background: #16201B !important;
+  border-top: 1px solid #26342C !important;
+  color: #8FA092 !important;
+}
+
+[data-theme="dark"] .summary-tag-spend,
+body.dark-theme .summary-tag-spend {
+  color: #E2ECE4 !important;
+}
+
+[data-theme="dark"] .summary-tag-spend strong,
+body.dark-theme .summary-tag-spend strong {
+  color: #4ADE80 !important;
+}
+
+[data-theme="dark"] .report-empty-state,
+body.dark-theme .report-empty-state {
+  background: transparent !important;
+}
+
+[data-theme="dark"] .report-empty-icon,
+body.dark-theme .report-empty-icon {
+  background: #17201B !important;
+  color: #8FA092 !important;
+}
+
+[data-theme="dark"] .report-empty-state h4,
+body.dark-theme .report-empty-state h4 {
+  color: #F3F7F4 !important;
+}
+
+[data-theme="dark"] .report-empty-state p,
+body.dark-theme .report-empty-state p {
+  color: #8FA092 !important;
+}
+
 /* 10. Dashboard Cards, Metrics & Empty States */
 [data-theme="dark"] .farmer-crop-manage-card,
 body.dark-theme .farmer-crop-manage-card {
@@ -2283,6 +2537,118 @@ body.dark-theme .dashboard-empty-state {
 body.dark-theme .farmer-discovery-card {
   background: #111815 !important;
   border: 1px solid #26342C !important;
+}
+
+[data-theme="dark"] .discovery-toolbar,
+body.dark-theme .discovery-toolbar {
+  background: #111815 !important;
+  border-color: #26342C !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .discovery-search-wrap,
+body.dark-theme .discovery-search-wrap {
+  background: #17201B !important;
+  border-color: #2A3A30 !important;
+}
+
+[data-theme="dark"] .discovery-search-wrap:focus-within,
+body.dark-theme .discovery-search-wrap:focus-within {
+  border-color: #16A34A !important;
+  background: #17201B !important;
+}
+
+[data-theme="dark"] .discovery-search-input,
+body.dark-theme .discovery-search-input {
+  color: #F3F7F4 !important;
+}
+
+[data-theme="dark"] .discovery-search-input::placeholder,
+body.dark-theme .discovery-search-input::placeholder {
+  color: #78877D !important;
+}
+
+[data-theme="dark"] .btn-clear-discovery-search,
+body.dark-theme .btn-clear-discovery-search {
+  color: #8FA092 !important;
+}
+
+[data-theme="dark"] .btn-clear-discovery-search:hover,
+body.dark-theme .btn-clear-discovery-search:hover {
+  background: #26342C !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .discovery-sort-wrap,
+body.dark-theme .discovery-sort-wrap {
+  background: #17201B !important;
+  border-color: #2A3A30 !important;
+}
+
+[data-theme="dark"] .discovery-sort-select,
+body.dark-theme .discovery-sort-select {
+  color: #E2ECE4 !important;
+}
+
+[data-theme="dark"] .discovery-sort-wrap .sort-icon,
+body.dark-theme .discovery-sort-wrap .sort-icon {
+  color: #8FA092 !important;
+}
+
+[data-theme="dark"] .discovery-filters-strip,
+body.dark-theme .discovery-filters-strip {
+  border-top-color: #26342C !important;
+}
+
+[data-theme="dark"] .discovery-pill-btn,
+body.dark-theme .discovery-pill-btn {
+  background: #17201B !important;
+  border-color: #26342C !important;
+  color: #A4B4A6 !important;
+}
+
+[data-theme="dark"] .discovery-pill-btn:hover,
+body.dark-theme .discovery-pill-btn:hover {
+  background: #1F2C25 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .discovery-pill-btn.active,
+body.dark-theme .discovery-pill-btn.active {
+  background: #15803D !important;
+  border-color: #22C55E !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .discovery-count-badge,
+body.dark-theme .discovery-count-badge {
+  color: #8FA092 !important;
+}
+
+[data-theme="dark"] .discovery-count-badge strong,
+body.dark-theme .discovery-count-badge strong {
+  color: #F3F7F4 !important;
+}
+
+[data-theme="dark"] .discovery-clear-link,
+body.dark-theme .discovery-clear-link {
+  color: #4ADE80 !important;
+}
+
+[data-theme="dark"] .discovery-empty-state,
+body.dark-theme .discovery-empty-state {
+  background: #111815 !important;
+  border-color: #26342C !important;
+}
+
+[data-theme="dark"] .discovery-empty-state h3,
+body.dark-theme .discovery-empty-state h3 {
+  color: #F3F7F4 !important;
+}
+
+[data-theme="dark"] .discovery-empty-state p,
+body.dark-theme .discovery-empty-state p {
+  color: #8FA092 !important;
 }
 
 /* 11. Marketplace & Crop Cards */
@@ -2669,4 +3035,195 @@ body.dark-theme .footer-link-btn:hover {
 body.dark-theme .footer-bottom-row {
   border-top: 1px solid #26342C !important;
   color: #78877D !important;
+}
+
+/* 16. Dedicated Buyer & Farmer Modules in Dark Mode */
+[data-theme="dark"] .dashboard-breadcrumb-trail .breadcrumb-current,
+body.dark-theme .dashboard-breadcrumb-trail .breadcrumb-current {
+  color: #F3F7F4 !important;
+}
+
+[data-theme="dark"] .dashboard-breadcrumb-trail .breadcrumb-link,
+body.dark-theme .dashboard-breadcrumb-trail .breadcrumb-link {
+  color: #A5B2AA !important;
+}
+
+[data-theme="dark"] .focused-kpi-chip,
+body.dark-theme .focused-kpi-chip {
+  background: #17201B !important;
+  border-color: #26342C !important;
+}
+
+[data-theme="dark"] .focused-kpi-chip .chip-val,
+body.dark-theme .focused-kpi-chip .chip-val {
+  color: #F3F7F4 !important;
+}
+
+[data-theme="dark"] .focused-kpi-chip .chip-lbl,
+body.dark-theme .focused-kpi-chip .chip-lbl {
+  color: #A5B2AA !important;
+}
+
+[data-theme="dark"] .filter-chip,
+body.dark-theme .filter-chip {
+  background: #17201B !important;
+  border-color: #26342C !important;
+  color: #A5B2AA !important;
+}
+
+[data-theme="dark"] .filter-chip:hover,
+body.dark-theme .filter-chip:hover {
+  border-color: #6FD39A !important;
+  color: #6FD39A !important;
+}
+
+[data-theme="dark"] .filter-chip.active,
+body.dark-theme .filter-chip.active {
+  background: #16A765 !important;
+  border-color: #16A765 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .overview-quick-card,
+body.dark-theme .overview-quick-card {
+  background: #17201B !important;
+  border-color: #26342C !important;
+}
+
+[data-theme="dark"] .overview-quick-card:hover,
+body.dark-theme .overview-quick-card:hover {
+  border-color: #16A765 !important;
+  box-shadow: 0 6px 16px rgba(22, 167, 101, 0.2) !important;
+}
+
+[data-theme="dark"] .quick-card-content h4,
+body.dark-theme .quick-card-content h4 {
+  color: #F3F7F4 !important;
+}
+
+[data-theme="dark"] .quick-card-content p,
+body.dark-theme .quick-card-content p {
+  color: #A5B2AA !important;
+}
+
+[data-theme="dark"] .table-search-input-wrap,
+body.dark-theme .table-search-input-wrap {
+  background: #101713 !important;
+  border-color: #26342C !important;
+}
+
+[data-theme="dark"] .table-search-input,
+body.dark-theme .table-search-input {
+  color: #F3F7F4 !important;
+}
+
+/* 17. Enhanced Enquiry Detail Cards in Dark Mode */
+[data-theme="dark"] .enquiry-detail-card,
+body.dark-theme .enquiry-detail-card {
+  background: #17201B !important;
+  border-color: #26342C !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme="dark"] .enquiry-detail-card:hover,
+body.dark-theme .enquiry-detail-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .crop-avatar-box,
+body.dark-theme .crop-avatar-box {
+  background: #101713 !important;
+  border-color: #26342C !important;
+}
+
+[data-theme="dark"] .crop-name-title,
+body.dark-theme .crop-name-title {
+  color: #F3F7F4 !important;
+}
+
+[data-theme="dark"] .crop-price-pill,
+body.dark-theme .crop-price-pill {
+  background: rgba(22, 167, 101, 0.15) !important;
+  border-color: rgba(22, 167, 101, 0.35) !important;
+  color: #6FD39A !important;
+}
+
+[data-theme="dark"] .crop-sub-metadata,
+body.dark-theme .crop-sub-metadata {
+  color: #A5B2AA !important;
+}
+
+[data-theme="dark"] .enquiry-requirement-box,
+body.dark-theme .enquiry-requirement-box {
+  background: #101713 !important;
+  border-color: #26342C !important;
+}
+
+[data-theme="dark"] .requirement-box-header,
+body.dark-theme .requirement-box-header {
+  color: #78877D !important;
+}
+
+[data-theme="dark"] .req-meta-chip,
+body.dark-theme .req-meta-chip {
+  background: #17201B !important;
+  border-color: #26342C !important;
+  color: #F3F7F4 !important;
+}
+
+[data-theme="dark"] .req-meta-chip strong,
+body.dark-theme .req-meta-chip strong {
+  color: #A5B2AA !important;
+}
+
+[data-theme="dark"] .requirement-note-body,
+body.dark-theme .requirement-note-body {
+  background: #141C17 !important;
+  border-left-color: #26342C !important;
+  color: #F3F7F4 !important;
+}
+
+[data-theme="dark"] .buyer-enquiry-footer-note.status-rejected,
+body.dark-theme .buyer-enquiry-footer-note.status-rejected {
+  background: rgba(239, 68, 68, 0.12) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  color: #FCA5A5 !important;
+}
+
+[data-theme="dark"] .buyer-enquiry-footer-note.status-confirmed,
+body.dark-theme .buyer-enquiry-footer-note.status-confirmed {
+  background: rgba(16, 185, 129, 0.12) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+  color: #86EFAC !important;
+}
+
+[data-theme="dark"] .buyer-enquiry-footer-note.status-pending,
+body.dark-theme .buyer-enquiry-footer-note.status-pending {
+  background: rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  color: #FCD34D !important;
+}
+
+[data-theme="dark"] .buyer-enquiry-footer-note.status-responded,
+body.dark-theme .buyer-enquiry-footer-note.status-responded {
+  background: rgba(37, 99, 235, 0.12) !important;
+  border-color: rgba(37, 99, 235, 0.3) !important;
+  color: #93C5FD !important;
+}
+
+[data-theme="dark"] .enquiry-bottom-action-bar,
+body.dark-theme .enquiry-bottom-action-bar {
+  border-top-color: #26342C !important;
+}
+
+[data-theme="dark"] .producer-role-badge,
+body.dark-theme .producer-role-badge {
+  background: rgba(22, 167, 101, 0.15) !important;
+  border-color: rgba(22, 167, 101, 0.35) !important;
+  color: #6FD39A !important;
+}
+
+[data-theme="dark"] .producer-name,
+body.dark-theme .producer-name {
+  color: #F3F7F4 !important;
 }

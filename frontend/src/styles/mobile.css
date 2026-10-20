@@ -1062,10 +1062,20 @@ body.dark-theme .mobile-logout-btn:hover {
     width: auto !important;
     max-width: 440px !important;
     margin: 0 auto !important;
-    max-height: calc(85vh - 65px) !important;
+    max-height: calc(88vh - 60px) !important;
     border-radius: 16px !important;
     box-shadow: 0 20px 48px -6px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 166, 62, 0.25) !important;
     z-index: 1060 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .notif-flyout-list {
+    flex: 1 1 auto !important;
+    max-height: calc(88vh - 175px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 24px !important;
   }
 
   /* Display mobile hamburger button on mobile header */

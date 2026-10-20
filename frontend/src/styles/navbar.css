@@ -1139,18 +1139,55 @@ body.dark-theme .profile-dropdown-item.logout-item:hover {
   box-shadow: 0 2px 6px rgba(0, 166, 62, 0.25);
 }
 
+/* Header Actions */
+.notif-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Close Cross Button */
+.btn-notif-close {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+  background: #FFFFFF;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.btn-notif-close:hover {
+  background: #FEE2E2;
+  border-color: #FCA5A5;
+  color: #DC2626;
+  transform: scale(1.05);
+}
+
 /* Tabs Bar */
 .notif-tabs-bar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  padding: 8px 18px;
+  padding: 8px 16px;
   background: #FFFFFF;
   border-bottom: 1px solid #F3F4F6;
 }
 
+.notif-tabs-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .notif-tab-item {
-  padding: 5px 14px;
+  padding: 5px 13px;
   border-radius: 9999px;
   font-size: 12px;
   font-weight: 600;
@@ -1174,16 +1211,43 @@ body.dark-theme .profile-dropdown-item.logout-item:hover {
   border-color: #00A63E;
 }
 
+/* Clear All Button */
+.notif-clear-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #DC2626;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.notif-clear-all-btn:hover {
+  background: #DC2626;
+  color: #FFFFFF;
+  border-color: #DC2626;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.22);
+  transform: translateY(-1px);
+}
+
 /* Notification List */
 .notif-flyout-list {
-  max-height: 390px;
+  max-height: 420px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 12px 14px;
+  padding: 12px 14px 22px 14px;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .notif-flyout-list::-webkit-scrollbar {
@@ -1364,6 +1428,14 @@ body.dark-theme .profile-dropdown-item.logout-item:hover {
   justify-content: space-between;
   gap: 8px;
   margin-top: 2px;
+}
+
+/* Tags wrapper */
+.notif-tags-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .notif-crop-pill {
@@ -1609,6 +1681,34 @@ body.dark-theme .notif-mark-all-btn {
 body.dark-theme .notif-mark-all-btn:hover {
   background: #16A34A !important;
   color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .btn-notif-close,
+body.dark-theme .btn-notif-close {
+  background: #17221B !important;
+  border-color: #273A2E !important;
+  color: #A3B3A9 !important;
+}
+
+[data-theme="dark"] .btn-notif-close:hover,
+body.dark-theme .btn-notif-close:hover {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border-color: rgba(248, 113, 113, 0.35) !important;
+  color: #F87171 !important;
+}
+
+[data-theme="dark"] .notif-clear-all-btn,
+body.dark-theme .notif-clear-all-btn {
+  background: rgba(239, 68, 68, 0.14) !important;
+  color: #FCA5A5 !important;
+  border-color: rgba(248, 113, 113, 0.3) !important;
+}
+
+[data-theme="dark"] .notif-clear-all-btn:hover,
+body.dark-theme .notif-clear-all-btn:hover {
+  background: #DC2626 !important;
+  color: #FFFFFF !important;
+  border-color: #DC2626 !important;
 }
 
 [data-theme="dark"] .notif-tabs-bar,

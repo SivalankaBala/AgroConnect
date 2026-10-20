@@ -224,26 +224,39 @@ export default function FarmerDashboardView({
                   </div>
                 ) : (
                   <div className="enquiries-list-stack">
-                    {dashboardEnquiries.map((enquiry) => (
-                      <div className="enquiry-detail-card" key={enquiry._id}>
-                        <div className="enquiry-top-row">
-                          <div className="enquiry-crop-identifier">
-                            <span className="crop-tag-title">
-                              🌾 {enquiry.crop?.name || "Crop"} · ₹{enquiry.crop?.price || "--"} / {t(`units.${enquiry.crop?.unit}`) || enquiry.crop?.unit || "kg"}
-                            </span>
-                            <span className="enquiry-timestamp">
-                              {formatEnquiryDate(enquiry.createdAt, language)}
+                    {dashboardEnquiries.map((enquiry) => {
+                      const statusRaw = (enquiry.status || "pending").toLowerCase();
+                      const statusKey =
+                        statusRaw === "confirmed"
+                          ? "confirmed"
+                          : statusRaw === "rejected"
+                          ? "rejected"
+                          : statusRaw === "responded"
+                          ? "responded"
+                          : statusRaw === "closed"
+                          ? "closed"
+                          : "pending";
+
+                      return (
+                        <div className={`enquiry-detail-card status-border-${statusKey}`} key={enquiry._id}>
+                          <div className="enquiry-top-row">
+                            <div className="enquiry-crop-identifier">
+                              <span className="crop-tag-title">
+                                🌾 {enquiry.crop?.name || "Crop"} · ₹{enquiry.crop?.price || "--"} / {t(`units.${enquiry.crop?.unit}`) || enquiry.crop?.unit || "kg"}
+                              </span>
+                              <span className="enquiry-timestamp">
+                                {formatEnquiryDate(enquiry.createdAt, language)}
+                              </span>
+                            </div>
+
+                            <span className={`status-pill-badge status-${statusKey}`}>
+                              {enquiry.status === "Pending" && `🕒 ${t("statuses.Pending")}`}
+                              {enquiry.status === "Responded" && `✅ ${t("statuses.Responded")}`}
+                              {enquiry.status === "Closed" && `📁 ${t("statuses.Closed")}`}
+                              {(enquiry.status === "confirmed" || enquiry.status === "Confirmed") && `✓ ${t("farmerDashboard.orderConfirmed") || "Order Confirmed"}`}
+                              {(enquiry.status === "rejected" || enquiry.status === "Rejected") && `✕ ${t("farmerDashboard.orderRejected") || "Order Rejected"}`}
                             </span>
                           </div>
-
-                          <span className={`status-pill-badge status-${(enquiry.status || "").toLowerCase()}`}>
-                            {enquiry.status === "Pending" && `🕒 ${t("statuses.Pending")}`}
-                            {enquiry.status === "Responded" && `✅ ${t("statuses.Responded")}`}
-                            {enquiry.status === "Closed" && `📁 ${t("statuses.Closed")}`}
-                            {(enquiry.status === "confirmed" || enquiry.status === "Confirmed") && `✓ ${t("farmerDashboard.orderConfirmed") || "Order Confirmed"}`}
-                            {(enquiry.status === "rejected" || enquiry.status === "Rejected") && `✕ ${t("farmerDashboard.orderRejected") || "Order Rejected"}`}
-                          </span>
-                        </div>
 
                         <div className="buyer-contact-cardlet">
                           <div className="contact-item">
@@ -312,7 +325,8 @@ export default function FarmerDashboardView({
                           </button>
                         </div>
                       </div>
-                    ))}
+                    );
+                  })}
                   </div>
                 )}
               </div>
