@@ -1,13 +1,18 @@
 /* ==========================================================================
-   MODERN FOOTER
+   COMPACT MODERN FOOTER
+   Low-profile, perfectly aligned, responsive & clean
    ========================================================================== */
 .agro-footer {
   position: relative;
   z-index: 2;
-  background: #FFFFFF;
-  border-top: 1px solid var(--border-default);
-  padding: 32px 20px 24px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(226, 232, 240, 0.85);
+  padding: 10px 24px;
   margin-top: auto;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .footer-container {
@@ -17,31 +22,160 @@
   box-sizing: border-box;
 }
 
-.footer-main-row {
+.footer-compact-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 24px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 38px;
 }
 
+/* Brand column on left */
 .footer-brand-col {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  flex-shrink: 0;
 }
 
+.footer-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  cursor: pointer;
+}
 
+.footer-logo .brand-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.footer-logo .brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.footer-logo .brand-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-dark);
+  line-height: 1.15;
+}
+
+.footer-logo .brand-telugu {
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  line-height: 1.15;
+}
+
+/* Center direct marketplace tagline pill */
+.footer-center-tagline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+}
+
+.footer-tagline-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #15803D;
+  background: #F0FDF4;
+  border: 1px solid rgba(22, 163, 74, 0.22);
+  border-radius: 9999px;
+  padding: 3px 12px;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+/* Copyright on right */
+.footer-copyright-col {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Responsive adjustment for tablets & mobile */
+@media (max-width: 860px) {
+  .agro-footer {
+    padding: 8px 16px;
+  }
+
+  .footer-compact-row {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+  }
+
+  .footer-brand-col {
+    justify-content: center;
+  }
+
+  .footer-center-tagline {
+    order: 2;
+    flex: none;
+  }
+
+  .footer-tagline-pill {
+    font-size: 10.5px;
+    padding: 2px 10px;
+  }
+
+  .footer-copyright-col {
+    order: 3;
+    justify-content: center;
+    font-size: 11px;
+  }
+}
+
+/* Dark mode theme styles */
+[data-theme="dark"] .agro-footer,
+body.dark-theme .agro-footer {
+  background: #09090B !important;
+  border-top: 1px solid #27272A !important;
+}
+
+[data-theme="dark"] .footer-logo .brand-title,
+body.dark-theme .footer-logo .brand-title {
+  color: #F4F4F6 !important;
+}
+
+[data-theme="dark"] .footer-logo .brand-telugu,
+body.dark-theme .footer-logo .brand-telugu {
+  color: #A1A1AA !important;
+}
+
+[data-theme="dark"] .footer-tagline-pill,
+body.dark-theme .footer-tagline-pill {
+  background: #141418 !important;
+  border-color: #27272A !important;
+  color: #4ADE80 !important;
+}
+
+[data-theme="dark"] .footer-copyright-col,
+body.dark-theme .footer-copyright-col {
+  color: #71717A !important;
+}
 
 /* Global Floating Round Arrow Button */
 .global-scroll-top-fab {
   position: fixed;
-  bottom: 28px;
-  right: 28px;
-  width: 46px;
-  height: 46px;
+  bottom: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.95);
   border: 1.5px solid rgba(0, 166, 62, 0.35);
@@ -78,29 +212,18 @@
 }
 
 @media (max-width: 768px) {
-  .footer-main-row {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-
-  .footer-brand-col {
-    align-items: center;
-  }
-
   .global-scroll-top-fab {
-    bottom: 78px;
-    right: 18px;
-    width: 42px;
-    height: 42px;
+    bottom: 74px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
   }
 }
 
-/* Dark mode for global fab */
 [data-theme="dark"] .global-scroll-top-fab,
 body.dark-theme .global-scroll-top-fab {
-  background: #17241C !important;
-  border-color: rgba(74, 222, 128, 0.4) !important;
+  background: #1E1E24 !important;
+  border-color: #27272A !important;
   color: #4ADE80 !important;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6) !important;
 }
@@ -112,21 +235,10 @@ body.dark-theme .global-scroll-top-fab:hover {
   border-color: #16A34A !important;
 }
 
-.footer-bottom-row,
-.footer-bottom-bar {
-  border-top: 1px solid var(--border-subtle);
-  padding-top: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  color: var(--text-light);
-  flex-wrap: wrap;
-  gap: 10px;
-  text-align: center;
-}
-
-.footer-tagline {
-  font-size: 12px;
-  color: var(--text-secondary);
+[data-theme="dark"] .agro-footer,
+body.dark-theme .agro-footer {
+  background: rgba(18, 22, 19, 0.94) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
 }

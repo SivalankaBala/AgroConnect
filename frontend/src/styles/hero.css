@@ -1,32 +1,73 @@
 /* ==========================================================================
    SIMPLIFIED HOME SCREEN — FIXED BACKGROUND & HERO
+   Background image stays fixed/stick in the viewport while text & cards scroll over it
    ========================================================================== */
 .home-view-wrapper {
   position: relative;
   width: 100%;
+  min-height: 100vh;
 }
 
-/* Hardware-accelerated fixed background: stays 100% frozen in place when scrolling down */
+/* 1. Fixed background image: pinned to the screen viewport, stays fixed while scrolling */
 .home-fixed-bg {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
   background-image: var(--hero-bg-desktop);
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
   z-index: 0;
   pointer-events: none;
-  transform: translate3d(0, 0, 0);
-  -webkit-transform: translate3d(0, 0, 0);
-  will-change: transform;
+}
+
+@media (max-width: 768px) {
+  .home-fixed-bg {
+    background-image: var(--hero-bg-mobile);
+    background-position: center center;
+    background-size: cover;
+  }
+}
+
+/* 2. Seamless gradient overlay for 100% readability across entire page */
+.home-fixed-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(255, 255, 255, 0.08) 35%,
+    rgba(250, 252, 250, 0.45) 65%,
+    rgba(250, 252, 250, 0.78) 100%
+  );
+  z-index: 0;
+  pointer-events: none;
+}
+
+[data-theme="dark"] .home-fixed-overlay,
+body.dark-theme .home-fixed-overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(9, 9, 11, 0.42) 0%,
+    rgba(9, 9, 11, 0.32) 35%,
+    rgba(14, 20, 16, 0.65) 65%,
+    rgba(14, 20, 16, 0.88) 100%
+  );
 }
 
 .hero-section {
   position: relative;
-  overflow: hidden;
   min-height: calc(100vh - 70px);
   display: flex;
   flex-direction: column;
@@ -39,31 +80,9 @@
   z-index: 1;
 }
 
-.hero-bg-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(251, 249, 244, 0.86) 0%,
-    rgba(251, 249, 244, 0.76) 45%,
-    rgba(251, 249, 244, 0.48) 100%
-  );
-  backdrop-filter: blur(1px);
-  -webkit-backdrop-filter: blur(1px);
-  pointer-events: none;
-  z-index: 1;
-}
-
-[data-theme="dark"] .hero-bg-overlay,
-body.dark-theme .hero-bg-overlay {
-  background: linear-gradient(
-    180deg,
-    rgba(12, 18, 15, 0.88) 0%,
-    rgba(12, 18, 15, 0.72) 50%,
-    rgba(12, 18, 15, 0.70) 100%
-  );
-  backdrop-filter: blur(1.5px);
-  -webkit-backdrop-filter: blur(1.5px);
+/* Overlay handled by .home-fixed-overlay */
+.hero-section::before {
+  display: none;
 }
 
 .hero-content {
@@ -80,16 +99,32 @@ body.dark-theme .hero-bg-overlay {
   line-height: 1.25;
   margin-bottom: 16px;
   letter-spacing: -0.02em;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.85);
+}
+
+[data-theme="dark"] .hero-heading,
+body.dark-theme .hero-heading {
+  color: #FFFFFF !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
 }
 
 .hero-description {
-  font-size: clamp(15px, 2vw, 17px);
-  color: var(--text-secondary);
-  line-height: 1.6;
+  font-size: clamp(15px, 2vw, 17.5px);
+  color: #0F291B;
+  font-weight: 600;
+  line-height: 1.65;
   margin-bottom: 28px;
-  max-width: 720px;
+  max-width: 740px;
   margin-left: auto;
   margin-right: auto;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.95), 0 2px 10px rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="dark"] .hero-description,
+body.dark-theme .hero-description {
+  color: #FFFFFF !important;
+  font-weight: 500;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 0.9) !important;
 }
 
 .hero-benefits-wrapper {
@@ -106,38 +141,16 @@ body.dark-theme .hero-bg-overlay {
 
 [data-theme="dark"] .hero-benefits-wrapper,
 body.dark-theme .hero-benefits-wrapper {
-  background: rgba(26, 36, 31, 0.92);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(20, 20, 24, 0.94);
+  border-color: #27272A;
 }
 
 @media (max-width: 768px) {
-  .home-fixed-bg {
-    background-image: var(--hero-bg-mobile);
-    background-position: center center;
-  }
-
   .hero-section {
+    background: transparent !important;
+    background-image: none !important;
     min-height: calc(100vh - 58px);
     padding: 56px 16px 44px;
-  }
-
-  .hero-bg-overlay {
-    background: linear-gradient(
-      180deg,
-      rgba(251, 249, 244, 0.88) 0%,
-      rgba(251, 249, 244, 0.78) 50%,
-      rgba(251, 249, 244, 0.52) 100%
-    );
-  }
-
-  [data-theme="dark"] .hero-bg-overlay,
-  body.dark-theme .hero-bg-overlay {
-    background: linear-gradient(
-      180deg,
-      rgba(12, 18, 15, 0.92) 0%,
-      rgba(12, 18, 15, 0.84) 50%,
-      rgba(12, 18, 15, 0.62) 100%
-    );
   }
 }
 
@@ -234,41 +247,14 @@ body.dark-theme .hero-benefits-wrapper {
 
 /* ==========================================================================
    AGROCONNECT — "HOW AGROCONNECT WORKS FOR EVERYONE" REDESIGN
-   Clean, modern, professional agricultural marketplace UI
+   Clean, modern, professional agricultural marketplace UI with sticky background
    ========================================================================== */
 .how-it-works-section {
   position: relative;
   z-index: 1;
-  padding: 80px 24px 96px;
+  padding: 72px 24px 88px;
   background: transparent;
-  overflow: hidden;
-}
-
-.how-it-works-bg-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(251, 249, 244, 0.74) 0%,
-    rgba(251, 249, 244, 0.58) 50%,
-    rgba(251, 249, 244, 0.76) 100%
-  );
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  pointer-events: none;
-  z-index: 0;
-}
-
-[data-theme="dark"] .how-it-works-bg-overlay,
-body.dark-theme .how-it-works-bg-overlay {
-  background: linear-gradient(
-    180deg,
-    rgba(12, 18, 15, 0.70) 0%,
-    rgba(12, 18, 15, 0.60) 50%,
-    rgba(12, 18, 15, 0.82) 100%
-  );
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  overflow: visible;
 }
 
 .how-it-works-container {
@@ -292,15 +278,18 @@ body.dark-theme .how-it-works-bg-overlay {
   align-items: center;
   gap: 8px;
   padding: 6px 16px;
-  background: #EAF5EC;
-  border: 1px solid rgba(35, 122, 69, 0.22);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(35, 122, 69, 0.28);
   border-radius: 9999px;
-  color: #237A45;
+  color: #1b6337;
   font-size: 12.5px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-bottom: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .how-badge-icon {
@@ -310,18 +299,21 @@ body.dark-theme .how-it-works-bg-overlay {
 .how-it-works-title {
   font-size: clamp(28px, 3.4vw, 38px);
   font-weight: 800;
-  color: #16532F;
+  color: #124525;
   line-height: 1.25;
   margin: 0 0 14px 0;
   letter-spacing: -0.02em;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9), 0 2px 12px rgba(255, 255, 255, 0.8);
 }
 
 .how-it-works-subtitle {
-  font-size: clamp(15px, 1.6vw, 17px);
-  color: #4A5568;
-  line-height: 1.6;
+  font-size: clamp(15px, 1.6vw, 17.5px);
+  color: #0F291B;
+  line-height: 1.65;
   margin: 0;
-  max-width: 660px;
+  max-width: 700px;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.95), 0 2px 10px rgba(255, 255, 255, 0.9);
 }
 
 /* Two Large Side-by-Side Cards on Desktop */
@@ -334,10 +326,12 @@ body.dark-theme .how-it-works-bg-overlay {
 
 .how-column {
   position: relative;
-  background: #FFFFFF;
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.95);
   border-radius: 20px;
-  box-shadow: 0 4px 20px -2px rgba(22, 83, 47, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 10px 32px -4px rgba(22, 83, 47, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04);
   padding: 32px 30px;
   display: flex;
   flex-direction: column;
@@ -614,7 +608,9 @@ body.dark-theme .how-it-works-title {
 
 [data-theme="dark"] .how-it-works-subtitle,
 body.dark-theme .how-it-works-subtitle {
-  color: #9BB0A3;
+  color: #FFFFFF !important;
+  font-weight: 500;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 0.9) !important;
 }
 
 [data-theme="dark"] .how-it-works-badge,
@@ -867,9 +863,12 @@ body.dark-theme .step-desc {
 }
 
 @keyframes pullArrowBounce {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(6px);
   }
@@ -877,8 +876,8 @@ body.dark-theme .step-desc {
 
 [data-theme="dark"] .hero-scroll-pull-btn,
 body.dark-theme .hero-scroll-pull-btn {
-  background: #17241C !important;
-  border-color: rgba(74, 222, 128, 0.4) !important;
+  background: #1E1E24 !important;
+  border-color: #27272A !important;
   color: #4ADE80 !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6) !important;
 }
@@ -892,7 +891,7 @@ body.dark-theme .hero-scroll-pull-btn:hover {
 
 [data-theme="dark"] .hero-scroll-pull-hint,
 body.dark-theme .hero-scroll-pull-hint {
-  background: #152219 !important;
-  color: #A3B3A9 !important;
-  border-color: rgba(74, 222, 128, 0.25) !important;
+  background: #18181D !important;
+  color: #A1A1AA !important;
+  border-color: #27272A !important;
 }

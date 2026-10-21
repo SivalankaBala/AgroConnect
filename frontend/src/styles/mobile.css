@@ -941,8 +941,9 @@ body.dark-theme .mobile-logout-btn:hover {
     gap: 16px;
   }
 
+  .footer-compact-row,
   .footer-main-row {
-    gap: 24px;
+    gap: 16px;
   }
 
   /* 3 columns on tablet landscape for balanced card sizes */
@@ -1182,9 +1183,10 @@ body.dark-theme .mobile-logout-btn:hover {
     grid-column: span 1;
   }
 
+  .footer-compact-row,
   .footer-main-row {
     flex-direction: column;
-    gap: 20px;
+    gap: 8px;
   }
 }
 

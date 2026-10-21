@@ -542,40 +542,30 @@ function App() {
     }
   }, []);
 
-  // Floating round arrow button visibility + track scroll location per view
+  // Clear any legacy stuck scroll positions from previous sessions
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem("agroconnectLastScrollY");
+      for (let i = sessionStorage.length - 1; i >= 0; i--) {
+        const key = sessionStorage.key(i);
+        if (key && (key.startsWith("agroconnectScroll_") || key === "agroconnectLastScrollY")) {
+          sessionStorage.removeItem(key);
+        }
+      }
+    } catch {
+      // storage unavailable
+    }
+  }, []);
+
+  // Floating round arrow button visibility
   const [showScrollTop, setShowScrollTop] = useState(false);
   useEffect(() => {
     function handleScroll() {
       setShowScrollTop(window.scrollY > 280);
-      if (window.scrollY > 0) {
-        sessionStorage.setItem(`agroconnectScroll_${currentView}`, window.scrollY.toString());
-        sessionStorage.setItem("agroconnectLastScrollY", window.scrollY.toString());
-      }
     }
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [currentView]);
-
-  // Restore scroll position at exact location on reload or when view data finishes loading
-  useEffect(() => {
-    const saved =
-      sessionStorage.getItem(`agroconnectScroll_${currentView}`) ||
-      sessionStorage.getItem("agroconnectLastScrollY");
-    if (saved) {
-      const pos = parseInt(saved, 10);
-      if (pos > 0) {
-        requestAnimationFrame(() => {
-          window.scrollTo({ top: pos, behavior: "instant" });
-        });
-        const timer = setTimeout(() => {
-          if (Math.abs(window.scrollY - pos) > 40) {
-            window.scrollTo({ top: pos, behavior: "instant" });
-          }
-        }, 150);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [currentView, loading, farmersLoading, dashboardLoading, buyerLoading]);
+  }, []);
 
   const handlePromptOrderAction = (enquiry, action) => {
     setOrderConfirmModal({

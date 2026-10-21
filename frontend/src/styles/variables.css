@@ -135,45 +135,45 @@
 }
 
 /* ==========================================================================
-   DARK MODE TOKEN SYSTEM (Near-Black Charcoal & AgroConnect Green Palette)
+   DARK MODE TOKEN SYSTEM (Flame Black, Deep Coal & Dark Gray Palette)
    ========================================================================== */
 [data-theme="dark"],
 body.dark-theme,
 html[data-theme="dark"] {
-  /* Core Design Tokens: Near-Black Charcoal & Clean Green Palette */
-  --bg: #080B0A;
-  /* Main application background */
-  --bg-secondary: #0D1210;
+  /* Core Design Tokens: Flame Black, Deep Coal & Dark Gray */
+  --bg: #09090B;
+  /* Main application background (Flame Black) */
+  --bg-secondary: #0D0D11;
   /* Secondary background */
-  --surface-nav: #0A0F0D;
+  --surface-nav: #0F0F13;
   /* Sidebar and navbar */
-  --surface: #111815;
-  /* Card background */
-  --surface-2: #171F1B;
-  /* Elevated cards and panels */
-  --input-bg: #101613;
+  --surface: #141418;
+  /* Card & container background (Deep Coal) */
+  --surface-2: #1E1E24;
+  /* Elevated cards, panels and chips (Dark Gray) */
+  --input-bg: #121216;
   /* Input background */
-  --text: #F3F7F4;
-  /* Primary text */
-  --text-secondary: #A5B2AA;
-  /* Secondary text */
-  --text-muted: #78877D;
-  /* Muted text */
-  --border: #26342C;
-  /* Borders and dividers */
+  --text: #F4F4F6;
+  /* Primary text (Crisp off-white) */
+  --text-secondary: #A1A1AA;
+  /* Secondary text (Clean silver zinc) */
+  --text-muted: #71717A;
+  /* Muted text (Neutral zinc) */
+  --border: #27272A;
+  /* Borders and dividers (Dark Gray) */
   --primary: #16A765;
   /* Primary AgroConnect green */
   --primary-hover: #128653;
   /* Hover green */
-  --primary-subtle: #103D2A;
+  --primary-subtle: rgba(22, 167, 101, 0.15);
   /* Subtle green highlight */
-  --danger: #F04452;
+  --danger: #EF4444;
   /* Error and rejection */
-  --warning: #F5AD32;
+  --warning: #F59E0B;
   /* Warning */
-  --accent: #F5AD32;
+  --accent: #F59E0B;
   /* Accent */
-  --info: #4DA3FF;
+  --info: #38BDF8;
   /* Informational accent */
 
   /* Aliases mapped to theme tokens */
@@ -184,11 +184,11 @@ html[data-theme="dark"] {
 
   --accent-saffron: var(--warning);
   --accent-saffron-hover: #D97706;
-  --accent-saffron-light: #242018;
-  --accent-saffron-border: #3F3320;
+  --accent-saffron-light: rgba(245, 158, 11, 0.15);
+  --accent-saffron-border: rgba(245, 158, 11, 0.3);
 
   --accent-chilli: var(--danger);
-  --accent-chilli-light: #2A1718;
+  --accent-chilli-light: rgba(239, 68, 68, 0.15);
 
   --bg-warm-cream: var(--bg);
   --bg-card-white: var(--surface);
@@ -198,7 +198,7 @@ html[data-theme="dark"] {
   --text-soft: var(--text-muted);
 
   --border-warm: var(--border);
-  --border-subtle: #1A241F;
+  --border-subtle: #1F1F24;
   --border-focus: var(--primary);
 
   --bg-page: var(--bg);
@@ -214,8 +214,8 @@ html[data-theme="dark"] {
   --light-green: var(--surface-2);
   --accent-orange: var(--accent);
   --error: var(--danger);
-  --error-bg: #271415;
-  --error-border: #4C1D20;
+  --error-bg: rgba(239, 68, 68, 0.12);
+  --error-border: rgba(239, 68, 68, 0.3);
   --success: var(--primary);
   --success-bg: rgba(22, 167, 101, 0.15);
 

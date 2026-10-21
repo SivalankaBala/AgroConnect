@@ -60,31 +60,73 @@ app.use('/api/notifications', notificationRoutes);
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
-    message: 'AgroConnect backend is running!'
+    message: 'AgroConnect backend is running!',
+    dbStatus: mongoose.connection.readyState === 1 ? 'connected' : 'connecting/disconnected'
   });
 });
 
+// Prevent unhandled promise rejections from crashing the process
+process.on('unhandledRejection', (reason) => {
+  console.error('[Process] Unhandled Rejection:', reason);
+});
+
 async function startServer() {
-  try {
-    const uri = (process.env.MONGODB_URI || '').trim();
-    if (!uri) {
-      throw new Error("MONGODB_URI is not set! Please add MONGODB_URI in your environment.");
-    }
-    await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 10000
-    });
-    console.log('MongoDB connected successfully!');
-
-    initSocket(server, allowedOrigins);
-    console.log('Socket.IO real-time engine initialized.');
-
-    server.listen(PORT, () => {
-      console.log(`AgroConnect server running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error('MongoDB connection failed:', error.message);
+  const uri = (process.env.MONGODB_URI || '').trim();
+  if (!uri) {
+    console.error("MONGODB_URI is not set! Please add MONGODB_URI in your environment.");
     process.exit(1);
   }
+
+  const MAX_INITIAL_RETRIES = 5;
+  const RETRY_DELAY_MS = 4000;
+  let attempt = 0;
+  let connected = false;
+
+  while (!connected) {
+    attempt++;
+    try {
+      console.log(`[MongoDB] Connecting (attempt ${attempt})...`);
+      await mongoose.connect(uri, {
+        family: 4, // Force IPv4 to completely bypass ISP NAT64/IPv6 connection timeouts
+        serverSelectionTimeoutMS: 10000
+      });
+      connected = true;
+      console.log('MongoDB connected successfully!');
+
+      // Set up lifecycle listeners once successfully connected
+      mongoose.connection.on('disconnected', () => {
+        console.warn('[MongoDB] Connection lost. Mongoose will automatically reconnect...');
+      });
+
+      mongoose.connection.on('reconnected', () => {
+        console.log('[MongoDB] Reconnected to database successfully.');
+      });
+
+      mongoose.connection.on('error', (err) => {
+        console.error('[MongoDB] Connection error:', err.message);
+      });
+    } catch (error) {
+      console.error(`[MongoDB] Connection attempt ${attempt} failed:`, error.message);
+      if (attempt < MAX_INITIAL_RETRIES) {
+        console.log(`Retrying in ${RETRY_DELAY_MS / 1000}s (Atlas cluster may be waking up)...`);
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+      } else {
+        console.error('\n⚠️ Atlas connection taking longer than expected.');
+        console.error('If this persists, check:');
+        console.error('• MongoDB Atlas -> Network Access -> Add 0.0.0.0/0 (allow from anywhere)');
+        console.error('• Verify your internet connection is active.\n');
+        console.log('Retrying connection in 6 seconds...');
+        await new Promise((resolve) => setTimeout(resolve, 6000));
+      }
+    }
+  }
+
+  initSocket(server, allowedOrigins);
+  console.log('Socket.IO real-time engine initialized.');
+
+  server.listen(PORT, () => {
+    console.log(`AgroConnect server running on port ${PORT}`);
+  });
 }
 
 startServer();

@@ -26,14 +26,15 @@ export default function HomeView({
         "--hero-bg-mobile": `url("${mobileHeroBg}")`
       }}
     >
+      {/* FIXED BACKGROUND LAYER — STICKS IN PLACE WHILE TEXT & CARDS SCROLL */}
       <div className="home-fixed-bg" aria-hidden="true" />
+      <div className="home-fixed-overlay" aria-hidden="true" />
 
       {/* SECTION 1: DIRECT FARM MARKETPLACE FOR HARDWORKING FARMERS & SMART BUYERS */}
       <header
         className="hero-section"
         id="home"
       >
-        <div className="hero-bg-overlay" aria-hidden="true" />
         <div className="hero-content">
           <h1 className="hero-heading">
             {t("hero.title")}
@@ -110,7 +111,6 @@ export default function HomeView({
 
       {/* SECTION 2: HOW AGROCONNECT WORKS FOR EVERYONE */}
       <section className="how-it-works-section" id="how-it-works" aria-labelledby="how-it-works-title">
-        <div className="how-it-works-bg-overlay" aria-hidden="true" />
         <div className="how-it-works-container">
           <div className="how-it-works-header-center">
             <div className="how-it-works-badge">

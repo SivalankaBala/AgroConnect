@@ -4,9 +4,9 @@
 html {
   box-sizing: border-box;
   -webkit-text-size-adjust: 100%;
-  overflow-x: clip;
+  overflow-x: hidden;
   width: 100%;
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 
 *,
@@ -24,7 +24,7 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: clip;
+  overflow-x: hidden;
   width: 100%;
   position: relative;
 }

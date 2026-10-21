@@ -1089,62 +1089,62 @@
 /* DARK MODE OVERRIDES FOR PRODUCT DETAILS MODAL */
 [data-theme="dark"] .product-details-modal-window,
 body.dark-theme .product-details-modal-window {
-  background: #111815 !important;
-  border-color: #26342C !important;
+  background: #141418 !important;
+  border-color: #27272A !important;
 }
 
 [data-theme="dark"] .product-modal-topbar,
 body.dark-theme .product-modal-topbar {
-  background: #141C17 !important;
-  border-bottom-color: #26342C !important;
+  background: #18181D !important;
+  border-bottom-color: #27272A !important;
 }
 
 [data-theme="dark"] .pill-subtag,
 body.dark-theme .pill-subtag {
-  background: #1B241F !important;
-  border-color: #2E3E34 !important;
-  color: #E2E8F0 !important;
+  background: #1E1E24 !important;
+  border-color: #27272A !important;
+  color: #E4E4E7 !important;
 }
 
 [data-theme="dark"] .product-modal-close-btn,
 body.dark-theme .product-modal-close-btn {
-  background: #1A231E !important;
-  border-color: #2E3E34 !important;
-  color: #CBD5E1 !important;
+  background: #1E1E24 !important;
+  border-color: #27272A !important;
+  color: #A1A1AA !important;
 }
 
 [data-theme="dark"] .product-modal-close-btn:hover,
 body.dark-theme .product-modal-close-btn:hover {
-  background: #26342C !important;
+  background: #27272A !important;
   color: #FFFFFF !important;
 }
 
 [data-theme="dark"] .product-headline-title,
 body.dark-theme .product-headline-title {
-  color: #F8FAFC !important;
+  color: #F4F4F6 !important;
 }
 
 [data-theme="dark"] .product-location-pill,
 body.dark-theme .product-location-pill {
-  background: #1A231E !important;
-  border-color: #2E3E34 !important;
-  color: #CBD5E1 !important;
+  background: #1E1E24 !important;
+  border-color: #27272A !important;
+  color: #A1A1AA !important;
 }
 
 [data-theme="dark"] .product-farmer-box,
 body.dark-theme .product-farmer-box {
-  background: #141C17 !important;
-  border-color: #26342C !important;
+  background: #18181D !important;
+  border-color: #27272A !important;
 }
 
 [data-theme="dark"] .farmer-name-heading,
 body.dark-theme .farmer-name-heading {
-  color: #F8FAFC !important;
+  color: #F4F4F6 !important;
 }
 
 [data-theme="dark"] .btn-view-farmer-link,
 body.dark-theme .btn-view-farmer-link {
-  background: #17261E !important;
+  background: #1E1E24 !important;
   border-color: #22C55E !important;
   color: #4ADE80 !important;
 }
@@ -1157,29 +1157,29 @@ body.dark-theme .btn-view-farmer-link:hover {
 
 [data-theme="dark"] .product-spec-card,
 body.dark-theme .product-spec-card {
-  background: #141C17 !important;
-  border-color: #26342C !important;
+  background: #18181D !important;
+  border-color: #27272A !important;
 }
 
 [data-theme="dark"] .spec-lbl,
 body.dark-theme .spec-lbl {
-  color: #94A3B8 !important;
+  color: #71717A !important;
 }
 
 [data-theme="dark"] .spec-val-highlight .stock-value,
 body.dark-theme .spec-val-highlight .stock-value {
-  color: #F8FAFC !important;
+  color: #F4F4F6 !important;
 }
 
 [data-theme="dark"] .product-spec-card.estimated-total-card,
 body.dark-theme .product-spec-card.estimated-total-card {
-  background: linear-gradient(135deg, #0E2919 0%, #091F13 100%) !important;
+  background: #18181D !important;
   border-color: #16A34A !important;
 }
 
 [data-theme="dark"] .estimated-icon-bubble,
 body.dark-theme .estimated-icon-bubble {
-  background: #162B1E !important;
+  background: #1E1E24 !important;
   border-color: #22C55E !important;
   color: #4ADE80 !important;
 }
@@ -1191,8 +1191,8 @@ body.dark-theme .estimated-lbl {
 
 [data-theme="dark"] .estimated-formula-tag,
 body.dark-theme .estimated-formula-tag {
-  background: #132219 !important;
-  border-color: #2E3E34 !important;
+  background: #1E1E24 !important;
+  border-color: #27272A !important;
   color: #A7F3D0 !important;
 }
 
@@ -1203,63 +1203,63 @@ body.dark-theme .spec-total-val {
 
 [data-theme="dark"] .product-notes-box,
 body.dark-theme .product-notes-box {
-  background: #141C17 !important;
-  border-color: #26342C !important;
+  background: #18181D !important;
+  border-color: #27272A !important;
 }
 
 [data-theme="dark"] .notes-header-row h4,
 body.dark-theme .notes-header-row h4 {
-  color: #CBD5E1 !important;
+  color: #D4D4D8 !important;
 }
 
 [data-theme="dark"] .notes-body-text,
 body.dark-theme .notes-body-text {
-  color: #94A3B8 !important;
+  color: #A1A1AA !important;
 }
 
 [data-theme="dark"] .product-trust-strip,
 body.dark-theme .product-trust-strip {
-  background: #141C17 !important;
-  border-color: #26342C !important;
-  color: #CBD5E1 !important;
+  background: #18181D !important;
+  border-color: #27272A !important;
+  color: #A1A1AA !important;
 }
 
 [data-theme="dark"] .trust-text-block strong,
 body.dark-theme .trust-text-block strong {
-  color: #CBD5E1 !important;
+  color: #D4D4D8 !important;
 }
 
 [data-theme="dark"] .btn-product-enquire,
 body.dark-theme .btn-product-enquire {
-  background: #17261E !important;
+  background: #1E1E24 !important;
   border-color: #16A34A !important;
   color: #4ADE80 !important;
 }
 
 [data-theme="dark"] .btn-product-enquire:hover,
 body.dark-theme .btn-product-enquire:hover {
-  background: #1F382A !important;
+  background: #27272A !important;
   color: #86EFAC !important;
 }
 
 [data-theme="dark"] .product-modal-footer,
 body.dark-theme .product-modal-footer {
-  background: #141C17 !important;
-  border-top-color: #26342C !important;
+  background: #141418 !important;
+  border-top-color: #27272A !important;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.35) !important;
 }
 
 [data-theme="dark"] .spec-badge-chip.rate,
 body.dark-theme .spec-badge-chip.rate {
-  background: #0E2919 !important;
-  border-color: #166534 !important;
+  background: rgba(34, 197, 94, 0.15) !important;
+  border-color: rgba(34, 197, 94, 0.35) !important;
   color: #4ADE80 !important;
 }
 
 [data-theme="dark"] .spec-badge-chip.stock,
 body.dark-theme .spec-badge-chip.stock {
-  background: #0C364D !important;
-  border-color: #0369A1 !important;
+  background: rgba(56, 189, 248, 0.15) !important;
+  border-color: rgba(56, 189, 248, 0.35) !important;
   color: #38BDF8 !important;
 }
 
